@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "svm_fs": {
+      "commandName": "Project",
+      "commandLineArgs": "-j C:\\Users\\aaron\\Documents\\k1040015\\svm_fs\\pbs_sub\\ctl.options."
+    }
+  }
+}
