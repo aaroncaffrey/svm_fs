@@ -16,6 +16,9 @@ namespace svm_fs
     {
         //public List<(int class_id, string class_name)> class_training_sizes = null;
 
+        public const string user_home = "/home/k1040015";
+        public const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
+        
         public string pbs_walltime = "1:00:00";
         public int pbs_nodes = 1;
         public int pbs_ppn = 16;
@@ -27,8 +30,8 @@ namespace svm_fs
 
         public string pbs_stdout_filename; // 
         public string pbs_stderr_filename; // 
-        public string pbs_execution_directory = $@"/home/k1040015/{nameof(svm_fs)}/pbs_sub/";
-        public string pbs_submission_directory = $@"/home/k1040015/{nameof(svm_fs)}/pbs_sub/";
+        public string pbs_execution_directory = $@"{svm_fs_home}/pbs_sub/";
+        public string pbs_submission_directory = $@"{svm_fs_home}/pbs_sub/";
 
         //public string pbs_jobid_filename;
 
@@ -37,10 +40,10 @@ namespace svm_fs
         public List<int> feature_selection_classes = new List<int>() { +1 };
         public List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
 
-        public string results_root_folder = $@"/home/k1040015/{nameof(svm_fs)}/results/";
+        public string results_root_folder = $@"{svm_fs_home}/results/";
         public string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        public string libsvm_train_runtime = $@"/home/k1040015/libsvm/svm-train";
-        public string libsvm_predict_runtime = $@"/home/k1040015/libsvm/svm-predict";
+        public string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
+        public string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
 
 
         public bool libsvm_grid_probability_estimates = true;
@@ -74,7 +77,7 @@ namespace svm_fs
         public List<(int class_id, int class_testing_size)> class_testing_sizes = null;
         public List<(int class_id, double class_weight)> class_weights = null;
         public cmd cmd = cmd.none;
-        public string dataset_dir = $@"/home/k1040015/{nameof(svm_fs)}/dataset/";
+        public string dataset_dir = $@"{svm_fs_home}/dataset/";
         public string experiment_name = null;
         public int old_feature_count = 0;
         public int new_feature_count = 0;

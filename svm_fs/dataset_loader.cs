@@ -463,6 +463,11 @@ namespace svm_fs
                 {
                     path = '~' + path.Substring(2);
                 }
+
+                if (path.Length > 0 && path[0] == '~')
+                {
+                    // convert ~ to home directory
+                }
             }
             else if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {

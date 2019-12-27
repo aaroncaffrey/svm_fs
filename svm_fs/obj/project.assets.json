@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\aaron\\Documents\\desktop files\\svm_fs\\svm_fs\\svm_fs.csproj",
+      "projectUniqueName": "C:\\svm_fs\\svm_fs\\svm_fs.csproj",
       "projectName": "svm_fs",
-      "projectPath": "C:\\Users\\aaron\\Documents\\desktop files\\svm_fs\\svm_fs\\svm_fs.csproj",
+      "projectPath": "C:\\svm_fs\\svm_fs\\svm_fs.csproj",
       "packagesPath": "C:\\Users\\aaron\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\aaron\\Documents\\desktop files\\svm_fs\\svm_fs\\obj\\",
+      "outputPath": "C:\\svm_fs\\svm_fs\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
