@@ -575,8 +575,8 @@ namespace svm_fs
                     checkpoint_data.Add(($@"{nameof(winning_iteration)}", $@"{winning_iteration}"));
                     checkpoint_data.Add(($@"{nameof(highest_score_last_iteration_group_index)}", $@"{highest_score_last_iteration_group_index}"));
                     checkpoint_data.Add(($@"{nameof(highest_score_this_iteration_group_index)}", $@"{highest_score_this_iteration_group_index}"));
-                    checkpoint_data.Add(($@"{nameof(highest_score_last_iteration_group_key)}", $@"{highest_score_last_iteration_group_key}"));
-                    checkpoint_data.Add(($@"{nameof(highest_score_this_iteration_group_key)}", $@"{highest_score_this_iteration_group_key}"));
+                    checkpoint_data.Add(($@"{nameof(highest_score_last_iteration_group_key)}", $@"{highest_score_last_iteration_group_key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")}"));
+                    checkpoint_data.Add(($@"{nameof(highest_score_this_iteration_group_key)}", $@"{highest_score_this_iteration_group_key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")}"));
                     checkpoint_data.Add(($@"{nameof(forward)}", $@"{forward}"));
                     checkpoint_data.Add(($@"{nameof(iterations_not_better_than_last)}", $@"{iterations_not_better_than_last}"));
                     checkpoint_data.Add(($@"{nameof(iterations_not_better_than_all)}", $@"{iterations_not_better_than_all}")); 
@@ -653,7 +653,7 @@ namespace svm_fs
 
             var final_list_fn = Path.Combine(root_folder, "final_list.txt");
             var final_list_txt = new List<string>();
-            var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key},{string.Join(";",groups[a].columns)}").ToList();
+            var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")},{string.Join(";",groups[a].columns)}").ToList();
             File.WriteAllLines(final_list_fn, final_list_txt);
 
             svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));

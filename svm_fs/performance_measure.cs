@@ -1825,7 +1825,7 @@ namespace svm_fs
                     pri_xy_str_11p,
                 };
 
-                var data1 = data.Select(a => a?.ToString() ?? "").ToArray();
+                var data1 = data.Select(a => a?.ToString().Replace(",",";") ?? "").ToArray();
 
                 return data1;
             }
