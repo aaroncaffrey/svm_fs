@@ -513,6 +513,9 @@ namespace svm_fs
                     score_increase_from_last = highest_score_this_iteration - highest_score_last_iteration;
                     score_increase_from_all = highest_score_this_iteration - highest_score_all_iteration;
 
+                    var score_increase_from_last_pct = highest_score_last_iteration != 0 ? score_increase_from_last / highest_score_last_iteration : 0;
+                    var score_increase_from_all_pct = highest_score_last_iteration != 0 ? score_increase_from_all / highest_score_all_iteration : 0;
+
                     score_better_than_last = score_increase_from_last > 0;
                     score_better_than_all = score_increase_from_all > 0;
 
@@ -585,7 +588,9 @@ namespace svm_fs
                     checkpoint_data.Add(($@"{nameof(highest_score_this_iteration)}", $@"{highest_score_this_iteration}"));
                     checkpoint_data.Add(($@"{nameof(highest_score_all_iteration)}", $@"{highest_score_all_iteration}"));
                     checkpoint_data.Add(($@"{nameof(score_increase_from_last)}", $@"{score_increase_from_last}"));
+                    checkpoint_data.Add(($@"{nameof(score_increase_from_last_pct)}", $@"{score_increase_from_last_pct}"));
                     checkpoint_data.Add(($@"{nameof(score_increase_from_all)}", $@"{score_increase_from_all}"));
+                    checkpoint_data.Add(($@"{nameof(score_increase_from_all_pct)}", $@"{score_increase_from_all_pct}"));
                     checkpoint_data.Add(($@"{nameof(score_better_than_last)}", $@"{score_better_than_last}"));
                     checkpoint_data.Add(($@"{nameof(score_better_than_all)}", $@"{score_better_than_all}"));
                     checkpoint_data.Add(($@"{nameof(elapsed_iteration)}", $@"{elapsed_iteration}"));
@@ -652,9 +657,8 @@ namespace svm_fs
             // todo: save final list
 
             var final_list_fn = Path.Combine(root_folder, "final_list.txt");
-            var final_list_txt = new List<string>();
             var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")},{string.Join(";",groups[a].columns)}").ToList();
-            File.WriteAllLines(final_list_fn, final_list_txt);
+            File.WriteAllLines(final_list_fn, fl);
 
             svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
 
