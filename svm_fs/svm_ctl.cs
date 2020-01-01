@@ -69,6 +69,8 @@ namespace svm_fs
 
         public static double PopulationStandardDeviation(List<double> numberSet)
         {
+            if (numberSet.Count == 0) return 0;
+
             double mean = numberSet.Average();
 
             return Math.Sqrt(numberSet.Sum(x => Math.Pow(x - mean, 2)) / (numberSet.Count));
@@ -76,6 +78,8 @@ namespace svm_fs
 
         public static double SampleStandardDeviation(List<double> numberSet)
         {
+            if (numberSet.Count < 2) return 0;
+
             double mean = numberSet.Average();
 
             return Math.Sqrt(numberSet.Sum(x => Math.Pow(x - mean, 2)) / (numberSet.Count - 1));
@@ -173,7 +177,20 @@ namespace svm_fs
             // Load dataset
             //svm_ctl.WriteLine("Start: Loading dataset...");
 
-            var dataset = dataset_loader.read_binary_dataset(p.dataset_dir, p.negative_class_id, p.positive_class_id, p.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false);
+
+
+            var required_default = false;
+            
+            var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
+
+            //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
+            
+            //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
+
+            
+
+            var dataset = dataset_loader.read_binary_dataset(p.dataset_dir, p.negative_class_id, p.positive_class_id, p.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
+
 
 
             //svm_ctl.WriteLine("End: Loading dataset...");
@@ -656,8 +673,9 @@ namespace svm_fs
 
             // todo: save final list
 
-            var final_list_fn = Path.Combine(root_folder, "final_list.txt");
+            var final_list_fn = Path.Combine(root_folder, "final_list.csv");
             var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")},{string.Join(";",groups[a].columns)}").ToList();
+            fl.Insert(0, "group_index,group_key,columns");
             File.WriteAllLines(final_list_fn, fl);
 
             svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
@@ -765,7 +783,10 @@ namespace svm_fs
 
 
             // reorder all groups by rank
-            cm_inputs = cm_inputs.OrderByDescending(a => a.cms.cm_list.Where(b => ranking_metric_params.feature_selection_classes == null || ranking_metric_params.feature_selection_classes.Count == 0 || ranking_metric_params.feature_selection_classes.Contains(b.class_id.Value)).Average(b => b.get_perf_value_strings().Where(c => ranking_metric_params.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value))).ToList();
+            cm_inputs = cm_inputs.OrderByDescending(a => 
+                a.cms.cm_list.Where(b => ranking_metric_params.feature_selection_classes == null || ranking_metric_params.feature_selection_classes.Count == 0 || ranking_metric_params.feature_selection_classes.Contains(b.class_id.Value)).Average(b => b.get_perf_value_strings().Where(c => ranking_metric_params.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value)))
+                .ThenBy(a=> a.cmd_params.new_feature_count)
+                .ToList();
 
 
             var ranked_scores = cm_inputs.Select((a, i) => (group_index: a.cmd_params.group_index, rank_index: i,
@@ -799,14 +820,14 @@ namespace svm_fs
             return cm_inputs;
         }
 
-        public static void check_solution(List<int> group_indexes, List<int> column_indexes)
-        {
-            // check a proposed solution
+        //public static void check_solution(List<int> group_indexes, List<int> column_indexes)
+        //{
+        //    // check a proposed solution
 
-            // perform outer-cv x10 with given svm_type, kernel_type, scale_function, etc.
+        //    // perform outer-cv x10 with given svm_type, kernel_type, scale_function, etc.
 
 
-        }
+        //}
 
         public static
 
@@ -818,7 +839,7 @@ namespace svm_fs
                 cmd_params p,
                 List<(int class_id, int size, List<(int randomisation_cv_index, int outer_cv_index, List<int> indexes)> folds)> downsampled_training_class_folds,
                 List<(int class_id, int size, List<(int randomisation_cv_index, int outer_cv_index, List<int> indexes)> folds)> class_folds,
-                List<(int class_id, List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, string comment_columns_hash, List<(int fid, double fv)> feature_data, string feature_data_hash)> examples)> dataset_instance_list_grouped,
+                List<(int class_id, List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, /*string comment_columns_hash,*/ List<(int fid, double fv)> feature_data/*, string feature_data_hash*/)> examples)> dataset_instance_list_grouped,
                 int iteration_index,
                 int group_index,
                 List<(int index, (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) key, List<(int fid, string alphabet, string dimension, string category, string source, string @group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> list, List<int> columns)> groups,
@@ -860,9 +881,9 @@ namespace svm_fs
                     var training_example_columns = training_examples.Select(a =>
                         (
                             a.class_id,
-                            examples: a.examples.Select(b => (example: b, columns: query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList(), columns_hash: hash.calc_hash(string.Join(" ", query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList())))).ToList())).ToList();
+                            examples: a.examples.Select(b => (example: b, columns: query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList()/*, columns_hash: hash.calc_hash(string.Join(" ", query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList()))*/)).ToList())).ToList();
 
-                    var testing_example_columns = testing_examples.Select(a => (a.class_id, examples: a.examples.Select(b => (example: b, columns: query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList(), columns_hash: hash.calc_hash(string.Join(" ", query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList())))).ToList())).ToList();
+                    var testing_example_columns = testing_examples.Select(a => (a.class_id, examples: a.examples.Select(b => (example: b, columns: query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList()/*, columns_hash: hash.calc_hash(string.Join(" ", query_cols.Select(c => b.feature_data[c].fid == c ? b.feature_data[c] : b.feature_data.First(d => d.fid == c)).ToList()))*/)).ToList())).ToList();
 
                     var training_scaling_params = training_example_columns.SelectMany(a => a.examples.SelectMany(b => b.columns).ToList()).GroupBy(a => a.fid).Select(a =>
                     {
@@ -876,24 +897,24 @@ namespace svm_fs
                         var x = training_scaling_params.First(y => y.fid == c.fid);
 
                         return (fid: c.fid, fv: scale(c.fv, x.list, x.non_zero, x.abs_sum, x.srsos, x.min, x.max, x.average, x.stdev, p.scale_function));
-                    }).ToList(), b.columns_hash)).ToList())).ToList();
+                    }).ToList()/*, b.columns_hash*/)).ToList())).ToList();
 
                     var testing_example_columns_scaled = testing_example_columns.Select(a => (a.class_id, examples: a.examples.Select(b => (b.example, columns: b.columns.Select(c =>
                     {
                         var x = training_scaling_params.First(y => y.fid == c.fid);
 
                         return (fid: c.fid, fv: scale(c.fv, x.list, x.non_zero, x.abs_sum, x.srsos, x.min, x.max, x.average, x.stdev, p.scale_function));
-                    }).ToList(), b.columns_hash)).ToList())).ToList();
+                    }).ToList()/*, b.columns_hash*/)).ToList())).ToList();
 
                     var training_text = training_example_columns_scaled.SelectMany(a => a.examples.Select(b => $"{a.class_id} {String.Join(" ", b.columns.Where(c => c.fv != 0).OrderBy(c => c.fid).Select(c => $"{c.fid}:{c.fv}").ToList())}").ToList()).ToList();
 
                     var testing_text = testing_example_columns_scaled.SelectMany(a => a.examples.Select(b => $"{a.class_id} {String.Join(" ", b.columns.Where(c => c.fv != 0).OrderBy(c => c.fid).Select(c => $"{c.fid}:{c.fv}").ToList())}").ToList()).ToList();
 
                     if (string.IsNullOrWhiteSpace(training_id_text_header))
-                        training_id_text_header = $"class_id,example_id,class_example_id,feature_data_hash,comment_columns_hash,columns_hash";
+                        training_id_text_header = $"class_id,example_id,class_example_id";//",feature_data_hash,comment_columns_hash,columns_hash";
 
                     if (string.IsNullOrWhiteSpace(testing_id_text_header))
-                        testing_id_text_header = $"class_id,example_id,class_example_id,feature_data_hash,comment_columns_hash,columns_hash";
+                        testing_id_text_header = $"class_id,example_id,class_example_id";//",feature_data_hash,comment_columns_hash,columns_hash";
 
                     if (string.IsNullOrWhiteSpace(training_meta_text_header))
                         training_meta_text_header = string.Join(",", training_example_columns.First().examples.First().example.comment_columns.Select(c => "c_" + c.comment_header).ToList());
@@ -901,9 +922,9 @@ namespace svm_fs
                     if (string.IsNullOrWhiteSpace(testing_meta_text_header))
                         testing_meta_text_header = string.Join(",", testing_example_columns.First().examples.First().example.comment_columns.Select(c => "c_" + c.comment_header).ToList());
 
-                    var training_id_text = training_example_columns.SelectMany(a => a.examples.Select(b => $"{a.class_id},{b.example.example_id},{b.example.class_example_id},{b.example.feature_data_hash},{b.example.comment_columns_hash},{b.columns_hash}").ToList()).ToList();
+                    var training_id_text = training_example_columns.SelectMany(a => a.examples.Select(b => $"{a.class_id},{b.example.example_id},{b.example.class_example_id}").ToList()).ToList();//,{ b.example.feature_data_hash},{b.example.comment_columns_hash},{b.columns_hash}").ToList()).ToList();
 
-                    var testing_id_text = testing_example_columns.SelectMany(a => a.examples.Select(b => $"{a.class_id},{b.example.example_id},{b.example.class_example_id},{b.example.feature_data_hash},{b.example.comment_columns_hash},{b.columns_hash}").ToList()).ToList();
+                    var testing_id_text = testing_example_columns.SelectMany(a => a.examples.Select(b => $"{a.class_id},{b.example.example_id},{b.example.class_example_id}").ToList()).ToList();//,{ b.example.feature_data_hash},{b.example.comment_columns_hash},{b.columns_hash}").ToList()).ToList();
 
                     var training_meta_text = training_example_columns.SelectMany(a => a.examples.Select(b => string.Join(",", b.example.comment_columns.Select(c => c.comment_value).ToList())).ToList()).ToList();
 
@@ -964,10 +985,10 @@ namespace svm_fs
             merge_pre_results(pre_tm);
 
             // submit jobs to scheduler
-            var cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
+            //var cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
 
 
-            var iteration_folder = dataset_loader.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+            //var iteration_folder = dataset_loader.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
             // wait for results
             var wait_file_list = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.wait_file_list).ToList()).ToList();
@@ -980,7 +1001,8 @@ namespace svm_fs
             var merge_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.merge_cmd_params).ToList()).ToList();
 
             var merge_cm_inputs = merge_cmd_params_list.GroupBy(a =>
-                (test_file: a.test_filename,
+                (
+                    test_file: a.test_filename,
                     test_comments_file: a.test_meta_filename,
                     prediction_file: a.test_predict_filename,
                     cm_file: Path.Combine(Path.GetDirectoryName(a.test_predict_cm_filename), $@"{Path.GetFileNameWithoutExtension(a.test_predict_cm_filename)}_merged_predictions{Path.GetExtension(a.test_predict_cm_filename)}")
@@ -1265,13 +1287,21 @@ namespace svm_fs
             var cmd_params = new cmd_params(p);
             //{
             cmd_params.cmd = cmd.wkr;
-            cmd_params.pbs_jobname = pbs_jobname;
-            cmd_params.pbs_walltime = $@"{pbs_walltime:hh\:mm\:ss}";
-            cmd_params.pbs_stdout_filename = $"{filename}.stdout.txt";
-            cmd_params.pbs_stderr_filename = $"{filename}.stderr.txt";
+            cmd_params.pbs_wkr_jobname = pbs_jobname;
+            cmd_params.pbs_wkr_walltime = $@"{pbs_walltime:hh\:mm\:ss}";
+            cmd_params.pbs_wkr_stdout_filename = $"{filename}.stdout.txt";
+            cmd_params.pbs_wkr_stderr_filename = $"{filename}.stderr.txt";
+
             //cmd_params.pbs_nodes = 1;
             //cmd_params.pbs_ppn = 4;
             //cmd_params.pbs_mem = $@"{(1024 * 8)}mb";
+
+            if (cmd_params.inner_cv_folds <= 1)
+            {
+                cmd_params.pbs_wkr_nodes = 1;
+                cmd_params.pbs_wkr_ppn = 1;
+            }
+
             cmd_params.job_id = job.job_id;
             cmd_params.feature_id = group.columns != null && group.columns.Count == 1 && group.list != null && group.list.Count > 0 ? group.list.First().fid : -1;
             cmd_params.member = group.columns != null && group.columns.Count == 1 && group.list != null && group.list.Count > 0 ? group.list.First().member : "";
@@ -1398,7 +1428,11 @@ namespace svm_fs
             }
             //cmds.Add($@"start cmd /c {cmd_params.program_runtime} -j {cmd_params.options_filename}");
 
-            wait_file_list.Add(cmd_params.train_grid_filename);
+            if (cmd_params.inner_cv_folds > 1)
+            {
+                wait_file_list.Add(cmd_params.train_grid_filename);
+            }
+
             wait_file_list.Add(cmd_params.train_model_filename);
             wait_file_list.Add(cmd_params.test_predict_filename);
             wait_file_list.Add(cmd_params.test_predict_cm_filename);
@@ -1421,8 +1455,10 @@ namespace svm_fs
 
             var merge_cmd_params = new cmd_params(cmd_params)
             {
-                pbs_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.stdout.txt"),
-                pbs_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.stderr.txt"),
+                pbs_ctl_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}_ctl.stdout.txt"),
+                pbs_ctl_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}_ctl.stderr.txt"),
+                pbs_wkr_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}_wkr.stdout.txt"),
+                pbs_wkr_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}_wkr.stderr.txt"),
 
                 train_filename = Path.Combine(merge_output_folder, $"{merge_filename}.train.libsvm"),
                 train_id_filename = Path.Combine(merge_output_folder, $"{merge_filename}.train_id.csv"),
@@ -1438,7 +1474,11 @@ namespace svm_fs
 
             merge_cmd_params.convert_paths();
 
-            to_merge.Add((true, true, null, merge_cmd_params.train_grid_filename, cmd_params.train_grid_filename, null));
+            if (cmd_params.inner_cv_folds > 1)
+            {
+                to_merge.Add((true, true, null, merge_cmd_params.train_grid_filename, cmd_params.train_grid_filename, null));
+            }
+
             to_merge.Add((false, false, null, merge_cmd_params.test_filename, cmd_params.test_filename, null));
             to_merge.Add((false, true, null, merge_cmd_params.test_id_filename, cmd_params.test_id_filename, null));
             to_merge.Add((false, true, null, merge_cmd_params.test_meta_filename, cmd_params.test_meta_filename, null));
@@ -1463,8 +1503,13 @@ namespace svm_fs
 
         public static void submit_pbs_job(cmd_params cmd_params) //(string jobs_fn)
         {
+            var sub_dir = "";
+            
+            if (cmd_params.cmd == cmd.ctl) sub_dir = cmd_params.pbs_ctl_submission_directory;
+            if (cmd_params.cmd == cmd.wkr) sub_dir = cmd_params.pbs_wkr_submission_directory;
+
             var source = dataset_loader.convert_path(cmd_params.options_filename);
-            var dest = dataset_loader.convert_path(Path.Combine(Path.GetDirectoryName(cmd_params.pbs_submission_directory), Path.GetFileName(cmd_params.options_filename)));
+            var dest = dataset_loader.convert_path(Path.Combine(Path.GetDirectoryName(sub_dir), Path.GetFileName(cmd_params.options_filename)));
 
             if (source != dest)
             {

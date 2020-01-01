@@ -12,8 +12,8 @@ namespace svm_fs
         public class dataset
         {
             public List<(int fid, string alphabet, string dimension, string category, string source, string group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> dataset_headers = null;
-            public List<(int filename_index, int line_index, List<(string comment_header, string comment_value)> comment_columns, string comment_columns_hash)> dataset_comment_row_values = null;
-            public List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, string comment_columns_hash, List<(int fid, double fv)> feature_data, string feature_data_hash)> dataset_instance_list = null;
+            public List<(int filename_index, int line_index, List<(string comment_header, string comment_value)> comment_columns/*, string comment_columns_hash*/)> dataset_comment_row_values = null;
+            public List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, /*string comment_columns_hash,*/ List<(int fid, double fv)> feature_data/*, string feature_data_hash*/)> dataset_instance_list = null;
 
             //public static void serialise(datax datax, string filename)
             //{
@@ -80,6 +80,7 @@ namespace svm_fs
            bool use_parallel = true,
            bool perform_integrity_checks = false,
            bool fix_double = true,
+           bool required_default = true,
            List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)> required_matches = null
            )
         {
@@ -199,13 +200,21 @@ namespace svm_fs
             if (required_matches != null && required_matches.Count > 0)
             {
                 required = new bool[header_data.Count];
-                Array.Fill(required, true);
+                Array.Fill(required, required_default);
 
                 for (var index = 0; index < required_matches.Count; index++)
                 {
                     var rm = required_matches[index];
 
-                    var matching_fids = header_data.Where(a => matches(a.alphabet, rm.alphabet) && matches(a.category, rm.category) && matches(a.dimension, rm.dimension) && matches(a.source, rm.source) && matches(a.@group, rm.@group) && matches(a.member, rm.member) && matches(a.perspective, rm.perspective)).Select(a => a.fid).ToList();
+                    var matching_fids = header_data.Where(a => 
+                        matches(a.alphabet, rm.alphabet) &&
+                        matches(a.category, rm.category) &&
+                        matches(a.dimension, rm.dimension) &&
+                        matches(a.source, rm.source) &&
+                        matches(a.@group, rm.@group) && 
+                        matches(a.member, rm.member) && 
+                        matches(a.perspective, rm.perspective)
+                        ).Select(a => a.fid).ToList();
 
                     
                     matching_fids.ForEach(a => required[a] = rm.required);
@@ -233,8 +242,8 @@ namespace svm_fs
             //Program.WriteLine($@"{nameof(table_perspective)}: {table_perspective.Count}: {string.Join(", ", table_perspective)}");
             //Program.WriteLine($@"");
 
-            List<(int filename_index, int line_index, List<(string comment_header, string comment_value)> comment_columns, string comment_columns_hash)> dataset_comment_row_values = null;
-            List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, string comment_columns_hash, List<(int fid, double fv)> feature_data, string feature_data_hash)> dataset_instance_list = null;
+            List<(int filename_index, int line_index, List<(string comment_header, string comment_value)> comment_columns/*, string comment_columns_hash*/)> dataset_comment_row_values = null;
+            List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, /*string comment_columns_hash,*/ List<(int fid, double fv)> feature_data/*, string feature_data_hash*/)> dataset_instance_list = null;
 
 
 
@@ -249,8 +258,8 @@ namespace svm_fs
                     var comment_columns = line.Split(',').Select((col, col_index) => (comment_header: data_comments_header[col_index], comment_value: col)).ToList();
                     comment_columns = comment_columns.Where(d => d.comment_header.FirstOrDefault() != '#').ToList();
 
-                    var comment_columns_hash = hash.calc_hash(string.Join(" ", comment_columns.Select(c => c.comment_header + ":" + c.comment_value).ToList()));
-                    return (filename_index: filename_index, line_index: line_index, comment_columns: comment_columns, comment_columns_hash: comment_columns_hash);
+                    //var comment_columns_hash = hash.calc_hash(string.Join(" ", comment_columns.Select(c => c.comment_header + ":" + c.comment_value).ToList()));
+                    return (filename_index: filename_index, line_index: line_index, comment_columns: comment_columns/*, comment_columns_hash: comment_columns_hash*/);
 
                 }).ToList()).ToList();
             }
@@ -261,8 +270,8 @@ namespace svm_fs
                     var comment_columns = line.Split(',').Select((col, col_index) => (comment_header: data_comments_header[col_index], comment_value: col)).ToList();
                     comment_columns = comment_columns.Where(d => d.comment_header.FirstOrDefault() != '#').ToList();
 
-                    var comment_columns_hash = hash.calc_hash(string.Join(" ", comment_columns.Select(c => c.comment_header + ":" + c.comment_value).ToList()));
-                    return (filename_index: filename_index, line_index: line_index, comment_columns: comment_columns, comment_columns_hash: comment_columns_hash);
+                    //var comment_columns_hash = hash.calc_hash(string.Join(" ", comment_columns.Select(c => c.comment_header + ":" + c.comment_value).ToList()));
+                    return (filename_index: filename_index, line_index: line_index, comment_columns: comment_columns/*, comment_columns_hash: comment_columns_hash*/);
 
                 }).ToList()).ToList();
 
@@ -290,20 +299,20 @@ namespace svm_fs
 
                     var class_id = int.Parse(line.Substring(0, line.IndexOf(',')));
                     var feature_data = parse_csv_line_doubles(line, required);
-                    var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
+                    //var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
 
                     var comment_row = dataset_comment_row_values.First(b => b.filename_index == filename_index && b.line_index == line_index);
                     var comment_columns = comment_row.comment_columns;
-                    var comment_columns_hash = comment_row.comment_columns_hash;
+                    //var comment_columns_hash = comment_row.comment_columns_hash;
 
                     return (
                         class_id: class_id,
                         example_id: 0,
                         class_example_id: 0,
                         comment_columns: comment_columns,
-                        comment_columns_hash: comment_columns_hash,
-                        feature_data: feature_data,
-                        feature_data_hash: feature_data_hash
+                        //comment_columns_hash: comment_columns_hash,
+                        feature_data: feature_data//,
+                        //feature_data_hash: feature_data_hash
                     );
 
                 }
@@ -319,20 +328,20 @@ namespace svm_fs
 
                     var class_id = int.Parse(line.Substring(0, line.IndexOf(',')));
                     var feature_data = parse_csv_line_doubles(line, required);
-                    var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
+                    //var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
 
                     var comment_row = dataset_comment_row_values.First(b => b.filename_index == filename_index && b.line_index == line_index);
                     var comment_columns = comment_row.comment_columns;
-                    var comment_columns_hash = comment_row.comment_columns_hash;
+                    //var comment_columns_hash = comment_row.comment_columns_hash;
 
                     return (
                         class_id: class_id,
                         example_id: 0,
                         class_example_id: 0,
                         comment_columns: comment_columns,
-                        comment_columns_hash: comment_columns_hash,
-                        feature_data: feature_data,
-                        feature_data_hash: feature_data_hash
+                        //comment_columns_hash: comment_columns_hash,
+                        feature_data: feature_data//,
+                        //feature_data_hash: feature_data_hash
                     );
 
                 }
@@ -362,8 +371,8 @@ namespace svm_fs
             }
 
 
-            dataset_instance_list = dataset_instance_list.Select((a, i) => (a.class_id, i, a.class_example_id, a.comment_columns, a.comment_columns_hash, a.feature_data, a.feature_data_hash)).ToList();
-            dataset_instance_list = dataset_instance_list.GroupBy(a => a.class_id).SelectMany(x => x.Select((a, i) => (a.class_id, a.example_id, i, a.comment_columns, a.comment_columns_hash, a.feature_data, a.feature_data_hash)).ToList()).ToList();
+            dataset_instance_list = dataset_instance_list.Select((a, i) => (a.class_id, i, a.class_example_id, a.comment_columns, /*a.comment_columns_hash,*/ a.feature_data/*, a.feature_data_hash*/)).ToList();
+            dataset_instance_list = dataset_instance_list.GroupBy(a => a.class_id).SelectMany(x => x.Select((a, i) => (a.class_id, a.example_id, i, a.comment_columns, /*a.comment_columns_hash,*/ a.feature_data/*, a.feature_data_hash*/)).ToList()).ToList();
 
 
             //var dataset_instance_list2 = dataset_instance_list.Select((a, i) => (class_id: a.class_id, comment_columns: a.comment_columns, feature_data: a.feature_data,
@@ -373,14 +382,233 @@ namespace svm_fs
             //comment_columns_hash: a.comment_columns_hash, feature_data_hash: a.feature_data_hash, example_id: a.example_id, class_example_id: i))).SelectMany(a => a).ToList();
 
 
-            var datax = new dataset();
+            var dataset = new dataset();
 
-            datax.dataset_headers = header_data;
-            datax.dataset_comment_row_values = dataset_comment_row_values;
-            datax.dataset_instance_list = dataset_instance_list;
+            dataset.dataset_headers = header_data;
+            dataset.dataset_comment_row_values = dataset_comment_row_values;
+            dataset.dataset_instance_list = dataset_instance_list;
 
-            return datax;
+            remove_empty_features(dataset);
+            remove_large_groups(dataset, 20);
+            remove_duplicate_groups(dataset);
+
+            return dataset;
         }
+
+        public static double[][] get_column_data(dataset dataset) // [column][row]
+        {
+            var result = new double[dataset.dataset_headers.Count][];
+
+            for (var i = 0; i < dataset.dataset_headers.Count; i++)
+            {
+                result[i] = dataset.dataset_instance_list.Select(a => a.feature_data[i].fv).ToArray();
+            }
+
+            return result;
+        }
+
+
+        public static void remove_large_groups(dataset dataset, int max_group_size )
+        {
+            var groups = dataset.dataset_headers.GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).OrderBy(a=>a.Count()).ToList();
+
+            //groups.ForEach(a => Console.WriteLine(a.Count() + ": " + a.First().alphabet + ", " + a.First().dimension + ", " + a.First().category + ", " + a.First().group));
+
+            //var sizes = groups.Select(a => a.Count()).Distinct().Select(b=> (size: b, count: groups.Count(c=> c.Count() == b))).OrderByDescending(a => a).ToList();
+             
+            //Console.WriteLine("sizes: " + string.Join(", ", sizes));
+
+            var groups_too_large = groups.Where(a => a.Count() > max_group_size).ToList();
+
+            var fids_to_remove = groups_too_large.SelectMany(a => a.Select(b => b.fid).ToList()).ToList();
+
+            remove_fids(dataset, fids_to_remove);
+
+            groups_too_large.ForEach(a => svm_ctl.WriteLine($@"Removed large group: {a.Key}", nameof(dataset_loader), nameof(remove_large_groups)));
+        }
+
+        public static void remove_duplicate_groups(dataset dataset)
+        {
+            var column_data = get_column_data(dataset);
+
+            var grouped_by_groups = dataset.dataset_headers.GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).ToList();
+
+            var groups_same_sizes = grouped_by_groups.GroupBy(a => a.Count()).ToList();
+
+            var fids_to_remove = new List<int>();
+
+
+            foreach (var groups_same_size in groups_same_sizes)
+            {
+                var group_size = groups_same_size.Key;
+
+                var groups_this_size = groups_same_size.ToList();
+
+                var groups_this_size_columns = groups_this_size.Select(a => a.Select(b => b.fid).ToList()).ToList();
+
+                var groups_this_size_columns_data_flattened = groups_this_size_columns.Select(a => a.SelectMany(b => column_data[b]).OrderBy(c => c).ToList()).ToList();
+                var groups_this_size_columns_data = groups_this_size_columns.Select(a => a.Select(b => column_data[b]).ToList()).ToList();
+
+                var clusters = new List<List<int>>();
+
+                for (var i = 0; i < groups_this_size_columns_data_flattened.Count; i++)
+                {
+                    for (var j = 0; j < groups_this_size_columns_data_flattened.Count; j++)
+                    {
+                        if (i <= j) continue;
+
+                        var g_i = groups_this_size_columns_data_flattened[i];
+                        var g_j = groups_this_size_columns_data_flattened[j];
+
+                        // do simple check
+                        if (g_i.SequenceEqual(g_j))
+                        {
+                            // do full check to confirm
+                            var x_i = groups_this_size_columns_data[i];
+                            var x_j = groups_this_size_columns_data[j];
+
+                            if (x_i.All(a => x_j.Any(b => a.SequenceEqual(b))))
+                            {
+
+                                var c_i = clusters.FirstOrDefault(a => a.Contains(i));
+                                var c_j = clusters.FirstOrDefault(a => a.Contains(j));
+
+                                var cluster = new List<int>();
+                                cluster.AddRange(c_i != null ? c_i : new List<int>() {i});
+                                cluster.AddRange(c_j != null ? c_j : new List<int>() {j});
+                                cluster = cluster.Distinct().OrderBy(a => a).ToList();
+                                if (c_i != null) clusters.Remove(c_i);
+                                if (c_j != null) clusters.Remove(c_j);
+                                clusters.Add(cluster);
+                            }
+                        }
+
+                    }
+                }
+
+                Console.WriteLine();
+
+                
+
+                foreach (var cluster in clusters)
+                {
+                    var cluster_groups = cluster.Select(a => groups_this_size[a]).ToList();
+
+                    var groups_ungrouped = cluster_groups.Select(a => a.ToList()).ToList();
+                    var group_to_keep = groups_ungrouped.First();
+                    var groups_to_remove = groups_ungrouped.Skip(1).ToList();
+
+                    var cluster_fids_to_remove = groups_to_remove.SelectMany(a => a.Select(b => b.fid).ToList()).ToList();
+                    fids_to_remove.AddRange(cluster_fids_to_remove);
+
+                    // todo: loop through each column of group to keep, find sequence equal in the groups to remove, to get the correct new header names
+                    //
+                    var alphabets = new List<string>();
+                    var dimensions = new List<string>();
+                    var categories = new List<string>();
+                    var sources = new List<string>();
+                    var groups = new List<string>();
+                    //var members = new List<string>();
+                    //var perspectives = new List<string>();
+
+                    foreach (var cg in cluster_groups)
+                    {
+                        foreach (var x in cg)
+                        {
+                            alphabets.Add(x.alphabet);
+                            dimensions.Add(x.dimension);
+                            categories.Add(x.category);
+                            sources.Add(x.source);
+                            groups.Add(x.group);
+                            //members.Add(x.member);
+                            //perspectives.Add(x.perspective);
+                        }
+
+                        //Console.WriteLine("Duplicate group: " + string.Join(",", cg.Select(b => b.alphabet + "," + b.dimension + "," + b.category + "," + b.source + "," + b.group + "," + b.member + "," + b.perspective).ToList()));
+                    }
+
+                    var new_header = (
+                        alphabet:string.Join("|", alphabets.Distinct().ToList()),
+                        dimension:string.Join("|", dimensions.Distinct().ToList()),
+                        category:string.Join("|", categories.Distinct().ToList()),
+                        source:string.Join("|", sources.Distinct().ToList()),
+                        group:string.Join("|", groups.Distinct().ToList())
+                        //string.Join("|", members.Distinct().ToList()),
+                        //string.Join("|", perspectives.Distinct().ToList())
+                        );
+
+                    for (var i = 0; i < group_to_keep.Count; i++)
+                    {
+                        group_to_keep[i] = (group_to_keep[i].fid, new_header.alphabet, new_header.dimension, new_header.category, new_header.source, new_header.group, group_to_keep[i].member, group_to_keep[i].perspective,
+                            group_to_keep[i].alphabet_id, group_to_keep[i].dimension_id, group_to_keep[i].category_id, group_to_keep[i].source_id, group_to_keep[i].group_id, group_to_keep[i].member_id, group_to_keep[i].perspective_id);
+                    }
+                    
+                }
+
+
+            }
+
+            remove_fids(dataset, fids_to_remove);
+
+        }
+
+        public static void remove_empty_features(dataset dataset)
+        {
+            var empty_fids = new List<int>();
+
+            var column_data = get_column_data(dataset);
+
+            for (var i = 0; i < dataset.dataset_headers.Count; i++)
+            {
+                var values = column_data[i];
+
+                var values_distinct = values.Distinct().ToList();
+
+                if (values_distinct.Count <= 1)
+                {
+                    empty_fids.Add(i);
+                }
+            }
+
+            if (empty_fids != null && empty_fids.Count > 0)
+            {
+                remove_fids(dataset, empty_fids);
+            }
+
+            svm_ctl.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features));
+
+        }
+
+        public static void remove_fids(dataset dataset, List<int> fids_to_remove)
+        {
+            // removed given fids and renumber the headers/features
+
+            if (fids_to_remove == null || fids_to_remove.Count == 0) return;
+
+            var remove = new bool[dataset.dataset_headers.Count];
+
+            fids_to_remove.ForEach(a => remove[a] = true);
+
+            dataset.dataset_headers = dataset.dataset_headers.Where((a, i) => !remove[i]).Select((b,j) => 
+                (j, b.alphabet, b.dimension, b.category, b.source, b.group, b.member, b.perspective,
+                    b.alphabet_id, b.dimension_id, b.category_id, b.source_id, b.group_id, b.member_id, b.perspective_id)
+                ).ToList();
+
+            for (var index = 0; index < dataset.dataset_instance_list.Count; index++)
+            {
+
+                dataset.dataset_instance_list[index] = (
+                    
+                    dataset.dataset_instance_list[index].class_id,
+                    dataset.dataset_instance_list[index].example_id,
+                    dataset.dataset_instance_list[index].class_example_id,
+                    dataset.dataset_instance_list[index].comment_columns,
+                    dataset.dataset_instance_list[index].feature_data.Where((b, i) => !remove[i]).Select((c, j) => (j, c.fv)).ToList()
+                    
+                    );
+            }
+        }
+
 
         public static List<(int fid, double value)> parse_csv_line_doubles(string line, bool[] required = null)
         {

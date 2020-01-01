@@ -18,20 +18,35 @@ namespace svm_fs
 
         public const string user_home = "/home/k1040015";
         public const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
-        
-        public string pbs_walltime = "1:00:00";
-        public int pbs_nodes = 1;
-        public int pbs_ppn = 16;
-        public string pbs_mem = null;
-        
-        public string pbs_jobname;
-        public string pbs_mail_opt = "n"; // abe|n
-        public string pbs_mail_addr; // 
 
-        public string pbs_stdout_filename; // 
-        public string pbs_stderr_filename; // 
-        public string pbs_execution_directory = $@"{svm_fs_home}/pbs_sub/";
-        public string pbs_submission_directory = $@"{svm_fs_home}/pbs_sub/";
+        public string pbs_ctl_walltime = "240:00:00";
+        public int pbs_ctl_nodes = 1;
+        public int pbs_ctl_ppn = 16;
+        public string pbs_ctl_mem = null;
+
+        public string pbs_ctl_jobname;
+        public string pbs_ctl_mail_opt = "n"; // abe|n
+        public string pbs_ctl_mail_addr; // 
+
+        public string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.options.stdout";
+        public string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.options.stderr";
+
+        public string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+        public string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+
+        public string pbs_wkr_walltime = "1:00:00";
+        public int pbs_wkr_nodes = 1;
+        public int pbs_wkr_ppn = 16;
+        public string pbs_wkr_mem = null;
+
+        public string pbs_wkr_jobname;
+        public string pbs_wkr_mail_opt = "n"; // abe|n
+        public string pbs_wkr_mail_addr; // 
+
+        public string pbs_wkr_stdout_filename; // 
+        public string pbs_wkr_stderr_filename; // 
+        public string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        public string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
 
         //public string pbs_jobid_filename;
 
@@ -100,7 +115,7 @@ namespace svm_fs
         public int new_group_count = 0;
         public bool group_features = true;
         public int group_index = -1;
-        public int inner_cv_folds = 10;
+        public int inner_cv_folds = 10; // set to 0 to skip inner-cv
         public int iteration = -1;
         public int job_id = -1;
         public int outer_cv_index = -1;
@@ -130,8 +145,12 @@ namespace svm_fs
         public void convert_paths()
         {
             this.options_filename           = dataset_loader.convert_path(this.options_filename);
-            this.pbs_stderr_filename        = dataset_loader.convert_path(this.pbs_stderr_filename);
-            this.pbs_stdout_filename        = dataset_loader.convert_path(this.pbs_stdout_filename);
+            this.pbs_ctl_stderr_filename = dataset_loader.convert_path(this.pbs_ctl_stderr_filename);
+            this.pbs_ctl_stdout_filename = dataset_loader.convert_path(this.pbs_ctl_stdout_filename);
+            this.pbs_wkr_stderr_filename = dataset_loader.convert_path(this.pbs_wkr_stderr_filename);
+            this.pbs_wkr_stdout_filename = dataset_loader.convert_path(this.pbs_wkr_stdout_filename);
+
+
             this.test_filename              = dataset_loader.convert_path(this.test_filename);
             this.test_id_filename           = dataset_loader.convert_path(this.test_id_filename);
             this.test_meta_filename         = dataset_loader.convert_path(this.test_meta_filename);
@@ -148,8 +167,10 @@ namespace svm_fs
             var files = new List<string>()
             {
                 this.options_filename          ,
-                this.pbs_stderr_filename       ,
-                this.pbs_stdout_filename       ,
+                this.pbs_ctl_stderr_filename       ,
+                this.pbs_ctl_stdout_filename       ,
+                this.pbs_wkr_stderr_filename       ,
+                this.pbs_wkr_stdout_filename       ,
                 this.test_filename             ,
                 this.test_id_filename          ,
                 this.test_meta_filename        ,
@@ -188,18 +209,31 @@ namespace svm_fs
 
         public cmd_params(List<cmd_params> p)
         {
-            if (p.Select(a => a.pbs_walltime).Distinct().Count() == 1) this.pbs_walltime = p.FirstOrDefault().pbs_walltime;
-            if (p.Select(a => a.pbs_jobname).Distinct().Count() == 1) this.pbs_jobname = p.FirstOrDefault().pbs_jobname;
-            if (p.Select(a => a.pbs_mail_opt).Distinct().Count() == 1) this.pbs_mail_opt = p.FirstOrDefault().pbs_mail_opt;
-            if (p.Select(a => a.pbs_mail_addr).Distinct().Count() == 1) this.pbs_mail_addr = p.FirstOrDefault().pbs_mail_addr;
-            if (p.Select(a => a.pbs_mem).Distinct().Count() == 1) this.pbs_mem = p.FirstOrDefault().pbs_mem;
-            if (p.Select(a => a.pbs_nodes).Distinct().Count() == 1) this.pbs_nodes = p.FirstOrDefault().pbs_nodes;
-            if (p.Select(a => a.pbs_ppn).Distinct().Count() == 1) this.pbs_ppn = p.FirstOrDefault().pbs_ppn;
+            if (p.Select(a => a.pbs_ctl_walltime).Distinct().Count() == 1) this.pbs_ctl_walltime = p.FirstOrDefault().pbs_ctl_walltime;
+            if (p.Select(a => a.pbs_ctl_jobname).Distinct().Count() == 1) this.pbs_ctl_jobname = p.FirstOrDefault().pbs_ctl_jobname;
+            if (p.Select(a => a.pbs_ctl_mail_opt).Distinct().Count() == 1) this.pbs_ctl_mail_opt = p.FirstOrDefault().pbs_ctl_mail_opt;
+            if (p.Select(a => a.pbs_ctl_mail_addr).Distinct().Count() == 1) this.pbs_ctl_mail_addr = p.FirstOrDefault().pbs_ctl_mail_addr;
+            if (p.Select(a => a.pbs_ctl_mem).Distinct().Count() == 1) this.pbs_ctl_mem = p.FirstOrDefault().pbs_ctl_mem;
+            if (p.Select(a => a.pbs_ctl_nodes).Distinct().Count() == 1) this.pbs_ctl_nodes = p.FirstOrDefault().pbs_ctl_nodes;
+            if (p.Select(a => a.pbs_ctl_ppn).Distinct().Count() == 1) this.pbs_ctl_ppn = p.FirstOrDefault().pbs_ctl_ppn;
 
-            if (p.Select(a => a.pbs_stdout_filename).Distinct().Count() == 1) this.pbs_stdout_filename = p.FirstOrDefault().pbs_stdout_filename;
-            if (p.Select(a => a.pbs_stderr_filename).Distinct().Count() == 1) this.pbs_stderr_filename = p.FirstOrDefault().pbs_stderr_filename;
-            if (p.Select(a => a.pbs_execution_directory).Distinct().Count() == 1) this.pbs_execution_directory = p.FirstOrDefault().pbs_execution_directory;
-            if (p.Select(a => a.pbs_submission_directory).Distinct().Count() == 1) this.pbs_submission_directory = p.FirstOrDefault().pbs_submission_directory;
+            if (p.Select(a => a.pbs_ctl_stdout_filename).Distinct().Count() == 1) this.pbs_ctl_stdout_filename = p.FirstOrDefault().pbs_ctl_stdout_filename;
+            if (p.Select(a => a.pbs_ctl_stderr_filename).Distinct().Count() == 1) this.pbs_ctl_stderr_filename = p.FirstOrDefault().pbs_ctl_stderr_filename;
+            if (p.Select(a => a.pbs_ctl_execution_directory).Distinct().Count() == 1) this.pbs_ctl_execution_directory = p.FirstOrDefault().pbs_ctl_execution_directory;
+            if (p.Select(a => a.pbs_ctl_submission_directory).Distinct().Count() == 1) this.pbs_ctl_submission_directory = p.FirstOrDefault().pbs_ctl_submission_directory;
+
+            if (p.Select(a => a.pbs_wkr_walltime).Distinct().Count() == 1) this.pbs_wkr_walltime = p.FirstOrDefault().pbs_wkr_walltime;
+            if (p.Select(a => a.pbs_wkr_jobname).Distinct().Count() == 1) this.pbs_wkr_jobname = p.FirstOrDefault().pbs_wkr_jobname;
+            if (p.Select(a => a.pbs_wkr_mail_opt).Distinct().Count() == 1) this.pbs_wkr_mail_opt = p.FirstOrDefault().pbs_wkr_mail_opt;
+            if (p.Select(a => a.pbs_wkr_mail_addr).Distinct().Count() == 1) this.pbs_wkr_mail_addr = p.FirstOrDefault().pbs_wkr_mail_addr;
+            if (p.Select(a => a.pbs_wkr_mem).Distinct().Count() == 1) this.pbs_wkr_mem = p.FirstOrDefault().pbs_wkr_mem;
+            if (p.Select(a => a.pbs_wkr_nodes).Distinct().Count() == 1) this.pbs_wkr_nodes = p.FirstOrDefault().pbs_wkr_nodes;
+            if (p.Select(a => a.pbs_wkr_ppn).Distinct().Count() == 1) this.pbs_wkr_ppn = p.FirstOrDefault().pbs_wkr_ppn;
+
+            if (p.Select(a => a.pbs_wkr_stdout_filename).Distinct().Count() == 1) this.pbs_wkr_stdout_filename = p.FirstOrDefault().pbs_wkr_stdout_filename;
+            if (p.Select(a => a.pbs_wkr_stderr_filename).Distinct().Count() == 1) this.pbs_wkr_stderr_filename = p.FirstOrDefault().pbs_wkr_stderr_filename;
+            if (p.Select(a => a.pbs_wkr_execution_directory).Distinct().Count() == 1) this.pbs_wkr_execution_directory = p.FirstOrDefault().pbs_wkr_execution_directory;
+            if (p.Select(a => a.pbs_wkr_submission_directory).Distinct().Count() == 1) this.pbs_wkr_submission_directory = p.FirstOrDefault().pbs_wkr_submission_directory;
 
             //
 
@@ -296,18 +330,31 @@ namespace svm_fs
 
         public cmd_params(cmd_params p)
         {
-            this.pbs_walltime = p.pbs_walltime;
-            this.pbs_jobname = p.pbs_jobname;
-            this.pbs_mail_opt = p.pbs_mail_opt;
-            this.pbs_mail_addr = p.pbs_mail_addr;
-            this.pbs_mem = p.pbs_mem;
-            this.pbs_nodes = p.pbs_nodes;
-            this.pbs_ppn = p.pbs_ppn;
-            
-            this.pbs_stdout_filename = p.pbs_stdout_filename;
-            this.pbs_stderr_filename = p.pbs_stderr_filename;
-            this.pbs_execution_directory = p.pbs_execution_directory;
-            this.pbs_submission_directory = p.pbs_submission_directory;
+            this.pbs_ctl_walltime = p.pbs_ctl_walltime;
+            this.pbs_ctl_jobname = p.pbs_ctl_jobname;
+            this.pbs_ctl_mail_opt = p.pbs_ctl_mail_opt;
+            this.pbs_ctl_mail_addr = p.pbs_ctl_mail_addr;
+            this.pbs_ctl_mem = p.pbs_ctl_mem;
+            this.pbs_ctl_nodes = p.pbs_ctl_nodes;
+            this.pbs_ctl_ppn = p.pbs_ctl_ppn;
+
+            this.pbs_ctl_stdout_filename = p.pbs_ctl_stdout_filename;
+            this.pbs_ctl_stderr_filename = p.pbs_ctl_stderr_filename;
+            this.pbs_ctl_execution_directory = p.pbs_ctl_execution_directory;
+            this.pbs_ctl_submission_directory = p.pbs_ctl_submission_directory;
+
+            this.pbs_wkr_walltime = p.pbs_wkr_walltime;
+            this.pbs_wkr_jobname = p.pbs_wkr_jobname;
+            this.pbs_wkr_mail_opt = p.pbs_wkr_mail_opt;
+            this.pbs_wkr_mail_addr = p.pbs_wkr_mail_addr;
+            this.pbs_wkr_mem = p.pbs_wkr_mem;
+            this.pbs_wkr_nodes = p.pbs_wkr_nodes;
+            this.pbs_wkr_ppn = p.pbs_wkr_ppn;
+
+            this.pbs_wkr_stdout_filename = p.pbs_wkr_stdout_filename;
+            this.pbs_wkr_stderr_filename = p.pbs_wkr_stderr_filename;
+            this.pbs_wkr_execution_directory = p.pbs_wkr_execution_directory;
+            this.pbs_wkr_submission_directory = p.pbs_wkr_submission_directory;
 
 
             this.feature_selection_classes = p.feature_selection_classes;
@@ -438,20 +485,38 @@ namespace svm_fs
             var args2 = params_file_data.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => (key: a.Substring(0, a.IndexOf('=')), value: a.Substring(a.IndexOf('=') + 1))).ToList();
 
 
-            
 
-            if (args2.Any(a => a.key == nameof(pbs_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_walltime)).value;
-            if (args2.Any(a => a.key == nameof(pbs_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_jobname)).value;
-            if (args2.Any(a => a.key == nameof(pbs_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_mail_opt)).value;
-            if (args2.Any(a => a.key == nameof(pbs_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_mail_addr)).value;
-            if (args2.Any(a => a.key == nameof(pbs_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_mem)).value;
-            if (args2.Any(a => a.key == nameof(pbs_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_nodes)).value);
-            if (args2.Any(a => a.key == nameof(pbs_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ppn)).value);
 
-            if (args2.Any(a => a.key == nameof(pbs_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_stdout_filename)).value;
-            if (args2.Any(a => a.key == nameof(pbs_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_stderr_filename)).value;
-            if (args2.Any(a => a.key == nameof(pbs_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_execution_directory)).value;
-            if (args2.Any(a => a.key == nameof(pbs_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_submission_directory)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_walltime)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_jobname)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_opt)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_addr)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mem)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_nodes)).value);
+            if (args2.Any(a => a.key == nameof(pbs_ctl_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_ppn)).value);
+
+            if (args2.Any(a => a.key == nameof(pbs_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stdout_filename)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stderr_filename)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_execution_directory)).value;
+            if (args2.Any(a => a.key == nameof(pbs_ctl_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_submission_directory)).value;
+
+
+
+
+            if (args2.Any(a => a.key == nameof(pbs_wkr_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_walltime)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_jobname)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_opt)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_addr)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mem)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_nodes)).value);
+            if (args2.Any(a => a.key == nameof(pbs_wkr_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_ppn)).value);
+
+            if (args2.Any(a => a.key == nameof(pbs_wkr_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stdout_filename)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stderr_filename)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_execution_directory)).value;
+            if (args2.Any(a => a.key == nameof(pbs_wkr_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_submission_directory)).value;
+
+
 
 
             if (args2.Any(a => a.key == nameof(feature_selection_classes) && !string.IsNullOrWhiteSpace(a.value))) feature_selection_classes = args2.FirstOrDefault(a => a.key == nameof(feature_selection_classes)).value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(a => int.Parse(a)).ToList();
@@ -580,18 +645,33 @@ namespace svm_fs
         public static List<string> csv_header = new List<string>()
             {
 
-                nameof(pbs_walltime),
-                nameof(pbs_jobname),
-                nameof(pbs_mail_opt),
-                nameof(pbs_mail_addr),
-                nameof(pbs_mem),
-                nameof(pbs_nodes),
-                nameof(pbs_ppn),
-                
-                nameof(pbs_stdout_filename),
-                nameof(pbs_stderr_filename),
-                nameof(pbs_execution_directory),
-                nameof(pbs_submission_directory),
+                nameof(pbs_ctl_walltime),
+                nameof(pbs_ctl_jobname),
+                nameof(pbs_ctl_mail_opt),
+                nameof(pbs_ctl_mail_addr),
+                nameof(pbs_ctl_mem),
+                nameof(pbs_ctl_nodes),
+                nameof(pbs_ctl_ppn),
+
+                nameof(pbs_ctl_stdout_filename),
+                nameof(pbs_ctl_stderr_filename),
+                nameof(pbs_ctl_execution_directory),
+                nameof(pbs_ctl_submission_directory),
+
+
+                nameof(pbs_wkr_walltime),
+                nameof(pbs_wkr_jobname),
+                nameof(pbs_wkr_mail_opt),
+                nameof(pbs_wkr_mail_addr),
+                nameof(pbs_wkr_mem),
+                nameof(pbs_wkr_nodes),
+                nameof(pbs_wkr_ppn),
+
+                nameof(pbs_wkr_stdout_filename),
+                nameof(pbs_wkr_stderr_filename),
+                nameof(pbs_wkr_execution_directory),
+                nameof(pbs_wkr_submission_directory),
+
 
 
                 nameof(options_filename),
@@ -692,18 +772,33 @@ namespace svm_fs
         {
             var result = new List<(string key, string value)>()
             {
-                (nameof(pbs_walltime),     pbs_walltime   ),
-                (nameof(pbs_jobname),      pbs_jobname  ),
-                (nameof(pbs_mail_opt),     pbs_mail_opt   ),
-                (nameof(pbs_mail_addr),     pbs_mail_addr   ),
-                (nameof(pbs_mem),          pbs_mem   ),
-                (nameof(pbs_nodes),        pbs_nodes.ToString()   ),
-                (nameof(pbs_ppn),          pbs_ppn.ToString()   ),
-                
-                (nameof(pbs_stdout_filename),          pbs_stdout_filename  ),
-                (nameof(pbs_stderr_filename),          pbs_stderr_filename   ),
-                (nameof(pbs_execution_directory),      pbs_execution_directory  ),
-                (nameof(pbs_submission_directory),     pbs_submission_directory   ),
+                (nameof(pbs_ctl_walltime),     pbs_ctl_walltime   ),
+                (nameof(pbs_ctl_jobname),      pbs_ctl_jobname  ),
+                (nameof(pbs_ctl_mail_opt),     pbs_ctl_mail_opt   ),
+                (nameof(pbs_ctl_mail_addr),     pbs_ctl_mail_addr   ),
+                (nameof(pbs_ctl_mem),          pbs_ctl_mem   ),
+                (nameof(pbs_ctl_nodes),        pbs_ctl_nodes.ToString()   ),
+                (nameof(pbs_ctl_ppn),          pbs_ctl_ppn.ToString()   ),
+
+                (nameof(pbs_ctl_stdout_filename),          pbs_ctl_stdout_filename  ),
+                (nameof(pbs_ctl_stderr_filename),          pbs_ctl_stderr_filename   ),
+                (nameof(pbs_ctl_execution_directory),      pbs_ctl_execution_directory  ),
+                (nameof(pbs_ctl_submission_directory),     pbs_ctl_submission_directory   ),
+
+
+
+                (nameof(pbs_wkr_walltime),     pbs_wkr_walltime   ),
+                (nameof(pbs_wkr_jobname),      pbs_wkr_jobname  ),
+                (nameof(pbs_wkr_mail_opt),     pbs_wkr_mail_opt   ),
+                (nameof(pbs_wkr_mail_addr),     pbs_wkr_mail_addr   ),
+                (nameof(pbs_wkr_mem),          pbs_wkr_mem   ),
+                (nameof(pbs_wkr_nodes),        pbs_wkr_nodes.ToString()   ),
+                (nameof(pbs_wkr_ppn),          pbs_wkr_ppn.ToString()   ),
+
+                (nameof(pbs_wkr_stdout_filename),          pbs_wkr_stdout_filename  ),
+                (nameof(pbs_wkr_stderr_filename),          pbs_wkr_stderr_filename   ),
+                (nameof(pbs_wkr_execution_directory),      pbs_wkr_execution_directory  ),
+                (nameof(pbs_wkr_submission_directory),     pbs_wkr_submission_directory   ),
 
 
 

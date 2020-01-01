@@ -38,6 +38,30 @@ namespace svm_fs
 
         public static void Main(string[] args)
         {
+            //var x0 = new string[] { "f1", "f1_ppf", "f1_ppg" };
+            //var x1 = new string[] { "yes filter", "no filter" };
+            //var x2 = new string[] { "yes inner-cv", "no inner-cv" };
+            //var x3 = new string[] { "2d", "3d", "2d and 3d", "2d then 3d", "3d then 2d" };
+            //var x4 = new string[] { "Interface", "Neighbourhood", "Protein", "Interface", "Interface Neighbourhood Protein", "Interface Neighbourhood", "Interface Protein", "Neighbourhood Protein"  };
+
+
+
+
+            var required_default = false;
+
+            var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
+
+            //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
+
+            //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
+
+
+            var tp = new cmd_params();
+
+            var dataset = dataset_loader.read_binary_dataset($@"C:\betastrands_dataset\svm_features\updated 10 june 2019\", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
+            
+
+            return;
             //var cms = performance_measure.confusion_matrix.load(@"C:\Temp\svm_fs\results\iteration_0\group_Normal.1.aa_oaac.subsequence_1d.aa_unsplit_oaac_Normal_dist_normal._._\iteration_0_group_2.test_predict_cm_all.csv", 68);
             //return;
             bool is64Bit = IntPtr.Size == 8;
@@ -115,12 +139,7 @@ namespace svm_fs
                 var test_params = new cmd_params(options)
                 {
                     experiment_name = "program_test",
-                    options_filename = dataset_loader.convert_path(Path.Combine(options.pbs_submission_directory, $@"{nameof(svm_ctl)}.options")),
-                    pbs_stdout_filename = $@"{nameof(svm_ctl)}.options.stdout",
-                    pbs_stderr_filename = $@"{nameof(svm_ctl)}.options.stderr",
-                    pbs_nodes = 1,
-                    pbs_ppn = 8,
-                    pbs_walltime = "240:00:00",
+                    options_filename = dataset_loader.convert_path(Path.Combine(options.pbs_ctl_submission_directory, $@"{nameof(svm_ctl)}.options")),
                     cmd = cmd.ctl,
                 }.get_options_ini_text();
 

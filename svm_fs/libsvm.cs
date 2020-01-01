@@ -169,7 +169,7 @@ namespace svm_fs
                             //   return (cmd_line, null, null);
                         }
 
-                        svm_ctl.WriteLine($"Spawned processs: {process.Id}", nameof(libsvm), nameof(train));
+                        svm_ctl.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(train));
 
                         try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
                         try { process.PriorityClass = priority_class; } catch (Exception) { }
@@ -181,7 +181,7 @@ namespace svm_fs
 
 
 
-                        if (process_max_time != null && process_max_time.Value.Ticks > 0)
+                        if (!process.HasExited && process_max_time != null && process_max_time.Value.Ticks > 0)
                         {
                             //var time_taken = DateTime.Now - process.StartTime;
 
@@ -194,7 +194,7 @@ namespace svm_fs
                                     try { Task.WaitAll(tasks.ToArray(), process_max_time.Value); } catch (Exception) { }
                                     //time_taken = DateTime.Now - process.StartTime;
                                     cpu_time = process.TotalProcessorTime;
-                                } while (tasks.Any(a => !a.IsCompleted) && cpu_time < process_max_time.Value);
+                                } while (tasks.Any(a => !a.IsCompleted) && cpu_time < process_max_time.Value && !process.HasExited);
 
                                 if (tasks.Any(a => !a.IsCompleted) && !process.HasExited)
                                 {
@@ -211,13 +211,12 @@ namespace svm_fs
                                 svm_ctl.WriteLine($"Process: {process.Id}. {e.ToString()}", nameof(libsvm), nameof(train));
                             }
                         }
-                        else
-                        {
-                            try { Task.WaitAll(tasks.ToArray()); } catch (Exception) { }
-                        }
+                        
+                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception) { }
+                        
 
                         process.WaitForExit();
-                        svm_ctl.WriteLine($"Exited processs: {process.Id}", nameof(libsvm), nameof(train));
+                        svm_ctl.WriteLine($"Exited process: {process.Id}", nameof(libsvm), nameof(train));
 
                         var stdout_result = "";
                         var stderr_result = "";
@@ -318,7 +317,7 @@ namespace svm_fs
                             //   return (cmd_line, null, null);
                         }
 
-                        svm_ctl.WriteLine($"Spawned processs: {process.Id}", nameof(libsvm), nameof(predict));
+                        svm_ctl.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(predict));
                         try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
                         try { process.PriorityClass = priority_class; } catch (Exception) { }
 
@@ -326,11 +325,11 @@ namespace svm_fs
                         var stderr = process.StandardError.ReadToEndAsync();
 
                         process.WaitForExit();
-                        svm_ctl.WriteLine("Exited processs: " + process.Id, nameof(libsvm), nameof(predict));
+                        svm_ctl.WriteLine("Exited process: " + process.Id, nameof(libsvm), nameof(predict));
 
                         var tasks = new List<Task>() { stdout, stderr };
 
-                        try { Task.WaitAll(tasks.ToArray()); } catch (Exception) { }
+                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception) { }
 
                         var stdout_result = "";
                         var stderr_result = "";
