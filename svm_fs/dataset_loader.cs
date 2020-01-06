@@ -389,10 +389,28 @@ namespace svm_fs
             dataset.dataset_instance_list = dataset_instance_list;
 
             remove_empty_features(dataset);
-            remove_large_groups(dataset, 20);
+            remove_empty_features_by_class(dataset);
+            remove_large_groups(dataset, 100);
             remove_duplicate_groups(dataset);
 
             return dataset;
+        }
+
+        public static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
+        {
+            var total_headers = dataset.dataset_headers.Count;
+            var total_classes = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().Count();
+
+            var result = new double[total_headers][][];
+
+            for (var i = 0; i < dataset.dataset_headers.Count; i++)
+            {
+                var x = dataset.dataset_instance_list.GroupBy(a => a.class_id).Select(a => a.Select(b => b.feature_data[i].fv).ToArray()).ToArray();
+
+                result[i] = x;
+            }
+
+            return result;
         }
 
         public static double[][] get_column_data(dataset dataset) // [column][row]
@@ -410,7 +428,7 @@ namespace svm_fs
 
         public static void remove_large_groups(dataset dataset, int max_group_size )
         {
-            var groups = dataset.dataset_headers.GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).OrderBy(a=>a.Count()).ToList();
+            var groups = dataset.dataset_headers.Skip(1).GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).OrderBy(a=>a.Count()).ToList();
 
             //groups.ForEach(a => Console.WriteLine(a.Count() + ": " + a.First().alphabet + ", " + a.First().dimension + ", " + a.First().category + ", " + a.First().group));
 
@@ -431,7 +449,7 @@ namespace svm_fs
         {
             var column_data = get_column_data(dataset);
 
-            var grouped_by_groups = dataset.dataset_headers.GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).ToList();
+            var grouped_by_groups = dataset.dataset_headers.Skip(1).GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).ToList();
 
             var groups_same_sizes = grouped_by_groups.GroupBy(a => a.Count()).ToList();
 
@@ -486,7 +504,7 @@ namespace svm_fs
                     }
                 }
 
-                Console.WriteLine();
+                //Console.WriteLine();
 
                 
 
@@ -498,7 +516,14 @@ namespace svm_fs
                     var group_to_keep = groups_ungrouped.First();
                     var groups_to_remove = groups_ungrouped.Skip(1).ToList();
 
-                    var cluster_fids_to_remove = groups_to_remove.SelectMany(a => a.Select(b => b.fid).ToList()).ToList();
+                    var group_to_keep_key = new string[] { group_to_keep.First().alphabet, group_to_keep.First().dimension, group_to_keep.First().category, group_to_keep.First().source, group_to_keep.First().group };
+                    var groups_to_remove_keys = groups_to_remove.Select(a => new string[] {a.First().alphabet, a.First().dimension, a.First().category, a.First().source, a.First().group}).ToList();
+
+                    Console.WriteLine("+    Keeping: " + string.Join(".", group_to_keep_key));
+                    groups_to_remove_keys.ForEach(a => Console.WriteLine("-   Removing: " + string.Join(".", a)));
+                    
+
+                    var cluster_fids_to_remove = groups_to_remove.SelectMany(a => a.Select(b => b.fid).ToList())/*.Distinct().OrderBy(a=>a)*/.ToList();
                     fids_to_remove.AddRange(cluster_fids_to_remove);
 
                     // todo: loop through each column of group to keep, find sequence equal in the groups to remove, to get the correct new header names
@@ -537,19 +562,26 @@ namespace svm_fs
                         //string.Join("|", perspectives.Distinct().ToList())
                         );
 
+                    var new_header_str = new string[] {new_header.alphabet, new_header.dimension, new_header.category, new_header.source, new_header.group};
+
+
+                    Console.WriteLine("~ new header: " + string.Join(".", new_header_str));
+                    Console.WriteLine();
+
                     for (var i = 0; i < group_to_keep.Count; i++)
                     {
-                        group_to_keep[i] = (group_to_keep[i].fid, new_header.alphabet, new_header.dimension, new_header.category, new_header.source, new_header.group, group_to_keep[i].member, group_to_keep[i].perspective,
-                            group_to_keep[i].alphabet_id, group_to_keep[i].dimension_id, group_to_keep[i].category_id, group_to_keep[i].source_id, group_to_keep[i].group_id, group_to_keep[i].member_id, group_to_keep[i].perspective_id);
+                        dataset.dataset_headers[group_to_keep[i].fid] = 
+                        (group_to_keep[i].fid, 
+                            
+                            new_header.alphabet, new_header.dimension, new_header.category, new_header.source, new_header.group, group_to_keep[i].member, group_to_keep[i].perspective,
+                            group_to_keep[i].alphabet_id, group_to_keep[i].dimension_id, group_to_keep[i].category_id, group_to_keep[i].source_id, group_to_keep[i].group_id, group_to_keep[i].member_id, group_to_keep[i].perspective_id
+                            
+                            );
                     }
-                    
                 }
-
-
             }
 
             remove_fids(dataset, fids_to_remove);
-
         }
 
         public static void remove_empty_features(dataset dataset)
@@ -558,15 +590,26 @@ namespace svm_fs
 
             var column_data = get_column_data(dataset);
 
-            for (var i = 0; i < dataset.dataset_headers.Count; i++)
+            for (var i = 1; i < dataset.dataset_headers.Count; i++)
             {
                 var values = column_data[i];
 
-                var values_distinct = values.Distinct().ToList();
+                if (values == null || values.Length == 0) continue;
 
-                if (values_distinct.Count <= 1)
+                var values_distinct = values.Distinct().OrderBy(a => a).ToList();
+                var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
+
+                var zero = values_count.FirstOrDefault(a => a.value == 0).count;
+                var non_zero = values.Length - zero;
+                var non_zero_pct = (double)non_zero / (double)values.Length;
+
+                const double min_non_zero_pct = 0.5;
+                const double min_distinct_numbers = 3;
+
+                if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
                 {
-                    empty_fids.Add(i);
+                    empty_fids.Add(dataset.dataset_headers[i].fid);
+                    break;
                 }
             }
 
@@ -578,6 +621,49 @@ namespace svm_fs
             svm_ctl.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features));
 
         }
+
+        public static void remove_empty_features_by_class(dataset dataset)
+        {
+
+            var empty_fids = new List<int>();
+
+            var column_data = get_column_data_by_class(dataset);
+
+            for (var i = 1; i < dataset.dataset_headers.Count; i++)
+            {
+                for (var j = 0; j < column_data[i].Length; j++)
+                {
+                    var values = column_data[i][j];
+
+                    if (values == null || values.Length == 0) continue;
+
+                    var values_distinct = values.Distinct().OrderBy(a => a).ToList();
+                    var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
+
+                    var zero = values_count.FirstOrDefault(a => a.value == 0).count;
+                    var non_zero = values.Length - zero;
+                    var non_zero_pct = (double)non_zero / (double)values.Length;
+
+                    const double min_non_zero_pct = 0.5;
+                    const double min_distinct_numbers = 3;
+
+                    if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
+                    {
+                        empty_fids.Add(dataset.dataset_headers[i].fid);
+                        break;
+                    }
+                }
+            }
+
+            if (empty_fids != null && empty_fids.Count > 0)
+            {
+                remove_fids(dataset, empty_fids);
+            }
+
+            svm_ctl.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features_by_class));
+
+        }
+
 
         public static void remove_fids(dataset dataset, List<int> fids_to_remove)
         {

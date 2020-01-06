@@ -44,7 +44,7 @@ namespace svm_fs
             //var x3 = new string[] { "2d", "3d", "2d and 3d", "2d then 3d", "3d then 2d" };
             //var x4 = new string[] { "Interface", "Neighbourhood", "Protein", "Interface", "Interface Neighbourhood Protein", "Interface Neighbourhood", "Interface Protein", "Neighbourhood Protein"  };
 
-
+            
 
 
             var required_default = false;
@@ -59,7 +59,8 @@ namespace svm_fs
             var tp = new cmd_params();
 
             var dataset = dataset_loader.read_binary_dataset($@"C:\betastrands_dataset\svm_features\updated 10 june 2019\", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
-            
+
+            //var x = dataset_loader.get_column_data_by_class(dataset);
 
             return;
             //var cms = performance_measure.confusion_matrix.load(@"C:\Temp\svm_fs\results\iteration_0\group_Normal.1.aa_oaac.subsequence_1d.aa_unsplit_oaac_Normal_dist_normal._._\iteration_0_group_2.test_predict_cm_all.csv", 68);

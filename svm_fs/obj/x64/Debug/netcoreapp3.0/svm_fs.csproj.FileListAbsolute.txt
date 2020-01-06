@@ -19,3 +19,4 @@ C:\svm_fs\svm_fs\obj\x64\Debug\netcoreapp3.0\svm_fs.AssemblyInfoInputs.cache
 C:\svm_fs\svm_fs\obj\x64\Debug\netcoreapp3.0\svm_fs.AssemblyInfo.cs
 C:\svm_fs\svm_fs\obj\x64\Debug\netcoreapp3.0\svm_fs.dll
 C:\svm_fs\svm_fs\obj\x64\Debug\netcoreapp3.0\svm_fs.pdb
+C:\svm_fs\svm_fs\obj\x64\Debug\netcoreapp3.0\svm_fs.csprojAssemblyReference.cache
