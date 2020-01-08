@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -309,7 +310,7 @@ namespace svm_fs
 
                     var checkpoint_data1 = File.ReadAllLines(checkpoint_fn);
                     var previous_tests_data = File.ReadAllLines(previous_tests_fn);
-                    previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b)).ToList()).ToList();
+                    previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b, CultureInfo.InvariantCulture)).ToList()).ToList();
 
                     foreach (var cpd in checkpoint_data1)
                     {
@@ -319,47 +320,47 @@ namespace svm_fs
                         switch (cpd_key)
                         {
                             case "iteration_index":
-                                iteration_index = int.Parse(cpd_value);
+                                iteration_index = int.Parse(cpd_value, CultureInfo.InvariantCulture);
                                 break;
 
                             case "winning_iteration":
-                                winning_iteration = int.Parse(cpd_value);
+                                winning_iteration = int.Parse(cpd_value, CultureInfo.InvariantCulture);
                                 break;
 
                             case "iterations_not_better_than_last":
-                                iterations_not_better_than_last = int.Parse(cpd_value);
+                                iterations_not_better_than_last = int.Parse(cpd_value, CultureInfo.InvariantCulture);
                                 break;
 
                             case "iterations_not_better_than_all":
-                                iterations_not_better_than_all = int.Parse(cpd_value);
+                                iterations_not_better_than_all = int.Parse(cpd_value, CultureInfo.InvariantCulture);
                                 break;
 
                             case "currently_selected_group_indexes":
-                                currently_selected_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a)).ToList());
+                                currently_selected_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList());
                                 break;
 
                             case "highest_scoring_group_indexes":
-                                highest_scoring_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a)).ToList());
+                                highest_scoring_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList());
                                 break;
 
                             case "highest_score_last_iteration":
-                                highest_score_last_iteration = double.Parse(cpd_value);
+                                highest_score_last_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
                                 break;
 
                             case "highest_score_this_iteration":
-                                highest_score_this_iteration = double.Parse(cpd_value);
+                                highest_score_this_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
                                 break;
 
                             case "highest_score_all_iteration":
-                                highest_score_all_iteration = double.Parse(cpd_value);
+                                highest_score_all_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
                                 break;
 
                             case "score_increase_from_last":
-                                score_increase_from_last = double.Parse(cpd_value);
+                                score_increase_from_last = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
                                 break;
 
                             case "score_increase_from_all":
-                                score_increase_from_all = double.Parse(cpd_value);
+                                score_increase_from_all = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
                                 break;
 
                             case "score_better_than_last":
@@ -601,13 +602,13 @@ namespace svm_fs
                     checkpoint_data.Add(($@"{nameof(iterations_not_better_than_last)}", $@"{iterations_not_better_than_last}"));
                     checkpoint_data.Add(($@"{nameof(iterations_not_better_than_all)}", $@"{iterations_not_better_than_all}")); 
                   //checkpoint_data.Add(($@"{nameof(selected_group_indexes)}", $@"{selected_group_indexes}"));
-                    checkpoint_data.Add(($@"{nameof(highest_score_last_iteration)}", $@"{highest_score_last_iteration}"));
-                    checkpoint_data.Add(($@"{nameof(highest_score_this_iteration)}", $@"{highest_score_this_iteration}"));
-                    checkpoint_data.Add(($@"{nameof(highest_score_all_iteration)}", $@"{highest_score_all_iteration}"));
-                    checkpoint_data.Add(($@"{nameof(score_increase_from_last)}", $@"{score_increase_from_last}"));
-                    checkpoint_data.Add(($@"{nameof(score_increase_from_last_pct)}", $@"{score_increase_from_last_pct}"));
-                    checkpoint_data.Add(($@"{nameof(score_increase_from_all)}", $@"{score_increase_from_all}"));
-                    checkpoint_data.Add(($@"{nameof(score_increase_from_all_pct)}", $@"{score_increase_from_all_pct}"));
+                    checkpoint_data.Add(($@"{nameof(highest_score_last_iteration)}", $@"{highest_score_last_iteration:G17}"));
+                    checkpoint_data.Add(($@"{nameof(highest_score_this_iteration)}", $@"{highest_score_this_iteration:G17}"));
+                    checkpoint_data.Add(($@"{nameof(highest_score_all_iteration)}", $@"{highest_score_all_iteration:G17}"));
+                    checkpoint_data.Add(($@"{nameof(score_increase_from_last)}", $@"{score_increase_from_last:G17}"));
+                    checkpoint_data.Add(($@"{nameof(score_increase_from_last_pct)}", $@"{score_increase_from_last_pct:G17}"));
+                    checkpoint_data.Add(($@"{nameof(score_increase_from_all)}", $@"{score_increase_from_all:G17}"));
+                    checkpoint_data.Add(($@"{nameof(score_increase_from_all_pct)}", $@"{score_increase_from_all_pct:G17}"));
                     checkpoint_data.Add(($@"{nameof(score_better_than_last)}", $@"{score_better_than_last}"));
                     checkpoint_data.Add(($@"{nameof(score_better_than_all)}", $@"{score_better_than_all}"));
                     checkpoint_data.Add(($@"{nameof(elapsed_iteration)}", $@"{elapsed_iteration}"));
@@ -1100,7 +1101,7 @@ namespace svm_fs
 
                     for (var i = 0; i < is_numeric.Length; i++)
                     {
-                        is_numeric[i] = read_split_data.Select(a => a[i]).All(a => double.TryParse(a, out var r));
+                        is_numeric[i] = read_split_data.Select(a => a[i]).All(a => double.TryParse(a, NumberStyles.Float, CultureInfo.InvariantCulture, out var r));
                     }
 
                     var av_list = new List<string[]>();
@@ -1126,10 +1127,10 @@ namespace svm_fs
 
                             if (is_numeric[i])
                             {
-                                av_values[i] = values.Average(a => double.Parse(a)).ToString();
-                                min_values[i] = values.Min(a => double.Parse(a)).ToString();
-                                max_values[i] = values.Max(a => double.Parse(a)).ToString();
-                                sum_values[i] = values.Sum(a => double.Parse(a)).ToString();
+                                av_values[i] = values.Average(a => double.Parse(a, NumberStyles.Float, CultureInfo.InvariantCulture)).ToString("G17", CultureInfo.InvariantCulture);
+                                min_values[i] = values.Min(a => double.Parse(a, NumberStyles.Float, CultureInfo.InvariantCulture)).ToString("G17", CultureInfo.InvariantCulture);
+                                max_values[i] = values.Max(a => double.Parse(a, NumberStyles.Float, CultureInfo.InvariantCulture)).ToString("G17", CultureInfo.InvariantCulture);
+                                sum_values[i] = values.Sum(a => double.Parse(a, NumberStyles.Float, CultureInfo.InvariantCulture)).ToString("G17", CultureInfo.InvariantCulture);
                             }
                             else
                             {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -40,19 +41,19 @@ namespace svm_fs
                         (
                             svm_type: (common.libsvm_svm_type)Enum.Parse(typeof(common.libsvm_svm_type), line[k++]),
                             svm_kernel: (common.libsvm_kernel_type)Enum.Parse(typeof(common.libsvm_kernel_type), line[k++]),
-                            randomisation_cv_folds: int.Parse(line[k++]),
-                            randomisation_cv_index: int.Parse(line[k++]),
-                            outer_cv_folds: int.Parse(line[k++]),
-                            outer_cv_index: int.Parse(line[k++]),
-                            inner_cv_folds: int.Parse(line[k++]),
+                            randomisation_cv_folds: int.Parse(line[k++], CultureInfo.InvariantCulture),
+                            randomisation_cv_index: int.Parse(line[k++], CultureInfo.InvariantCulture),
+                            outer_cv_folds: int.Parse(line[k++], CultureInfo.InvariantCulture),
+                            outer_cv_index: int.Parse(line[k++], CultureInfo.InvariantCulture),
+                            inner_cv_folds: int.Parse(line[k++], CultureInfo.InvariantCulture),
                             probability_estimates: bool.Parse(line[k++]),
                             shrinking_heuristics: bool.Parse(line[k++]),
-                            point: (cost: double.TryParse(line[k++], out var p_cost) ? p_cost : (double?)null,
-                            gamma: double.TryParse(line[k++], out var p_gamma) ? p_gamma : (double?)null,
-                            epsilon: double.TryParse(line[k++], out var p_epsilon) ? p_epsilon : (double?)null,
-                            coef0: double.TryParse(line[k++], out var p_coef0) ? p_coef0 : (double?)null,
-                            degree: double.TryParse(line[k++], out var p_degree) ? p_degree : (double?)null),
-                            rate: double.TryParse(line[k++], out var p_rate) ? p_rate : 0d
+                            point: (cost: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_cost) ? p_cost : (double?)null,
+                            gamma: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_gamma) ? p_gamma : (double?)null,
+                            epsilon: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_epsilon) ? p_epsilon : (double?)null,
+                            coef0: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_coef0) ? p_coef0 : (double?)null,
+                            degree: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_degree) ? p_degree : (double?)null),
+                            rate: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_rate) ? p_rate : 0d
                         );
                     }
                     catch (Exception)
@@ -71,7 +72,15 @@ namespace svm_fs
         {
             var lines = new List<string>();
             lines.Add(string.Join(",", new string[] { nameof(svm_type), nameof(kernel), nameof(randomisation_cv_folds), nameof(randomisation_cv_index), nameof(outer_cv_folds), nameof(outer_cv_index), nameof(inner_cv_folds), nameof(probability_estimates), nameof(shrinking_heuristics), "cost", "gamma", "epsilon", "coef0", "degree", "rate", }));
-            lines.AddRange(res.Select(a => string.Join(",", new string[] { svm_type.ToString(), kernel.ToString(), randomisation_cv_folds.ToString(), randomisation_cv_index.ToString(), outer_cv_folds.ToString(), outer_cv_index.ToString(), inner_cv_folds.ToString(), probability_estimates.ToString(), shrinking_heuristics.ToString(), a.point.cost?.ToString(), a.point.gamma?.ToString(), a.point.epsilon?.ToString(), a.point.coef0?.ToString(), a.point.degree?.ToString(), a.rate.ToString() })).ToList());
+            lines.AddRange(res.Select(a => string.Join(",", new string[] { svm_type.ToString(), kernel.ToString(), randomisation_cv_folds.ToString(), randomisation_cv_index.ToString(), outer_cv_folds.ToString(), outer_cv_index.ToString(), inner_cv_folds.ToString(), probability_estimates.ToString(), shrinking_heuristics.ToString(),
+                
+                a.point.cost?.ToString("G17", CultureInfo.InvariantCulture), 
+                a.point.gamma?.ToString("G17", CultureInfo.InvariantCulture), 
+                a.point.epsilon?.ToString("G17", CultureInfo.InvariantCulture), 
+                a.point.coef0?.ToString("G17", CultureInfo.InvariantCulture), 
+                a.point.degree?.ToString("G17", CultureInfo.InvariantCulture), 
+                a.rate.ToString("G17", CultureInfo.InvariantCulture) })).ToList());
+
             File.WriteAllLines(dataset_loader.convert_path(cache_file), lines);
         }
 
@@ -464,7 +473,9 @@ namespace svm_fs
 
             if (v_libsvm_default_cross_validation_index >= 0 && !string.IsNullOrWhiteSpace(v_libsvm_default_cross_validation_str))
             {
-                return v_libsvm_default_cross_validation_str.Last() == '%' ? double.Parse(v_libsvm_default_cross_validation_str.Substring(0, v_libsvm_default_cross_validation_str.Length - 1)) / (double)100 : double.Parse(v_libsvm_default_cross_validation_str);
+                return v_libsvm_default_cross_validation_str.Last() == '%' ? 
+                    double.Parse(v_libsvm_default_cross_validation_str.Substring(0, v_libsvm_default_cross_validation_str.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture) / (double)100 
+                    : double.Parse(v_libsvm_default_cross_validation_str, NumberStyles.Float, CultureInfo.InvariantCulture);
             }
 
             return -1;

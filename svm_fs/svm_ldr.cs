@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -85,7 +86,7 @@ namespace svm_fs
 
                         try
                         {
-                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available, a.was_available && a.state != 0 ? int.Parse(File.ReadAllText(a.finish_maker_filename).Trim()) : a.state)).ToList();
+                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available, a.was_available && a.state != 0 ? int.Parse(File.ReadAllText(a.finish_maker_filename).Trim(), CultureInfo.InvariantCulture) : a.state)).ToList();
                         }
                         catch (Exception )
                         {

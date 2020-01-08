@@ -135,7 +135,7 @@ namespace svm_fs
             var header_data = File.ReadAllLines(dataset_header_csv_files.First()).Skip(1)/*.AsParallel().AsOrdered()*/.Select((a, i) =>
             {
                 var b = a.Split(',');
-                var fid = int.Parse(b[0]);
+                var fid = int.Parse(b[0], CultureInfo.InvariantCulture);
                 //if (fid!=i) throw new Exception();
 
                 var alphabet = b[1];
@@ -295,9 +295,7 @@ namespace svm_fs
             {
                 dataset_instance_list = dataset_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => File.ReadAllLines(filename).Skip(1/*skip header*/).AsParallel().AsOrdered().Select((line, line_index) =>
                 {
-                    //var feature_data = line.Split(',').Select((column_value, fid) => (fid, fv: fix_double ? dataset_loader.fix_double(column_value) : double.Parse(column_value) )).ToList()
-
-                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',')));
+                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
                     //var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
 
@@ -322,11 +320,7 @@ namespace svm_fs
             {
                 dataset_instance_list = dataset_csv_files.SelectMany((filename, filename_index) => File.ReadAllLines(filename).Skip(1/*skip header*/)./*Take(20).*/Select((line, line_index) =>
                 {
-                    //var feature_data = line.Split(',').Select((column_value, fid) => (fid, fv: fix_double ? dataset_loader.fix_double(column_value) : double.Parse(column_value) )).ToList()
-
-
-
-                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',')));
+                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
                     //var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
 
@@ -393,11 +387,16 @@ namespace svm_fs
             remove_large_groups(dataset, 100);
             remove_duplicate_groups(dataset);
 
+            
+            save_dataset(dataset, Path.Combine(dataset_folder, "updated_headers.csv"), Path.Combine(dataset_folder, "updated_dataset.csv"));
+
             return dataset;
         }
 
         public static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
         {
+            //svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(get_column_data_by_class));
+
             var total_headers = dataset.dataset_headers.Count;
             var total_classes = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().Count();
 
@@ -415,6 +414,8 @@ namespace svm_fs
 
         public static double[][] get_column_data(dataset dataset) // [column][row]
         {
+            //svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(get_column_data));
+
             var result = new double[dataset.dataset_headers.Count][];
 
             for (var i = 0; i < dataset.dataset_headers.Count; i++)
@@ -428,6 +429,8 @@ namespace svm_fs
 
         public static void remove_large_groups(dataset dataset, int max_group_size )
         {
+            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_large_groups));
+
             var groups = dataset.dataset_headers.Skip(1).GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).OrderBy(a=>a.Count()).ToList();
 
             //groups.ForEach(a => Console.WriteLine(a.Count() + ": " + a.First().alphabet + ", " + a.First().dimension + ", " + a.First().category + ", " + a.First().group));
@@ -447,6 +450,9 @@ namespace svm_fs
 
         public static void remove_duplicate_groups(dataset dataset)
         {
+            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_duplicate_groups));
+
+
             var column_data = get_column_data(dataset);
 
             var grouped_by_groups = dataset.dataset_headers.Skip(1).GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).ToList();
@@ -584,8 +590,37 @@ namespace svm_fs
             remove_fids(dataset, fids_to_remove);
         }
 
+        public static void save_dataset(dataset dataset, string header_filename, string data_filename)
+        {
+            svm_ctl.WriteLine("started saving...", nameof(dataset_loader), nameof(save_dataset));
+
+            var class_ids = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().OrderBy(a => a).ToList();
+            var header_fids = Enumerable.Range(0, dataset.dataset_headers.Count);
+            var header_fids_str = string.Join(",", header_fids);
+            
+            foreach (var class_id in class_ids)
+            {
+                var data = new List<string>();
+                data.Add(header_fids_str);
+                
+                dataset.dataset_instance_list.Where(a => a.class_id == class_id).ToList().ForEach(a => data.Add(string.Join(",", a.feature_data.Select(b => b.fv.ToString("G17", CultureInfo.InvariantCulture)).ToList())));
+                File.WriteAllLines(data_filename, data);
+            }
+
+
+            var header = dataset.dataset_headers.Select(a => $@"{a.fid},{a.alphabet},{a.dimension},{a.category},{a.source},{a.group},{a.member},{a.perspective}").ToList();
+            header.Insert(0, $@"fid,alphabet,dimension,category,source,group,member,perspective");
+            File.WriteAllLines(header_filename, header);
+
+
+            svm_ctl.WriteLine("finished saving...", nameof(dataset_loader), nameof(save_dataset));
+
+        }
+
         public static void remove_empty_features(dataset dataset)
         {
+            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features));
+
             var empty_fids = new List<int>();
 
             var column_data = get_column_data(dataset);
@@ -603,8 +638,8 @@ namespace svm_fs
                 var non_zero = values.Length - zero;
                 var non_zero_pct = (double)non_zero / (double)values.Length;
 
-                const double min_non_zero_pct = 0.5;
-                const double min_distinct_numbers = 3;
+                const double min_non_zero_pct = 0.25;
+                const double min_distinct_numbers = 2;
 
                 if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
                 {
@@ -624,6 +659,7 @@ namespace svm_fs
 
         public static void remove_empty_features_by_class(dataset dataset)
         {
+            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
             var empty_fids = new List<int>();
 
@@ -644,8 +680,9 @@ namespace svm_fs
                     var non_zero = values.Length - zero;
                     var non_zero_pct = (double)non_zero / (double)values.Length;
 
-                    const double min_non_zero_pct = 0.5;
-                    const double min_distinct_numbers = 3;
+
+                    const double min_non_zero_pct = 0.25;
+                    const double min_distinct_numbers = 2;
 
                     if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
                     {
@@ -667,6 +704,8 @@ namespace svm_fs
 
         public static void remove_fids(dataset dataset, List<int> fids_to_remove)
         {
+            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_fids));
+
             // removed given fids and renumber the headers/features
 
             if (fids_to_remove == null || fids_to_remove.Count == 0) return;
@@ -713,7 +752,7 @@ namespace svm_fs
                 {
                     if ((required == null || required.Length == 0 || fid == 0) || (required != null && required.Length > fid && required[fid]))
                     {
-                        result.Add((fid, len == 0 ? 0d : double.Parse(line.Substring(start, len))));
+                        result.Add((fid, len == 0 ? 0d : double.Parse(line.Substring(start, len), NumberStyles.Float, CultureInfo.InvariantCulture)));
                     }
 
                     fid++;

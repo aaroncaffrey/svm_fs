@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -144,7 +145,7 @@ namespace svm_fs
 
         public void convert_paths()
         {
-            this.options_filename           = dataset_loader.convert_path(this.options_filename);
+            this.options_filename        = dataset_loader.convert_path(this.options_filename);
             this.pbs_ctl_stderr_filename = dataset_loader.convert_path(this.pbs_ctl_stderr_filename);
             this.pbs_ctl_stdout_filename = dataset_loader.convert_path(this.pbs_ctl_stdout_filename);
             this.pbs_wkr_stderr_filename = dataset_loader.convert_path(this.pbs_wkr_stderr_filename);
@@ -492,8 +493,8 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(pbs_ctl_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_opt)).value;
             if (args2.Any(a => a.key == nameof(pbs_ctl_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_addr)).value;
             if (args2.Any(a => a.key == nameof(pbs_ctl_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mem)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_nodes)).value);
-            if (args2.Any(a => a.key == nameof(pbs_ctl_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_ppn)).value);
+            if (args2.Any(a => a.key == nameof(pbs_ctl_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_nodes)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(pbs_ctl_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_ppn)).value, CultureInfo.InvariantCulture);
 
             if (args2.Any(a => a.key == nameof(pbs_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stdout_filename)).value;
             if (args2.Any(a => a.key == nameof(pbs_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stderr_filename)).value;
@@ -508,8 +509,8 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(pbs_wkr_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_opt)).value;
             if (args2.Any(a => a.key == nameof(pbs_wkr_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_addr)).value;
             if (args2.Any(a => a.key == nameof(pbs_wkr_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mem)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_nodes)).value);
-            if (args2.Any(a => a.key == nameof(pbs_wkr_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_ppn)).value);
+            if (args2.Any(a => a.key == nameof(pbs_wkr_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_nodes)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(pbs_wkr_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_ppn)).value, CultureInfo.InvariantCulture);
 
             if (args2.Any(a => a.key == nameof(pbs_wkr_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stdout_filename)).value;
             if (args2.Any(a => a.key == nameof(pbs_wkr_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stderr_filename)).value;
@@ -519,7 +520,7 @@ namespace svm_fs
 
 
 
-            if (args2.Any(a => a.key == nameof(feature_selection_classes) && !string.IsNullOrWhiteSpace(a.value))) feature_selection_classes = args2.FirstOrDefault(a => a.key == nameof(feature_selection_classes)).value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(a => int.Parse(a)).ToList();
+            if (args2.Any(a => a.key == nameof(feature_selection_classes) && !string.IsNullOrWhiteSpace(a.value))) feature_selection_classes = args2.FirstOrDefault(a => a.key == nameof(feature_selection_classes)).value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList();
             if (args2.Any(a => a.key == nameof(feature_selection_metrics) && !string.IsNullOrWhiteSpace(a.value))) feature_selection_metrics = args2.FirstOrDefault(a => a.key == nameof(feature_selection_metrics)).value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             if (args2.Any(a => a.key == nameof(results_root_folder) && !string.IsNullOrWhiteSpace(a.value))) results_root_folder = args2.FirstOrDefault(a => a.key == nameof(results_root_folder)).value;
@@ -531,13 +532,13 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(libsvm_grid_shrinking_heuristics) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_shrinking_heuristics = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_shrinking_heuristics)).value);
             if (args2.Any(a => a.key == nameof(libsvm_grid_max_time) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_max_time = TimeSpan.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_max_time)).value);
             if (args2.Any(a => a.key == nameof(libsvm_grid_quiet_mode) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_quiet_mode = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_quiet_mode)).value);
-            if (args2.Any(a => a.key == nameof(libsvm_grid_memory_limit_mb) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_memory_limit_mb = int.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_memory_limit_mb)).value);
+            if (args2.Any(a => a.key == nameof(libsvm_grid_memory_limit_mb) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_memory_limit_mb = int.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_memory_limit_mb)).value, CultureInfo.InvariantCulture);
 
             if (args2.Any(a => a.key == nameof(libsvm_train_probability_estimates) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_probability_estimates = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_probability_estimates)).value);
             if (args2.Any(a => a.key == nameof(libsvm_train_shrinking_heuristics) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_shrinking_heuristics = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_shrinking_heuristics)).value);
             if (args2.Any(a => a.key == nameof(libsvm_train_max_time) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_max_time = TimeSpan.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_max_time)).value);
             if (args2.Any(a => a.key == nameof(libsvm_train_quiet_mode) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_quiet_mode = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_quiet_mode)).value);
-            if (args2.Any(a => a.key == nameof(libsvm_train_memory_limit_mb) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_memory_limit_mb = int.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_memory_limit_mb)).value);
+            if (args2.Any(a => a.key == nameof(libsvm_train_memory_limit_mb) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_memory_limit_mb = int.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_memory_limit_mb)).value, CultureInfo.InvariantCulture);
 
 
 
@@ -546,7 +547,7 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(program_runtime) && !string.IsNullOrWhiteSpace(a.value))) program_runtime = args2.FirstOrDefault(a => a.key == nameof(program_runtime)).value;
 
 
-            if (args2.Any(a => a.key == nameof(feature_id) && !string.IsNullOrWhiteSpace(a.value))) feature_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(feature_id)).value);
+            if (args2.Any(a => a.key == nameof(feature_id) && !string.IsNullOrWhiteSpace(a.value))) feature_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(feature_id)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(alphabet) && !string.IsNullOrWhiteSpace(a.value))) alphabet = args2.FirstOrDefault(a => a.key == nameof(alphabet)).value;
             if (args2.Any(a => a.key == nameof(dimension) && !string.IsNullOrWhiteSpace(a.value))) dimension = args2.FirstOrDefault(a => a.key == nameof(dimension)).value;
             if (args2.Any(a => a.key == nameof(category) && !string.IsNullOrWhiteSpace(a.value))) category = args2.FirstOrDefault(a => a.key == nameof(category)).value;
@@ -560,44 +561,44 @@ namespace svm_fs
 
             if (args2.Any(a => a.key == nameof(options_filename) && !string.IsNullOrWhiteSpace(a.value))) options_filename = args2.FirstOrDefault(a => a.key == nameof(options_filename)).value;
 
-            if (args2.Any(a => a.key == nameof(class_names) && !string.IsNullOrWhiteSpace(a.value))) class_names = args2.FirstOrDefault(a => a.key == nameof(class_names)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0]), a.Split(':')[1])).ToList();
-            if (args2.Any(a => a.key == nameof(class_testing_sizes) && !string.IsNullOrWhiteSpace(a.value))) class_testing_sizes = args2.FirstOrDefault(a => a.key == nameof(class_testing_sizes)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0]), int.Parse(a.Split(':')[1]))).ToList();
-            if (args2.Any(a => a.key == nameof(class_training_sizes) && !string.IsNullOrWhiteSpace(a.value))) class_training_sizes = args2.FirstOrDefault(a => a.key == nameof(class_training_sizes)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0]), int.Parse(a.Split(':')[1]))).ToList();
-            if (args2.Any(a => a.key == nameof(class_sizes) && !string.IsNullOrWhiteSpace(a.value))) class_sizes = args2.FirstOrDefault(a => a.key == nameof(class_sizes)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0]), int.Parse(a.Split(':')[1]))).ToList();
-            if (args2.Any(a => a.key == nameof(class_weights) && !string.IsNullOrWhiteSpace(a.value))) class_weights = args2.FirstOrDefault(a => a.key == nameof(class_weights)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0]), double.Parse(a.Split(':')[1]))).ToList();
+            if (args2.Any(a => a.key == nameof(class_names) && !string.IsNullOrWhiteSpace(a.value))) class_names = args2.FirstOrDefault(a => a.key == nameof(class_names)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0], CultureInfo.InvariantCulture), a.Split(':')[1])).ToList();
+            if (args2.Any(a => a.key == nameof(class_testing_sizes) && !string.IsNullOrWhiteSpace(a.value))) class_testing_sizes = args2.FirstOrDefault(a => a.key == nameof(class_testing_sizes)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0], CultureInfo.InvariantCulture), int.Parse(a.Split(':')[1], CultureInfo.InvariantCulture))).ToList();
+            if (args2.Any(a => a.key == nameof(class_training_sizes) && !string.IsNullOrWhiteSpace(a.value))) class_training_sizes = args2.FirstOrDefault(a => a.key == nameof(class_training_sizes)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0], CultureInfo.InvariantCulture), int.Parse(a.Split(':')[1], CultureInfo.InvariantCulture))).ToList();
+            if (args2.Any(a => a.key == nameof(class_sizes) && !string.IsNullOrWhiteSpace(a.value))) class_sizes = args2.FirstOrDefault(a => a.key == nameof(class_sizes)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0], CultureInfo.InvariantCulture), int.Parse(a.Split(':')[1], CultureInfo.InvariantCulture))).ToList();
+            if (args2.Any(a => a.key == nameof(class_weights) && !string.IsNullOrWhiteSpace(a.value))) class_weights = args2.FirstOrDefault(a => a.key == nameof(class_weights)).value.Split(';').Select((a, i) => (int.Parse(a.Split(':')[0], CultureInfo.InvariantCulture), double.Parse(a.Split(':')[1], NumberStyles.Float, CultureInfo.InvariantCulture))).ToList();
             if (args2.Any(a => a.key == nameof(cmd) && !string.IsNullOrWhiteSpace(a.value))) cmd = (cmd)Enum.Parse(typeof(cmd), args2.FirstOrDefault(a => a.key == nameof(cmd)).value);
             if (args2.Any(a => a.key == nameof(dataset_dir) && !string.IsNullOrWhiteSpace(a.value))) dataset_dir = args2.FirstOrDefault(a => a.key == nameof(dataset_dir)).value;
             if (args2.Any(a => a.key == nameof(experiment_name) && !string.IsNullOrWhiteSpace(a.value))) experiment_name = args2.FirstOrDefault(a => a.key == nameof(experiment_name)).value;
-            if (args2.Any(a => a.key == nameof(old_feature_count) && !string.IsNullOrWhiteSpace(a.value))) old_feature_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(old_feature_count)).value);
-            if (args2.Any(a => a.key == nameof(new_feature_count) && !string.IsNullOrWhiteSpace(a.value))) new_feature_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(new_feature_count)).value);
-            if (args2.Any(a => a.key == nameof(grid_coef0_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_coef0_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_coef0_exp_begin)).value);
-            if (args2.Any(a => a.key == nameof(grid_coef0_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_coef0_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_coef0_exp_end)).value);
-            if (args2.Any(a => a.key == nameof(grid_coef0_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_coef0_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_coef0_exp_step)).value);
-            if (args2.Any(a => a.key == nameof(grid_cost_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_cost_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_cost_exp_begin)).value);
-            if (args2.Any(a => a.key == nameof(grid_cost_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_cost_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_cost_exp_end)).value);
-            if (args2.Any(a => a.key == nameof(grid_cost_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_cost_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_cost_exp_step)).value);
-            if (args2.Any(a => a.key == nameof(grid_degree_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_degree_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_degree_exp_begin)).value);
-            if (args2.Any(a => a.key == nameof(grid_degree_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_degree_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_degree_exp_end)).value);
-            if (args2.Any(a => a.key == nameof(grid_degree_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_degree_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_degree_exp_step)).value);
-            if (args2.Any(a => a.key == nameof(grid_epsilon_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_epsilon_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_epsilon_exp_begin)).value);
-            if (args2.Any(a => a.key == nameof(grid_epsilon_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_epsilon_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_epsilon_exp_end)).value);
-            if (args2.Any(a => a.key == nameof(grid_epsilon_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_epsilon_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_epsilon_exp_step)).value);
-            if (args2.Any(a => a.key == nameof(grid_gamma_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_gamma_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_gamma_exp_begin)).value);
-            if (args2.Any(a => a.key == nameof(grid_gamma_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_gamma_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_gamma_exp_end)).value);
-            if (args2.Any(a => a.key == nameof(grid_gamma_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_gamma_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_gamma_exp_step)).value);
-            if (args2.Any(a => a.key == nameof(old_group_count) && !string.IsNullOrWhiteSpace(a.value))) old_group_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(old_group_count)).value);
-            if (args2.Any(a => a.key == nameof(new_group_count) && !string.IsNullOrWhiteSpace(a.value))) new_group_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(new_group_count)).value);
+            if (args2.Any(a => a.key == nameof(old_feature_count) && !string.IsNullOrWhiteSpace(a.value))) old_feature_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(old_feature_count)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(new_feature_count) && !string.IsNullOrWhiteSpace(a.value))) new_feature_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(new_feature_count)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_coef0_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_coef0_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_coef0_exp_begin)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_coef0_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_coef0_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_coef0_exp_end)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_coef0_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_coef0_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_coef0_exp_step)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_cost_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_cost_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_cost_exp_begin)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_cost_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_cost_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_cost_exp_end)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_cost_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_cost_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_cost_exp_step)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_degree_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_degree_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_degree_exp_begin)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_degree_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_degree_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_degree_exp_end)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_degree_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_degree_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_degree_exp_step)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_epsilon_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_epsilon_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_epsilon_exp_begin)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_epsilon_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_epsilon_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_epsilon_exp_end)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_epsilon_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_epsilon_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_epsilon_exp_step)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_gamma_exp_begin) && !string.IsNullOrWhiteSpace(a.value))) grid_gamma_exp_begin = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_gamma_exp_begin)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_gamma_exp_end) && !string.IsNullOrWhiteSpace(a.value))) grid_gamma_exp_end = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_gamma_exp_end)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(grid_gamma_exp_step) && !string.IsNullOrWhiteSpace(a.value))) grid_gamma_exp_step = double.Parse(args2.FirstOrDefault(a => a.key == nameof(grid_gamma_exp_step)).value, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(old_group_count) && !string.IsNullOrWhiteSpace(a.value))) old_group_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(old_group_count)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(new_group_count) && !string.IsNullOrWhiteSpace(a.value))) new_group_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(new_group_count)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(group_features) && !string.IsNullOrWhiteSpace(a.value))) group_features = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(group_features)).value);
-            if (args2.Any(a => a.key == nameof(group_index) && !string.IsNullOrWhiteSpace(a.value))) group_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(group_index)).value);
-            if (args2.Any(a => a.key == nameof(inner_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) inner_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(inner_cv_folds)).value);
-            if (args2.Any(a => a.key == nameof(iteration) && !string.IsNullOrWhiteSpace(a.value))) iteration = int.Parse(args2.FirstOrDefault(a => a.key == nameof(iteration)).value);
-            if (args2.Any(a => a.key == nameof(job_id) && !string.IsNullOrWhiteSpace(a.value))) job_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(job_id)).value);
-            if (args2.Any(a => a.key == nameof(outer_cv_index) && !string.IsNullOrWhiteSpace(a.value))) outer_cv_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(outer_cv_index)).value);
-            if (args2.Any(a => a.key == nameof(outer_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) outer_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(outer_cv_folds)).value);
+            if (args2.Any(a => a.key == nameof(group_index) && !string.IsNullOrWhiteSpace(a.value))) group_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(group_index)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(inner_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) inner_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(inner_cv_folds)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(iteration) && !string.IsNullOrWhiteSpace(a.value))) iteration = int.Parse(args2.FirstOrDefault(a => a.key == nameof(iteration)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(job_id) && !string.IsNullOrWhiteSpace(a.value))) job_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(job_id)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(outer_cv_index) && !string.IsNullOrWhiteSpace(a.value))) outer_cv_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(outer_cv_index)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(outer_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) outer_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(outer_cv_folds)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(output_threshold_adjustment_performance) && !string.IsNullOrWhiteSpace(a.value))) output_threshold_adjustment_performance = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(output_threshold_adjustment_performance)).value);
             //if (args2.Any(a => a.key == nameof(probability_estimates) && !string.IsNullOrWhiteSpace(a.value))) probability_estimates = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(probability_estimates)).value);
-            if (args2.Any(a => a.key == nameof(randomisation_cv_index) && !string.IsNullOrWhiteSpace(a.value))) randomisation_cv_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(randomisation_cv_index)).value);
-            if (args2.Any(a => a.key == nameof(randomisation_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) randomisation_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(randomisation_cv_folds)).value);
+            if (args2.Any(a => a.key == nameof(randomisation_cv_index) && !string.IsNullOrWhiteSpace(a.value))) randomisation_cv_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(randomisation_cv_index)).value, CultureInfo.InvariantCulture);
+            if (args2.Any(a => a.key == nameof(randomisation_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) randomisation_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(randomisation_cv_folds)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(scale_function) && !string.IsNullOrWhiteSpace(a.value))) scale_function = (common.scale_function)Enum.Parse(typeof(common.scale_function), args2.FirstOrDefault(a => a.key == nameof(scale_function)).value);
             //if (args2.Any(a => a.key == nameof(shrinking_heuristics) && !string.IsNullOrWhiteSpace(a.value))) shrinking_heuristics = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(shrinking_heuristics)).value);
             if (args2.Any(a => a.key == nameof(svm_kernel) && !string.IsNullOrWhiteSpace(a.value))) svm_kernel = (common.libsvm_kernel_type)Enum.Parse(typeof(common.libsvm_kernel_type), args2.FirstOrDefault(a => a.key == nameof(svm_kernel)).value);
