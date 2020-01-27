@@ -14,7 +14,7 @@ namespace svm_fs
         {
             try
             {
-                Console.WriteLine($@"{DateTime.Now:G} {module}.{func}: {text}");
+                Console.WriteLine($@"{DateTime.Now:G} {module}.{func} -> {text}");
             }
             catch (Exception)
             {

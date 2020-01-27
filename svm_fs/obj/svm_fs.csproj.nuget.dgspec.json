@@ -1,23 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\svm_fs\\svm_fs\\svm_fs.csproj": {}
+    "C:\\Users\\Aaron\\Desktop\\svm_fs\\svm_fs\\svm_fs.csproj": {}
   },
   "projects": {
-    "C:\\svm_fs\\svm_fs\\svm_fs.csproj": {
+    "C:\\Users\\Aaron\\Desktop\\svm_fs\\svm_fs\\svm_fs.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\svm_fs\\svm_fs\\svm_fs.csproj",
+        "projectUniqueName": "C:\\Users\\Aaron\\Desktop\\svm_fs\\svm_fs\\svm_fs.csproj",
         "projectName": "svm_fs",
-        "projectPath": "C:\\svm_fs\\svm_fs\\svm_fs.csproj",
-        "packagesPath": "C:\\Users\\aaron\\.nuget\\packages\\",
-        "outputPath": "C:\\svm_fs\\svm_fs\\obj\\",
+        "projectPath": "C:\\Users\\Aaron\\Desktop\\svm_fs\\svm_fs\\svm_fs.csproj",
+        "packagesPath": "C:\\Users\\Aaron\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Aaron\\Desktop\\svm_fs\\svm_fs\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\aaron\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Aaron\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -57,7 +54,15 @@
             },
             {
               "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[3.0.1, 3.0.1]"
+              "version": "[3.0.2, 3.0.2]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[3.0.0, 3.0.0]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[3.0.0, 3.0.0]"
             }
           ],
           "frameworkReferences": {
@@ -65,7 +70,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.101\\RuntimeIdentifierGraph.json"
         }
       }
     }

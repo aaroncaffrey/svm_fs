@@ -135,7 +135,7 @@ namespace svm_fs
             var header_data = File.ReadAllLines(dataset_header_csv_files.First()).Skip(1)/*.AsParallel().AsOrdered()*/.Select((a, i) =>
             {
                 var b = a.Split(',');
-                var fid = int.Parse(b[0], CultureInfo.InvariantCulture);
+                var fid = int.Parse(b[0], NumberStyles.Integer, CultureInfo.InvariantCulture);
                 //if (fid!=i) throw new Exception();
 
                 var alphabet = b[1];
