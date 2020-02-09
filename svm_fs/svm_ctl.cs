@@ -4,17 +4,23 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace svm_fs
 {
     public static class svm_ctl
     {
-        public static void WriteLine(string text, string module, string func)
+        public static void WriteLine(string text = "", string module_name = "", string function_name = "")
         {
             try
             {
-                Console.WriteLine($@"{DateTime.Now:G} {module}.{func} -> {text}");
+                var pid = Process.GetCurrentProcess().Id;
+                var thread_id = Thread.CurrentThread.ManagedThreadId;
+                var task_id = Task.CurrentId ?? 0;
+
+                Console.WriteLine($@"{DateTime.Now:G} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}");
+                
             }
             catch (Exception)
             {
@@ -190,7 +196,7 @@ namespace svm_fs
 
             
 
-            var dataset = dataset_loader.read_binary_dataset(p.dataset_dir, p.negative_class_id, p.positive_class_id, p.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
+            var dataset = dataset_loader.read_binary_dataset(p.dataset_dir, "2i", p.negative_class_id, p.positive_class_id, p.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
 
 
 

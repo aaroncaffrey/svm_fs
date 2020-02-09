@@ -73,7 +73,7 @@ namespace svm_fs
            read_binary_dataset(
 
            string dataset_folder,
-
+           string file_tag,
            int negative_class_id,
            int positive_class_id,
            List<(int class_id, string class_name)> class_names,
@@ -99,20 +99,20 @@ namespace svm_fs
 
             var dataset_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"f__[{class_names.First(a => a.class_id == positive_class_id).class_name}].csv")),
-                convert_path(Path.Combine(dataset_folder, $@"f__[{class_names.First(a => a.class_id == negative_class_id).class_name}].csv")),
+                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_header_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"h__[{class_names.First(a => a.class_id == positive_class_id).class_name}].csv")),
-                convert_path(Path.Combine(dataset_folder, $@"h__[{class_names.First(a => a.class_id == negative_class_id).class_name}].csv")),
+                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_comment_csv_files = new List<string>
             {
-                convert_path(Path.Combine(dataset_folder, $@"c__[{class_names.First(a => a.class_id == positive_class_id).class_name}].csv")),
-                convert_path(Path.Combine(dataset_folder, $@"c__[{class_names.First(a => a.class_id == negative_class_id).class_name}].csv")),
+                convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
 
@@ -617,7 +617,7 @@ namespace svm_fs
 
         }
 
-        public static void remove_empty_features(dataset dataset)
+        public static void remove_empty_features(dataset dataset, double min_non_zero_pct = 0.25, int min_distinct_numbers = 2)
         {
             svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features));
 
@@ -638,9 +638,6 @@ namespace svm_fs
                 var non_zero = values.Length - zero;
                 var non_zero_pct = (double)non_zero / (double)values.Length;
 
-                const double min_non_zero_pct = 0.25;
-                const double min_distinct_numbers = 2;
-
                 if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
                 {
                     empty_fids.Add(dataset.dataset_headers[i].fid);
@@ -657,7 +654,7 @@ namespace svm_fs
 
         }
 
-        public static void remove_empty_features_by_class(dataset dataset)
+        public static void remove_empty_features_by_class(dataset dataset, double min_non_zero_pct = 0.25, int min_distinct_numbers = 2)
         {
             svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
@@ -680,9 +677,6 @@ namespace svm_fs
                     var non_zero = values.Length - zero;
                     var non_zero_pct = (double)non_zero / (double)values.Length;
 
-
-                    const double min_non_zero_pct = 0.25;
-                    const double min_distinct_numbers = 2;
 
                     if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
                     {

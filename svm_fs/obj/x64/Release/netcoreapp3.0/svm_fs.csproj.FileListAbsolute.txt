@@ -1,0 +1,11 @@
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\bin\x64\Release\netcoreapp3.0\svm_fs.exe
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\bin\x64\Release\netcoreapp3.0\svm_fs.deps.json
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\bin\x64\Release\netcoreapp3.0\svm_fs.runtimeconfig.json
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\bin\x64\Release\netcoreapp3.0\svm_fs.runtimeconfig.dev.json
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\bin\x64\Release\netcoreapp3.0\svm_fs.dll
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\bin\x64\Release\netcoreapp3.0\svm_fs.pdb
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.csprojAssemblyReference.cache
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.AssemblyInfoInputs.cache
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.AssemblyInfo.cs
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.dll
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.pdb
