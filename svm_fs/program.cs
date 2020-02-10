@@ -59,7 +59,7 @@ namespace svm_fs
             var tp = new cmd_params();
 
             //var dataset = dataset_loader.read_binary_dataset($@"C:\betastrands_dataset\svm_features\updated 10 june 2019\", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
-            var dataset = dataset_loader.read_binary_dataset($@"e:\dataset\input\", "2i", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
+            var dataset = dataset_loader.read_binary_dataset($@"e:\input\", "2i", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
 
             //var x = dataset_loader.get_column_data_by_class(dataset);
 
