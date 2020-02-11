@@ -8,3 +8,4 @@ C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.Assemb
 C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.AssemblyInfo.cs
 C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.dll
 C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.pdb
+C:\Users\Aaron\Desktop\svm_fs\svm_fs\obj\x64\Release\netcoreapp3.0\svm_fs.csprojAssemblyReference.cache
