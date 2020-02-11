@@ -386,8 +386,8 @@ namespace svm_fs
             dataset.dataset_comment_row_values = dataset_comment_row_values;
             dataset.dataset_instance_list = dataset_instance_list;
 
+            remove_empty_features_by_class(dataset, 0.25, 2, $@"e:\input\feature_stats.csv");
             remove_empty_features(dataset);
-            remove_empty_features_by_class(dataset);
             remove_large_groups(dataset, 100);
             remove_duplicate_groups(dataset);
 
@@ -399,6 +399,11 @@ namespace svm_fs
             });// Path.Combine(dataset_folder, "updated_headers.csv"), Path.Combine(dataset_folder, "updated_dataset.csv"));
 
             return dataset;
+        }
+
+        public static void linear_analysis(dataset dataset)
+        {
+
         }
 
         public static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
@@ -639,11 +644,16 @@ namespace svm_fs
 
             var column_data = get_column_data(dataset);
 
+            var stats = new List<(int num_distinct_values, int num_values_zero, int num_values_non_zero, double pct_values_zero)>();
             for (var i = 1; i < dataset.dataset_headers.Count; i++)
             {
                 var values = column_data[i];
 
-                if (values == null || values.Length == 0) continue;
+                if (values == null || values.Length == 0)
+                {
+                    stats.Add(default);
+                    continue;
+                }
 
                 var values_distinct = values.Distinct().OrderBy(a => a).ToList();
                 var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
@@ -651,6 +661,8 @@ namespace svm_fs
                 var zero = values_count.FirstOrDefault(a => a.value == 0).count;
                 var non_zero = values.Length - zero;
                 var non_zero_pct = (double)non_zero / (double)values.Length;
+
+                stats.Add((values_distinct.Count, zero, non_zero, non_zero_pct));
 
                 if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
                 {
@@ -668,33 +680,98 @@ namespace svm_fs
 
         }
 
-        public static void remove_empty_features_by_class(dataset dataset, double min_non_zero_pct = 0.25, int min_distinct_numbers = 2)
+        public static void remove_empty_features_by_class(dataset dataset, double min_non_zero_pct = 0.25, int min_distinct_numbers = 2, string stats_filename = null)
         {
             svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
+
+            var save_stats = !string.IsNullOrWhiteSpace(stats_filename);
 
             var empty_fids = new List<int>();
 
             var column_data = get_column_data_by_class(dataset);
+            var class_stats = new List<(
 
-            for (var i = 1; i < dataset.dataset_headers.Count; i++)
+                int cid, 
+                int fid, 
+
+                int num_distinct_values, 
+                
+                int num_values_zero,
+                double num_values_zero_pct, 
+                
+                int num_values_non_zero,
+                double num_values_non_zero_pct, 
+                
+                int overlap,
+                double overlap_pct,
+                
+                int non_overlap,
+                double non_overlap_pct
+               
+                )>();
+
+            for (var fid = 1; fid < dataset.dataset_headers.Count; fid++)
             {
-                for (var j = 0; j < column_data[i].Length; j++)
+                //var mins = column_data[fid].Select(a=> a.Min()).ToList();
+                //var maxs = column_data[fid].Select(a=> a.Max()).ToList();
+                //var avs = column_data[fid].Select(a=> a.Average()).ToList();
+                
+                for (var cid = 0; cid < column_data[fid].Length; cid++)
                 {
-                    var values = column_data[i][j];
+                    var values = column_data[fid][cid];
 
-                    if (values == null || values.Length == 0) continue;
+                    if (values == null || values.Length == 0)
+                    {
+                        if (save_stats) class_stats.Add((cid, fid, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+                        continue;
+                    }
+
+                    var other_cids = Enumerable.Range(0, column_data[fid].Length).Where(a=> a != cid).ToList();
+                    var other_values = other_cids.SelectMany(a => column_data[fid][a]).ToList();
+                    var other_values_min = other_values.Min();
+                    var other_values_max = other_values.Max();
+
+
+                    var values_no_overlap = values.Where(a => a < other_values_min || a > other_values_max).ToList();
+                    
+                    var overlap = values.Length - values_no_overlap.Count;
+                    var overlap_pct = (double)overlap / (double)values.Length;
+                    var non_overlap = values_no_overlap.Count;
+                    var non_overlap_pct = (double)values_no_overlap.Count / (double)values.Length;
+
+                    //var values_before_other_classes_min = values_no_overlap.Where(a => a < other_values_min).ToList();
+                    //var values_after_other_classes_max = values_no_overlap.Where(a => a > other_values_max).ToList();
+                    
+
 
                     var values_distinct = values.Distinct().OrderBy(a => a).ToList();
                     var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
 
-                    var zero = values_count.FirstOrDefault(a => a.value == 0).count;
-                    var non_zero = values.Length - zero;
-                    var non_zero_pct = (double)non_zero / (double)values.Length;
+                    var num_values_zero = values_count.FirstOrDefault(a => a.value == 0).count;
+                    var num_values_zero_pct = (double) num_values_zero / (double) values.Length;
+                    var num_values_non_zero = values.Length - num_values_zero;
+                    var num_values_non_zero_pct = (double)num_values_non_zero / (double)values.Length;
+                    var num_distinct_values = values_distinct.Count;
 
+                    
+                    if (save_stats) class_stats.Add
+                    ((
+                        cid, 
+                        fid,
+                        num_distinct_values: num_distinct_values,
+                        num_values_zero: num_values_zero,
+                        num_values_zero_pct: num_values_zero_pct,
+                        num_values_non_zero: num_values_non_zero,
+                        num_values_non_zero_pct: num_values_non_zero_pct, 
+                        overlap:overlap,
+                        overlap_pct:overlap_pct,
+                        non_overlap: non_overlap, 
+                        non_overlap_pct: non_overlap_pct
+                    ));
 
-                    if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
+                    if (values_distinct.Count < min_distinct_numbers || num_values_non_zero_pct < min_non_zero_pct)
                     {
-                        empty_fids.Add(dataset.dataset_headers[i].fid);
+                        empty_fids.Add(dataset.dataset_headers[fid].fid);
                         break;
                     }
                 }
@@ -707,6 +784,13 @@ namespace svm_fs
 
             svm_ctl.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
+            if (save_stats)
+            {
+                var data = new List<string>();
+                data.Add("cid,fid,num_distinct_values,num_values_zero,num_values_zero_pct,num_values_non_zero,num_values_non_zero_pct,overlap,overlap_pct,non_overlap,non_overlap_pct");
+                data.AddRange(class_stats.Select(a => $@"{a.cid},{a.fid},{a.num_distinct_values},{a.num_values_zero},{a.num_values_zero_pct},{a.num_values_non_zero},{a.num_values_non_zero_pct},{a.overlap},{a.overlap_pct},{a.non_overlap},{a.non_overlap_pct}").ToList());
+                File.WriteAllLines(stats_filename, data);
+            }
         }
 
 
