@@ -36,8 +36,30 @@ namespace svm_fs
         //return;
         //args = new string[] { $@"c:\temp\iteration_0\rand_0\outer_fold_0\group_0\0_0_0_0_0.options" };
 
+        public static void close_notifications(CancellationTokenSource cts)
+        {
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
+                svm_ctl.WriteLine($@"Console.CancelKeyPress", nameof(program), nameof(Main));
+                cts.Cancel();
+            };
+            AssemblyLoadContext.Default.Unloading += context =>
+            {
+                svm_ctl.WriteLine($@"AssemblyLoadContext.Default.Unloading", nameof(program), nameof(Main));
+                cts.Cancel();
+            };
+            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
+            {
+                svm_ctl.WriteLine($@"AppDomain.CurrentDomain.ProcessExit", nameof(program), nameof(Main));
+                cts.Cancel();
+            };
+        }
+
         public static void Main(string[] args)
         {
+            var cts = new CancellationTokenSource();
+            close_notifications(cts);
+
             //var x0 = new string[] { "f1", "f1_ppf", "f1_ppg" };
             //var x1 = new string[] { "yes filter", "no filter" };
             //var x2 = new string[] { "yes inner-cv", "no inner-cv" };
@@ -59,11 +81,11 @@ namespace svm_fs
             var tp = new cmd_params();
 
             //var dataset = dataset_loader.read_binary_dataset($@"C:\betastrands_dataset\svm_features\updated 10 june 2019\", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
-            var dataset = dataset_loader.read_binary_dataset($@"e:\input\", "2i", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
+            //var dataset = dataset_loader.read_binary_dataset($@"e:\input\", "2i", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: true, fix_double: false, required_default, required_matches);
 
             //var x = dataset_loader.get_column_data_by_class(dataset);
 
-            return;
+            //return;
             //var cms = performance_measure.confusion_matrix.load(@"C:\Temp\svm_fs\results\iteration_0\group_Normal.1.aa_oaac.subsequence_1d.aa_unsplit_oaac_Normal_dist_normal._._\iteration_0_group_2.test_predict_cm_all.csv", 68);
             //return;
             bool is64Bit = IntPtr.Size == 8;
@@ -76,25 +98,10 @@ namespace svm_fs
             sw_program.Start();
 
 
-            var cts = new CancellationTokenSource();
             var options = new cmd_params();
             //options.options_filename = Path.Combine(options.pbs_submission_directory, $@"");
 
-            Console.CancelKeyPress += (sender, eventArgs) =>
-            {
-                svm_ctl.WriteLine($@"Console.CancelKeyPress", nameof(program), nameof(Main));
-                cts.Cancel();
-            };
-            AssemblyLoadContext.Default.Unloading += context =>
-            {
-                svm_ctl.WriteLine($@"AssemblyLoadContext.Default.Unloading", nameof(program), nameof(Main));
-                cts.Cancel();
-            };
-            AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
-            {
-                svm_ctl.WriteLine($@"AppDomain.CurrentDomain.ProcessExit", nameof(program), nameof(Main));
-                cts.Cancel();
-            };
+           
 
             //AppDomain.ProcessExit = AppDomainOnProcessExit;
             var bootstrap = true;

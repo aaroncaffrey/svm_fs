@@ -81,7 +81,8 @@ namespace svm_fs
            bool perform_integrity_checks = false,
            bool fix_double = true,
            bool required_default = true,
-           List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)> required_matches = null
+           List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)> required_matches = null,
+           bool fix_dataset = false
            )
         {
 
@@ -101,14 +102,14 @@ namespace svm_fs
 
             var dataset_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name})_updated.csv")),
+                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name})_updated.csv")),
             };
 
             var dataset_header_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name})_updated.csv")),
+                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name})_updated.csv")),
             };
 
             var dataset_comment_csv_files = new List<string>
@@ -162,20 +163,20 @@ namespace svm_fs
 
                 lock (lock_table)
                 {
-                    var duplicate = true;
-                    if (!table_alphabet.Contains(alphabet)) { table_alphabet.Add(alphabet); duplicate = false; }
-                    if (!table_dimension.Contains(dimension)) { table_dimension.Add(dimension); duplicate = false; }
-                    if (!table_category.Contains(category)) { table_category.Add(category); duplicate = false; }
-                    if (!table_source.Contains(source)) { table_source.Add(source); duplicate = false; }
-                    if (!table_group.Contains(group)) { table_group.Add(group); duplicate = false; }
-                    if (!table_member.Contains(member)) { table_member.Add(member); duplicate = false; }
-                    if (!table_perspective.Contains(perspective)) { table_perspective.Add(perspective); duplicate = false; }
+                    //var duplicate = true;
+                    if (!table_alphabet.Contains(alphabet)) { table_alphabet.Add(alphabet); /*duplicate = false;*/ }
+                    if (!table_dimension.Contains(dimension)) { table_dimension.Add(dimension); /*duplicate = false;*/ }
+                    if (!table_category.Contains(category)) { table_category.Add(category); /*duplicate = false;*/ }
+                    if (!table_source.Contains(source)) { table_source.Add(source); /*duplicate = false;*/ }
+                    if (!table_group.Contains(group)) { table_group.Add(group); /*duplicate = false;*/ }
+                    if (!table_member.Contains(member)) { table_member.Add(member); /*duplicate = false;*/ }
+                    if (!table_perspective.Contains(perspective)) { table_perspective.Add(perspective); /*duplicate = false;*/ }
 
-                    if (duplicate)
-                    {
+                    //if (duplicate)
+                    //{
                         //svm_ctl.WriteLine("Duplicate: " + a);
                         //Console.ReadLine();
-                    }
+                    //}
                 }
 
 
@@ -352,6 +353,11 @@ namespace svm_fs
             }
 
 
+            dataset_instance_list = dataset_instance_list.Select((a, i) => (a.class_id, i, a.class_example_id, a.comment_columns, /*a.comment_columns_hash,*/ a.feature_data/*, a.feature_data_hash*/)).ToList();
+            dataset_instance_list = dataset_instance_list.GroupBy(a => a.class_id).SelectMany(x => x.Select((a, i) => (a.class_id, a.example_id, i, a.comment_columns, /*a.comment_columns_hash,*/ a.feature_data/*, a.feature_data_hash*/)).ToList()).ToList();
+
+
+
             if (perform_integrity_checks)
             {
                 svm_ctl.WriteLine($@"Checking all dataset columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
@@ -364,14 +370,23 @@ namespace svm_fs
                 if (dataset_column_length != header_length) throw new Exception();
 
                 svm_ctl.WriteLine($@"Checking all dataset comment columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
+
+                
                 var comments_num_different_column_length = dataset_instance_list.Select(a => a.comment_columns.Count).Distinct().Count();
-                if (comments_num_different_column_length != 1) throw new Exception();
+                if (comments_num_different_column_length != 1)
+                {
+                    var distinct_comment_counts = dataset_instance_list.Select(a => a.comment_columns.Count).Distinct().ToList();
+
+                    var cc = distinct_comment_counts.Select(a => (a, dataset_instance_list.Where(b=>b.comment_columns.Count==a).Select(b=>b.example_id).ToList() )).ToList();
+                    
+                    cc.ForEach(a=> Console.WriteLine(a.a + ": " + string.Join(", ", a.Item2)));
+                    
+                    throw new Exception();
+                }
             }
 
 
-            dataset_instance_list = dataset_instance_list.Select((a, i) => (a.class_id, i, a.class_example_id, a.comment_columns, /*a.comment_columns_hash,*/ a.feature_data/*, a.feature_data_hash*/)).ToList();
-            dataset_instance_list = dataset_instance_list.GroupBy(a => a.class_id).SelectMany(x => x.Select((a, i) => (a.class_id, a.example_id, i, a.comment_columns, /*a.comment_columns_hash,*/ a.feature_data/*, a.feature_data_hash*/)).ToList()).ToList();
-
+            
 
             //var dataset_instance_list2 = dataset_instance_list.Select((a, i) => (class_id: a.class_id, comment_columns: a.comment_columns, feature_data: a.feature_data,
             //feature_data_hash: svm_manager.calc_hash(string.Join(" ", a.feature_data.SelectMany(b => new string[] { ""+b.fid, ""+b.fv }).ToList())), example_id: i)).ToList();
@@ -386,25 +401,31 @@ namespace svm_fs
             dataset.dataset_comment_row_values = dataset_comment_row_values;
             dataset.dataset_instance_list = dataset_instance_list;
 
-            remove_empty_features_by_class(dataset, 0.25, 2, $@"e:\input\feature_stats.csv");
-            remove_empty_features(dataset);
-            remove_large_groups(dataset, 100);
-            remove_duplicate_groups(dataset);
-
-
-            save_dataset(dataset, new List<(int class_id, string header_filename, string data_filename)>()
+            if (fix_dataset)
             {
-                (+1, Path.Combine(dataset_folder,"updated_headers_+1.csv"), Path.Combine(dataset_folder,"updated_dataset_+1.csv")),
-                (-1, Path.Combine(dataset_folder,"updated_headers_-1.csv"), Path.Combine(dataset_folder,"updated_dataset_-1.csv"))
-            });// Path.Combine(dataset_folder, "updated_headers.csv"), Path.Combine(dataset_folder, "updated_dataset.csv"));
+                var num_headers_before = dataset.dataset_headers.Count;
+
+                remove_empty_features(dataset, 2);
+                remove_empty_features_by_class(dataset, 2);//, 2, $@"e:\input\feature_stats.csv");
+                remove_large_groups(dataset, 100);
+                remove_duplicate_groups(dataset);
+                // remove_duplicate_features(); will be done on the feature selection algorithm, otherwise potential feature groups may lack useful information
+
+                var num_headers_after = dataset.dataset_headers.Count;
+
+                if (num_headers_before != num_headers_after)
+                {
+                    save_dataset(dataset, new List<(int class_id, string header_filename, string data_filename)>()
+                {
+                    (+1, Path.Combine(dataset_folder, $"{Path.GetFileNameWithoutExtension(dataset_header_csv_files[0])}_updated{Path.GetExtension(dataset_header_csv_files[0])}"), Path.Combine(dataset_folder, $"{Path.GetFileNameWithoutExtension(dataset_csv_files[0])}_updated{Path.GetExtension(dataset_csv_files[0])}")),
+                    (-1, Path.Combine(dataset_folder, $"{Path.GetFileNameWithoutExtension(dataset_header_csv_files[1])}_updated{Path.GetExtension(dataset_header_csv_files[1])}"), Path.Combine(dataset_folder, $"{Path.GetFileNameWithoutExtension(dataset_csv_files[1])}_updated{Path.GetExtension(dataset_csv_files[0])}"))
+                }); // Path.Combine(dataset_folder, "updated_headers.csv"), Path.Combine(dataset_folder, "updated_dataset.csv"));
+                }
+            }
 
             return dataset;
         }
 
-        public static void linear_analysis(dataset dataset)
-        {
-
-        }
 
         public static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
         {
@@ -541,8 +562,8 @@ namespace svm_fs
                     var group_to_keep_key = new string[] { group_to_keep.First().alphabet, group_to_keep.First().dimension, group_to_keep.First().category, group_to_keep.First().source, group_to_keep.First().group };
                     var groups_to_remove_keys = groups_to_remove.Select(a => new string[] {a.First().alphabet, a.First().dimension, a.First().category, a.First().source, a.First().group}).ToList();
 
-                    Console.WriteLine("+    Keeping: " + string.Join(".", group_to_keep_key));
-                    groups_to_remove_keys.ForEach(a => Console.WriteLine("-   Removing: " + string.Join(".", a)));
+                    Console.WriteLine($"+    Keeping: {string.Join(".", group_to_keep_key)}");
+                    groups_to_remove_keys.ForEach(a => Console.WriteLine($"-   Removing: {string.Join(".", a)}"));
                     
 
                     var cluster_fids_to_remove = groups_to_remove.SelectMany(a => a.Select(b => b.fid).ToList())/*.Distinct().OrderBy(a=>a)*/.ToList();
@@ -587,7 +608,7 @@ namespace svm_fs
                     var new_header_str = new string[] {new_header.alphabet, new_header.dimension, new_header.category, new_header.source, new_header.group};
 
 
-                    Console.WriteLine("~ new header: " + string.Join(".", new_header_str));
+                    Console.WriteLine($"~ new header: {string.Join(".", new_header_str)}");
                     Console.WriteLine();
 
                     for (var i = 0; i < group_to_keep.Count; i++)
@@ -636,7 +657,7 @@ namespace svm_fs
             svm_ctl.WriteLine("finished saving...", nameof(dataset_loader), nameof(save_dataset));
         }
 
-        public static void remove_empty_features(dataset dataset, double min_non_zero_pct = 0.25, int min_distinct_numbers = 2)
+        public static void remove_empty_features(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2)
         {
             svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features));
 
@@ -644,27 +665,24 @@ namespace svm_fs
 
             var column_data = get_column_data(dataset);
 
-            var stats = new List<(int num_distinct_values, int num_values_zero, int num_values_non_zero, double pct_values_zero)>();
+            
             for (var i = 1; i < dataset.dataset_headers.Count; i++)
             {
                 var values = column_data[i];
 
                 if (values == null || values.Length == 0)
                 {
-                    stats.Add(default);
                     continue;
                 }
 
                 var values_distinct = values.Distinct().OrderBy(a => a).ToList();
-                var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
+                //var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
 
-                var zero = values_count.FirstOrDefault(a => a.value == 0).count;
-                var non_zero = values.Length - zero;
-                var non_zero_pct = (double)non_zero / (double)values.Length;
+                //var zero = values_count.FirstOrDefault(a => a.value == 0).count;
+                //var non_zero = values.Length - zero;
+                //var non_zero_pct = (double)non_zero / (double)values.Length;
 
-                stats.Add((values_distinct.Count, zero, non_zero, non_zero_pct));
-
-                if (values_distinct.Count < min_distinct_numbers || non_zero_pct < min_non_zero_pct)
+                if (values_distinct.Count < min_distinct_numbers)// || non_zero_pct < min_non_zero_pct)
                 {
                     empty_fids.Add(dataset.dataset_headers[i].fid);
                     break;
@@ -680,7 +698,7 @@ namespace svm_fs
 
         }
 
-        public static void remove_empty_features_by_class(dataset dataset, double min_non_zero_pct = 0.25, int min_distinct_numbers = 2, string stats_filename = null)
+        public static void remove_empty_features_by_class(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2, string stats_filename = null)
         {
             svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
@@ -722,7 +740,7 @@ namespace svm_fs
 
                     if (values == null || values.Length == 0)
                     {
-                        if (save_stats) class_stats.Add((cid, fid, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+                        if (save_stats) {class_stats.Add((cid, fid, 0, 0, 0, 0, 0, 0, 0, 0, 0));}
                         continue;
                     }
 
@@ -745,31 +763,35 @@ namespace svm_fs
 
 
                     var values_distinct = values.Distinct().OrderBy(a => a).ToList();
-                    var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
-
-                    var num_values_zero = values_count.FirstOrDefault(a => a.value == 0).count;
-                    var num_values_zero_pct = (double) num_values_zero / (double) values.Length;
-                    var num_values_non_zero = values.Length - num_values_zero;
-                    var num_values_non_zero_pct = (double)num_values_non_zero / (double)values.Length;
-                    var num_distinct_values = values_distinct.Count;
+                    
 
                     
-                    if (save_stats) class_stats.Add
-                    ((
-                        cid, 
-                        fid,
-                        num_distinct_values: num_distinct_values,
-                        num_values_zero: num_values_zero,
-                        num_values_zero_pct: num_values_zero_pct,
-                        num_values_non_zero: num_values_non_zero,
-                        num_values_non_zero_pct: num_values_non_zero_pct, 
-                        overlap:overlap,
-                        overlap_pct:overlap_pct,
-                        non_overlap: non_overlap, 
-                        non_overlap_pct: non_overlap_pct
-                    ));
+                    
+                    if (save_stats) {
+                        var values_count = values_distinct.Select(a => (value: a, count: values.Count(b => a == b))).ToList();
+                        var num_values_zero = values_count.FirstOrDefault(a => a.value == 0).count;
+                        var num_values_zero_pct = (double)num_values_zero / (double)values.Length;
+                        var num_values_non_zero = values.Length - num_values_zero;
+                        var num_values_non_zero_pct = (double)num_values_non_zero / (double)values.Length;
+                        var num_distinct_values = values_distinct.Count;
 
-                    if (values_distinct.Count < min_distinct_numbers || num_values_non_zero_pct < min_non_zero_pct)
+                        class_stats.Add
+                        ((
+                            cid, 
+                            fid,
+                            num_distinct_values: num_distinct_values,
+                            num_values_zero: num_values_zero,
+                            num_values_zero_pct: num_values_zero_pct,
+                            num_values_non_zero: num_values_non_zero,
+                            num_values_non_zero_pct: num_values_non_zero_pct, 
+                            overlap:overlap,
+                            overlap_pct:overlap_pct,
+                            non_overlap: non_overlap, 
+                            non_overlap_pct: non_overlap_pct
+                        ));
+                    }
+
+                    if (values_distinct.Count < min_distinct_numbers)// || num_values_non_zero_pct < min_non_zero_pct)
                     {
                         empty_fids.Add(dataset.dataset_headers[fid].fid);
                         break;
