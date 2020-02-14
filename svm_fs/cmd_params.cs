@@ -20,6 +20,8 @@ namespace svm_fs
         public const string user_home = "/home/k1040015";
         public const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
 
+        public string dataset_dir = $@"{user_home}/dataset/";
+
         public string pbs_ctl_walltime = "240:00:00";
         public int pbs_ctl_nodes = 1;
         public int pbs_ctl_ppn = 16;
@@ -29,11 +31,21 @@ namespace svm_fs
         public string pbs_ctl_mail_opt = "n"; // abe|n
         public string pbs_ctl_mail_addr; // 
 
+        public string pbs_wkr_stdout_filename; // 
+        public string pbs_wkr_stderr_filename; // 
         public string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.options.stdout";
         public string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.options.stderr";
+        
+        public string results_root_folder = $@"{svm_fs_home}/results/";
+        public string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+        public string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
+        public string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
 
+        
         public string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
         public string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+        public string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        public string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
 
         public string pbs_wkr_walltime = "1:00:00";
         public int pbs_wkr_nodes = 1;
@@ -44,10 +56,7 @@ namespace svm_fs
         public string pbs_wkr_mail_opt = "n"; // abe|n
         public string pbs_wkr_mail_addr; // 
 
-        public string pbs_wkr_stdout_filename; // 
-        public string pbs_wkr_stderr_filename; // 
-        public string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        public string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        
 
         //public string pbs_jobid_filename;
 
@@ -56,11 +65,7 @@ namespace svm_fs
         public List<int> feature_selection_classes = new List<int>() { +1 };
         public List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
 
-        public string results_root_folder = $@"{svm_fs_home}/results/";
-        public string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        public string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
-        public string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
-
+        
 
         public bool libsvm_grid_probability_estimates = true;
         public bool libsvm_grid_shrinking_heuristics = true;
@@ -93,7 +98,7 @@ namespace svm_fs
         public List<(int class_id, int class_testing_size)> class_testing_sizes = null;
         public List<(int class_id, double class_weight)> class_weights = null;
         public cmd cmd = cmd.none;
-        public string dataset_dir = $@"{svm_fs_home}/dataset/";
+        
         public string experiment_name = null;
         public int old_feature_count = 0;
         public int new_feature_count = 0;
