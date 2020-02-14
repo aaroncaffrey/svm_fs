@@ -102,14 +102,14 @@ namespace svm_fs
 
             var dataset_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name})_updated.csv")),
-                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name})_updated.csv")),
+                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_header_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name})_updated.csv")),
-                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name})_updated.csv")),
+                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_comment_csv_files = new List<string>

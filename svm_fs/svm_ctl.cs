@@ -20,7 +20,7 @@ namespace svm_fs
                 var task_id = Task.CurrentId ?? 0;
 
                 Console.WriteLine($@"{DateTime.Now:G} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}");
-                
+
             }
             catch (Exception)
             {
@@ -187,16 +187,27 @@ namespace svm_fs
 
 
             var required_default = false;
-            
+
             var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
 
             //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
-            
+
             //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
 
-            
 
-            var dataset = dataset_loader.read_binary_dataset(p.dataset_dir, "2i", p.negative_class_id, p.positive_class_id, p.class_names, use_parallel: true, perform_integrity_checks: false, fix_double: false, required_default, required_matches);
+
+            var dataset = dataset_loader.read_binary_dataset(
+                p.dataset_dir,
+                "2i",
+                p.negative_class_id,
+                p.positive_class_id,
+                p.class_names,
+                use_parallel: true,
+                perform_integrity_checks: false,
+                fix_double: false,
+                required_default,
+                required_matches
+                );
 
 
 
@@ -301,7 +312,7 @@ namespace svm_fs
                 var sw_iteration = new Stopwatch();
                 sw_iteration.Start();
 
-                
+
                 var iteration_folder = dataset_loader.convert_path(Path.Combine(root_folder, $"itr_{iteration_index}"));
                 var checkpoint_fn = dataset_loader.convert_path(Path.Combine(iteration_folder, $@"{nameof(currently_selected_group_indexes)}.txt"));
                 var previous_tests_fn = dataset_loader.convert_path(Path.Combine(iteration_folder, $@"previous_tests.txt"));
@@ -395,7 +406,7 @@ namespace svm_fs
                     // 1. iteration winning score
                     // 2. selected features
 
-                    
+
                     //svm_ctl.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
                     svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
@@ -519,7 +530,7 @@ namespace svm_fs
 
 
                     // add best group to selected groups
-                    
+
 
                     //currently_selected_group_indexes.Add(cm_inputs.First().cmd_params.group_index);
 
@@ -547,7 +558,7 @@ namespace svm_fs
                     iterations_not_better_than_last = score_better_than_last ? 0 : iterations_not_better_than_last + 1;
                     iterations_not_better_than_all = score_better_than_all ? 0 : iterations_not_better_than_all + 1;
 
-                    
+
 
 
                     //if (score_better_than_last) // commented out so that more iterations can be tried to not get trapped in a low local optima
@@ -574,7 +585,7 @@ namespace svm_fs
                     }
 
                     svm_ctl.WriteLine($@"Score {(score_better_than_last ? "improved" : "not improved")} from last iteration; score {(score_better_than_last ? "increased" : "decreased")} by {score_increase_from_last} from {highest_score_last_iteration} to {highest_score_this_iteration}.", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine($@"Best score {(score_better_than_last ? "is": "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(interactive));
+                    svm_ctl.WriteLine($@"Best score {(score_better_than_last ? "is" : "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(interactive));
 
                     // highest_score_last_iteration
 
@@ -606,8 +617,8 @@ namespace svm_fs
                     checkpoint_data.Add(($@"{nameof(highest_score_this_iteration_group_key)}", $@"{highest_score_this_iteration_group_key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")}"));
                     checkpoint_data.Add(($@"{nameof(forward)}", $@"{forward}"));
                     checkpoint_data.Add(($@"{nameof(iterations_not_better_than_last)}", $@"{iterations_not_better_than_last}"));
-                    checkpoint_data.Add(($@"{nameof(iterations_not_better_than_all)}", $@"{iterations_not_better_than_all}")); 
-                  //checkpoint_data.Add(($@"{nameof(selected_group_indexes)}", $@"{selected_group_indexes}"));
+                    checkpoint_data.Add(($@"{nameof(iterations_not_better_than_all)}", $@"{iterations_not_better_than_all}"));
+                    //checkpoint_data.Add(($@"{nameof(selected_group_indexes)}", $@"{selected_group_indexes}"));
                     checkpoint_data.Add(($@"{nameof(highest_score_last_iteration)}", $@"{highest_score_last_iteration:G17}"));
                     checkpoint_data.Add(($@"{nameof(highest_score_this_iteration)}", $@"{highest_score_this_iteration:G17}"));
                     checkpoint_data.Add(($@"{nameof(highest_score_all_iteration)}", $@"{highest_score_all_iteration:G17}"));
@@ -628,8 +639,8 @@ namespace svm_fs
                     File.WriteAllLines(checkpoint_fn, checkpoint_data.Select(a => $"{a.key}={a.value}").ToList());
 
                     //var summary_fn = dataset_loader.convert_path(Path.Combine(iteration_folder, "summary.csv"));
-                    
-                    
+
+
 
                     if (summary_lines == null || summary_lines.Count == 0)
                     {
@@ -656,7 +667,7 @@ namespace svm_fs
 
                 svm_ctl.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
-                 
+
             }
             while
             (
@@ -681,7 +692,7 @@ namespace svm_fs
             // todo: save final list
 
             var final_list_fn = Path.Combine(root_folder, "final_list.csv");
-            var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")},{string.Join(";",groups[a].columns)}").ToList();
+            var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")},{string.Join(";", groups[a].columns)}").ToList();
             fl.Insert(0, "group_index,group_key,columns");
             File.WriteAllLines(final_list_fn, fl);
 
@@ -696,8 +707,8 @@ namespace svm_fs
             {
                 // todo: make it do this for the winning iteration (rather than the last iteration)
 
-                var kernel_types = ((common.libsvm_kernel_type[]) Enum.GetValues(typeof(common.libsvm_kernel_type))).Where(a => a != common.libsvm_kernel_type.precomputed).ToList();
-                var scale_functions = ((common.scale_function[]) Enum.GetValues(typeof(common.scale_function))).Where(a => a != common.scale_function.none).ToList();
+                var kernel_types = ((common.libsvm_kernel_type[])Enum.GetValues(typeof(common.libsvm_kernel_type))).Where(a => a != common.libsvm_kernel_type.precomputed).ToList();
+                var scale_functions = ((common.scale_function[])Enum.GetValues(typeof(common.scale_function))).Where(a => a != common.scale_function.none).ToList();
 
 
                 svm_ctl.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
@@ -790,9 +801,9 @@ namespace svm_fs
 
 
             // reorder all groups by rank
-            cm_inputs = cm_inputs.OrderByDescending(a => 
+            cm_inputs = cm_inputs.OrderByDescending(a =>
                 a.cms.cm_list.Where(b => ranking_metric_params.feature_selection_classes == null || ranking_metric_params.feature_selection_classes.Count == 0 || ranking_metric_params.feature_selection_classes.Contains(b.class_id.Value)).Average(b => b.get_perf_value_strings().Where(c => ranking_metric_params.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value)))
-                .ThenBy(a=> a.cmd_params.new_feature_count)
+                .ThenBy(a => a.cmd_params.new_feature_count)
                 .ToList();
 
 
@@ -862,6 +873,35 @@ namespace svm_fs
         {
             svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv));
 
+            query_cols = query_cols.ToList();
+
+            // remove duplicate columns (may exist in separate groups)
+            var query_col_dupe_check = dataset_instance_list_grouped.SelectMany(a => a.examples).SelectMany(a => query_cols.Select(b => (query_col: b, fv: a.feature_data[b].fv)).ToList()).GroupBy(b => b.query_col).Select(b => (query_col: b.Key, values: b.Select(c => c.fv).ToList())).ToList();
+            var dupe_clusters = new List<List<int>>();
+            for (var i = 0; i < query_col_dupe_check.Count; i++)
+            {
+                for (var j = 0; j < query_col_dupe_check.Count; j++)
+                {
+                    if (i <= j) continue;
+
+                    if (query_col_dupe_check[i].values.SequenceEqual(query_col_dupe_check[j].values))
+                    {
+                        var cluster = new List<int>() { query_col_dupe_check[i].query_col, query_col_dupe_check[j].query_col };
+                        var x = dupe_clusters.Where(a => a.Any(b => cluster.Any(c => b == c))).ToList();
+                        x.ForEach(a => { cluster.AddRange(a); dupe_clusters.Remove(a); });
+                        cluster = cluster.OrderBy(a => a).Distinct().ToList();
+                        dupe_clusters.Add(cluster);
+                    }
+                }
+            }
+            foreach (var dc in dupe_clusters)
+            {
+                //var keep = dc.First();
+                var remove = dc.Skip(1).ToList();
+                query_cols.RemoveAll(a => remove.Any(b => a == b));
+            }
+            ///
+
             var jobs_randomisation_level = Enumerable.Range(0, p.randomisation_cv_folds).AsParallel().AsOrdered().Select(randomisation_cv_index =>
             {
                 var jobs_outerfold_level = Enumerable.Range(0, p.outer_cv_folds).AsParallel().AsOrdered().Select(outer_cv_index =>
@@ -870,6 +910,8 @@ namespace svm_fs
                     var training_fold_indexes = downsampled_training_class_folds.Select(a => (a.class_id, outer_cv_index: outer_cv_index, indexes: a.folds.Where(b => b.randomisation_cv_index == randomisation_cv_index && b.outer_cv_index != outer_cv_index).SelectMany(b => b.indexes).OrderBy(b => b).ToList())).ToList();
 
                     var testing_fold_indexes = class_folds.Select(a => (a.class_id, outer_cv_index: outer_cv_index, indexes: a.folds.Where(b => b.randomisation_cv_index == randomisation_cv_index && b.outer_cv_index == outer_cv_index).SelectMany(b => b.indexes).OrderBy(b => b).ToList())).ToList();
+
+                    
 
                     var training_examples = training_fold_indexes.Select(a => (a.class_id, examples: a.indexes.Select(row_index => dataset_instance_list_grouped.First(b => a.class_id == b.class_id).examples[row_index]).ToList())).ToList();
 
@@ -1511,7 +1553,7 @@ namespace svm_fs
         public static void submit_pbs_job(cmd_params cmd_params) //(string jobs_fn)
         {
             var sub_dir = "";
-            
+
             if (cmd_params.cmd == cmd.ctl) sub_dir = cmd_params.pbs_ctl_submission_directory;
             if (cmd_params.cmd == cmd.wkr) sub_dir = cmd_params.pbs_wkr_submission_directory;
 
