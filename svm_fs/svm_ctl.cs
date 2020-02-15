@@ -1094,21 +1094,21 @@ namespace svm_fs
 
         public static void delete_temp_files(cmd_params p)
         {
-            //try { io_proxy.Delete(p.options_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.pbs_stderr_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.pbs_stdout_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.test_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.test_id_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.test_meta_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_predict_cm_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.test_predict_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_grid_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_id_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_meta_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_model_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.train_predict_cm_filename); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_predict_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            //try { io_proxy.Delete(p.pbs_stderr_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            //try { io_proxy.Delete(p.pbs_stdout_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_predict_filename, nameof(svm_ctl), nameof(delete_temp_files)); } catch (Exception) { }
         }
 
         public static void delete_temp_files(List<cmd_params> cmd_params_list)
@@ -1562,7 +1562,7 @@ namespace svm_fs
 
             if (source != dest)
             {
-                io_proxy.Copy(source, dest);
+                io_proxy.Copy(source, dest, false, nameof(svm_ctl), nameof(submit_pbs_job));
             }
 
             //var psi = new ProcessStartInfo()
@@ -1645,7 +1645,7 @@ namespace svm_fs
             {
                 if (string.IsNullOrWhiteSpace(filename)) return false;
 
-                if (!io_proxy.Exists(filename)) return false;
+                if (!io_proxy.Exists(filename, nameof(svm_ctl), nameof(is_file_available))) return false;
 
                 if (new FileInfo(filename).Length <= 0) return false;
 

@@ -69,7 +69,7 @@ namespace svm_fs
 
         public static Task status_task(CancellationTokenSource cts)
         {
-            var status_task = Task.Run(() =>
+            var status_task1 = Task.Run(() =>
             {
                 while (!cts.IsCancellationRequested)
                 {
@@ -99,9 +99,9 @@ namespace svm_fs
                         {
                             //var pbs_options_filename = "";
 
-                            try { io_proxy.Delete(jc.job_id_filename); } catch (Exception) { }
-                            try { io_proxy.Delete(jc.finish_maker_filename); } catch (Exception) { }
-                            try { io_proxy.Delete(jc.pbs_script_filename); } catch (Exception) { }
+                            try { io_proxy.Delete(jc.job_id_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
+                            try { io_proxy.Delete(jc.finish_maker_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
+                            try { io_proxy.Delete(jc.pbs_script_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
                             //try { io_proxy.Delete(jc.options_filename); } catch (Exception) { }
                         }
 
@@ -124,7 +124,7 @@ namespace svm_fs
                 }
             });
 
-            return status_task;
+            return status_task1;
         }
 
         public static void start(cmd_params controller_options, CancellationTokenSource cts)
@@ -254,7 +254,7 @@ namespace svm_fs
 
                     if (r.cmd == cmd.wkr)
                     {
-                        try { io_proxy.Delete(options_file); } catch (Exception) { }
+                        try { io_proxy.Delete(options_file, nameof(svm_ldr), nameof(run_worker_jobs)); } catch (Exception) { }
                     }
                     return r;
 

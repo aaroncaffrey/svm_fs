@@ -126,26 +126,40 @@ namespace svm_fs
             }
         }
 
-        public static bool Exists(string filename)
+        public static bool Exists(string filename, string module_name = "", string function_name = "")
         {
-            return File.Exists(fix_path(filename));
+            filename=fix_path(filename);
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Exists));
+
+            return File.Exists(filename);
         }
             
-        public static void Delete(string filename)
+        public static void Delete(string filename, string module_name = "", string function_name = "")
         {
-            File.Delete(fix_path(filename));
+            filename = fix_path(filename);
+
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
+
+            File.Delete(filename);
         }
 
-        public static void Copy(string source, string dest, bool overwrite = false)
+        public static void Copy(string source, string dest, bool overwrite = false, string module_name = "", string function_name = "")
         {
-            File.Copy(fix_path(source), fix_path(dest), overwrite);
+            source = fix_path(source);
+            dest = fix_path(dest);
+
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} )", nameof(io_proxy), nameof(Copy));
+
+            File.Copy(source, dest, overwrite);
         }
 
-        public static void CreateDirectory(string filename)//, string module_name, string function_name)
+        public static void CreateDirectory(string filename, string module_name = "", string function_name = "")
         {
-            //program.WriteLine($"{module_name}.{function_name} -> {nameof(program)}.{nameof(CreateDirectory)} ( {filename} )");
+            filename = fix_path(filename);
 
-            var dir = Path.GetDirectoryName(fix_path(filename));
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
+
+            var dir = Path.GetDirectoryName(filename);
 
             if (!String.IsNullOrWhiteSpace(dir))
             {
@@ -159,13 +173,14 @@ namespace svm_fs
 
         public static string[] ReadAllLines(string filename, string module_name = "", string function_name = "")
         {
+            filename = fix_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllLines));
 
             while (true)
             {
                 try
                 {
-                    var ret = File.ReadAllLines(fix_path(filename));
+                    var ret = File.ReadAllLines(filename);
 
                     return ret;
                 }
@@ -181,13 +196,14 @@ namespace svm_fs
 
         public static string ReadAllText(string filename, string module_name = "", string function_name = "")
         {
+            filename = fix_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllText));
 
             while (true)
             {
                 try
                 {
-                    var ret = File.ReadAllText(fix_path(filename));
+                    var ret = File.ReadAllText(filename);
 
                     return ret;
                 }
@@ -202,15 +218,16 @@ namespace svm_fs
 
         public static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "")
         {
+            filename = fix_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllLines));
 
-            CreateDirectory(filename);//, module_name, function_name);
+            CreateDirectory(filename, module_name, function_name);
 
             while (true)
             {
                 try
                 {
-                    File.WriteAllLines(fix_path(filename), lines);
+                    File.WriteAllLines(filename, lines);
                     return;
                 }
                 catch (Exception e)
@@ -223,15 +240,16 @@ namespace svm_fs
 
         public static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "")
         {
+            filename = fix_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllLines));
 
-            CreateDirectory(filename);//, module_name, function_name);
+            CreateDirectory(filename, module_name, function_name);
 
             while (true)
             {
                 try
                 {
-                    File.AppendAllLines(fix_path(filename), lines);
+                    File.AppendAllLines(filename, lines);
                     return;
                 }
                 catch (Exception e)
@@ -244,15 +262,16 @@ namespace svm_fs
 
         public static void AppendAllText(string filename, string text, string module_name = "", string function_name = "")
         {
+            filename = fix_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllText));
 
-            CreateDirectory(filename);//, module_name, function_name);
+            CreateDirectory(filename, module_name, function_name);
 
             while (true)
             {
                 try
                 {
-                    File.AppendAllText(fix_path(filename), text);
+                    File.AppendAllText(filename, text);
                     return;
                 }
                 catch (Exception e)
@@ -265,15 +284,16 @@ namespace svm_fs
 
         public static void WriteAllText(string filename, string text, string module_name = "", string function_name = "")
         {
+            filename = fix_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllText));
 
-            CreateDirectory(filename);//, module_name, function_name);
+            CreateDirectory(filename, module_name, function_name);
 
             while (true)
             {
                 try
                 {
-                    File.WriteAllText(fix_path(filename), text);
+                    File.WriteAllText(filename, text);
                     return;
                 }
                 catch (Exception e)

@@ -2009,12 +2009,12 @@ namespace svm_fs
 
         public static List<prediction> load_prediction_file_regression_values(string test_file, string test_comments_file, string prediction_file)
         {
-            if (string.IsNullOrWhiteSpace(test_file) || !io_proxy.Exists(test_file) || new FileInfo(test_file).Length == 0)
+            if (string.IsNullOrWhiteSpace(test_file) || !io_proxy.Exists(test_file, nameof(performance_measure), nameof(load_prediction_file)) || new FileInfo(test_file).Length == 0)
             {
                 throw new Exception($@"Error: Test data file not found: ""{test_file}"".");
             }
 
-            if (string.IsNullOrWhiteSpace(prediction_file) || !io_proxy.Exists(prediction_file) || new FileInfo(prediction_file).Length == 0)
+            if (string.IsNullOrWhiteSpace(prediction_file) || !io_proxy.Exists(prediction_file, nameof(performance_measure), nameof(load_prediction_file)) || new FileInfo(prediction_file).Length == 0)
             {
                 throw new Exception($@"Error: Prediction output file not found: ""{prediction_file}"".");
             }
