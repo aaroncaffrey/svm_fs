@@ -10,23 +10,6 @@ namespace svm_fs
 {
     public static class io_proxy
     {
-        public static string fix_path(string filename)
-        {
-            return convert_path(fix_filename(filename));
-        }
-
-        public static string fix_filename(string filename)
-        {
-            //var path = Path.GetDirectoryName(filename);
-            //var file = Path.GetFileName(filename);
-
-            var invalid = $"?%*|<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
-
-            var filename2 = string.Join("", filename.Select(a => invalid.Any(b => a == b) ? '_' : a).ToList());
-
-            return filename2;
-        }
-
         public static string convert_path(string path, bool temp_file = false)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -93,6 +76,10 @@ namespace svm_fs
                 path = path.Replace('/', Path.DirectorySeparatorChar);
             }
 
+            var invalid = $"?%*|<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
+
+            path = string.Join("", path.Select(a => invalid.Any(b => a == b) ? '_' : a).ToList()).Trim();
+
             return path;
         }
 
@@ -128,7 +115,7 @@ namespace svm_fs
 
         public static bool Exists(string filename, string module_name = "", string function_name = "")
         {
-            filename=fix_path(filename);
+            filename=convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Exists));
 
             return File.Exists(filename);
@@ -136,7 +123,7 @@ namespace svm_fs
             
         public static void Delete(string filename, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
 
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
 
@@ -145,8 +132,8 @@ namespace svm_fs
 
         public static void Copy(string source, string dest, bool overwrite = false, string module_name = "", string function_name = "")
         {
-            source = fix_path(source);
-            dest = fix_path(dest);
+            source = convert_path(source);
+            dest = convert_path(dest);
 
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} )", nameof(io_proxy), nameof(Copy));
 
@@ -155,7 +142,7 @@ namespace svm_fs
 
         public static void CreateDirectory(string filename, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
 
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
 
@@ -173,7 +160,7 @@ namespace svm_fs
 
         public static string[] ReadAllLines(string filename, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllLines));
 
             while (true)
@@ -196,7 +183,7 @@ namespace svm_fs
 
         public static string ReadAllText(string filename, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllText));
 
             while (true)
@@ -218,7 +205,7 @@ namespace svm_fs
 
         public static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllLines));
 
             CreateDirectory(filename, module_name, function_name);
@@ -240,7 +227,7 @@ namespace svm_fs
 
         public static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllLines));
 
             CreateDirectory(filename, module_name, function_name);
@@ -262,7 +249,7 @@ namespace svm_fs
 
         public static void AppendAllText(string filename, string text, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllText));
 
             CreateDirectory(filename, module_name, function_name);
@@ -284,7 +271,7 @@ namespace svm_fs
 
         public static void WriteAllText(string filename, string text, string module_name = "", string function_name = "")
         {
-            filename = fix_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllText));
 
             CreateDirectory(filename, module_name, function_name);
