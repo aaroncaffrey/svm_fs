@@ -34,11 +34,11 @@ namespace svm_fs
             int memory_limit_mb = 1024
             )
         {
-            libsvm_train_exe_file = dataset_loader.convert_path(libsvm_train_exe_file);
-            train_file = dataset_loader.convert_path(train_file);
-            model_out_file = dataset_loader.convert_path(model_out_file);
-            stdout_file = dataset_loader.convert_path(stdout_file);
-            stderr_file = dataset_loader.convert_path(stderr_file);
+            libsvm_train_exe_file = io_proxy.convert_path(libsvm_train_exe_file);
+            train_file = io_proxy.convert_path(train_file);
+            model_out_file = io_proxy.convert_path(model_out_file);
+            stdout_file = io_proxy.convert_path(stdout_file);
+            stderr_file = io_proxy.convert_path(stderr_file);
 
             //var quiet_mode = true;
             //var memory_limit_mb = 1024;
@@ -169,7 +169,7 @@ namespace svm_fs
                             //   return (cmd_line, null, null);
                         }
 
-                        svm_ctl.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(train));
+                        io_proxy.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(train));
 
                         try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
                         try { process.PriorityClass = priority_class; } catch (Exception) { }
@@ -208,7 +208,7 @@ namespace svm_fs
                             }
                             catch (Exception e)
                             {
-                                svm_ctl.WriteLine($"Process: {process.Id}. {e.ToString()}", nameof(libsvm), nameof(train));
+                                io_proxy.WriteLine($"Process: {process.Id}. {e.ToString()}", nameof(libsvm), nameof(train));
                             }
                         }
                         
@@ -216,7 +216,7 @@ namespace svm_fs
                         
 
                         process.WaitForExit();
-                        svm_ctl.WriteLine($"Exited process: {process.Id}", nameof(libsvm), nameof(train));
+                        io_proxy.WriteLine($"Exited process: {process.Id}", nameof(libsvm), nameof(train));
 
                         var stdout_result = "";
                         var stderr_result = "";
@@ -227,12 +227,12 @@ namespace svm_fs
 
                         if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
                         {
-                            File.AppendAllText(stdout_file, stdout_result);
+                            io_proxy.AppendAllText(stdout_file, stdout_result);
                         }
 
                         if (!string.IsNullOrWhiteSpace(stderr_file) && !string.IsNullOrWhiteSpace(stderr_result))
                         {
-                            File.AppendAllText(stderr_file, stderr_result);
+                            io_proxy.AppendAllText(stderr_file, stderr_result);
                         }
 
                         return (cmd_line, stdout_result, stderr_result);
@@ -242,7 +242,7 @@ namespace svm_fs
                 {
                     retry = true;
 
-                    svm_ctl.WriteLine(e.ToString(), nameof(libsvm), nameof(train));
+                    io_proxy.WriteLine(e.ToString(), nameof(libsvm), nameof(train));
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }
@@ -253,12 +253,12 @@ namespace svm_fs
 
         public static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null)
         {
-            libsvm_predict_exe_file = dataset_loader.convert_path(libsvm_predict_exe_file);
-            test_file = dataset_loader.convert_path(test_file);
-            model_file = dataset_loader.convert_path(model_file);
-            predictions_out_file = dataset_loader.convert_path(predictions_out_file);
-            stdout_file = dataset_loader.convert_path(stdout_file);
-            stderr_file = dataset_loader.convert_path(stderr_file);
+            libsvm_predict_exe_file = io_proxy.convert_path(libsvm_predict_exe_file);
+            test_file = io_proxy.convert_path(test_file);
+            model_file = io_proxy.convert_path(model_file);
+            predictions_out_file = io_proxy.convert_path(predictions_out_file);
+            stdout_file = io_proxy.convert_path(stdout_file);
+            stderr_file = io_proxy.convert_path(stderr_file);
 
             var libsvm_params = new List<string>();
 
@@ -317,7 +317,7 @@ namespace svm_fs
                             //   return (cmd_line, null, null);
                         }
 
-                        svm_ctl.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(predict));
+                        io_proxy.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(predict));
                         try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
                         try { process.PriorityClass = priority_class; } catch (Exception) { }
 
@@ -325,7 +325,7 @@ namespace svm_fs
                         var stderr = process.StandardError.ReadToEndAsync();
 
                         process.WaitForExit();
-                        svm_ctl.WriteLine("Exited process: " + process.Id, nameof(libsvm), nameof(predict));
+                        io_proxy.WriteLine("Exited process: " + process.Id, nameof(libsvm), nameof(predict));
 
                         var tasks = new List<Task>() { stdout, stderr };
 
@@ -340,12 +340,12 @@ namespace svm_fs
 
                         if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
                         {
-                            File.AppendAllText(stdout_file, stdout_result);
+                            io_proxy.AppendAllText(stdout_file, stdout_result);
                         }
 
                         if (!string.IsNullOrWhiteSpace(stderr_file) && !string.IsNullOrWhiteSpace(stderr_result))
                         {
-                            File.AppendAllText(stderr_file, stderr_result);
+                            io_proxy.AppendAllText(stderr_file, stderr_result);
                         }
 
                         return (cmd_line, stdout_result, stderr_result);
@@ -354,7 +354,7 @@ namespace svm_fs
                 catch (Exception e)
                 {
                     retry = true;
-                    svm_ctl.WriteLine(e.ToString(), nameof(libsvm), nameof(predict));
+                    io_proxy.WriteLine(e.ToString(), nameof(libsvm), nameof(predict));
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }

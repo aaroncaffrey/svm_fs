@@ -110,9 +110,9 @@ namespace svm_fs
             sw_train.Stop();
             var sw_train_dur = sw_train.ElapsedMilliseconds;
 
-            if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) svm_ctl.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(train_result.stdout)) svm_ctl.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(train_result.stderr)) svm_ctl.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(train_result.stdout)) io_proxy.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(train_result.stderr)) io_proxy.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(cross_validation));
 
 
             // predict
@@ -131,9 +131,9 @@ namespace svm_fs
             sw_predict.Stop();
             var sw_predict_dur = sw_train.ElapsedMilliseconds;
 
-            if (!string.IsNullOrWhiteSpace(predict_result.cmd_line)) svm_ctl.WriteLine(predict_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) svm_ctl.WriteLine(predict_result.stdout, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(predict_result.stderr)) svm_ctl.WriteLine(predict_result.stderr, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(predict_result.cmd_line)) io_proxy.WriteLine(predict_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) io_proxy.WriteLine(predict_result.stdout, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(predict_result.stderr)) io_proxy.WriteLine(predict_result.stderr, nameof(svm_wkr), nameof(cross_validation));
 
 
             var prediction_file_data = performance_measure.load_prediction_file(p.test_filename, p.test_meta_filename, p.test_predict_filename, p.output_threshold_adjustment_performance);
@@ -170,24 +170,24 @@ namespace svm_fs
                 var cm = prediction_file_data.cm_list[i];
                 cm_lines.Add($"{string.Join(",", p.get_options().Select(c => c.value).ToList())},{cm}");
             }
-            File.WriteAllLines(p.test_predict_cm_filename, cm_lines);
+            io_proxy.WriteAllLines(p.test_predict_cm_filename, cm_lines);
 
 
-            //try { File.Delete(p.options_filename); } catch (Exception) { }
-            //try { File.Delete(p.pbs_stderr_filename); } catch (Exception) { }
-            //try { File.Delete(p.pbs_stdout_filename); } catch (Exception) { }
-            //try { File.Delete(p.test_filename); } catch (Exception) { }
-            //try { File.Delete(p.test_id_filename); } catch (Exception) { }
-            //try { File.Delete(p.test_meta_filename); } catch (Exception) { }
-            //try { File.Delete(p.test_predict_cm_filename); } catch (Exception) { }
-            //try { File.Delete(p.test_predict_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_grid_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_id_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_meta_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_model_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_predict_cm_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_predict_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.options_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.pbs_stderr_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.pbs_stdout_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_id_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_meta_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_predict_cm_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_predict_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_grid_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_id_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_meta_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_model_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_predict_cm_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_predict_filename); } catch (Exception) { }
 
             // report finished
             // rename output files

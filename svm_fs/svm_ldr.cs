@@ -51,7 +51,7 @@ namespace svm_fs
 
         public static Task worker_jobs_task(string job_submission_folder, CancellationToken ct)
         {
-            svm_ctl.WriteLine($@"Monitoring '{job_submission_folder}' for new jobs to run...", nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
+            io_proxy.WriteLine($@"Monitoring '{job_submission_folder}' for new jobs to run...", nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
 
             var worker_jobs_task = Task.Run(() =>
             {
@@ -86,7 +86,7 @@ namespace svm_fs
 
                         try
                         {
-                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available, a.was_available && a.state != 0 ? int.Parse(File.ReadAllText(a.finish_maker_filename).Trim(), CultureInfo.InvariantCulture) : a.state)).ToList();
+                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available, a.was_available && a.state != 0 ? int.Parse(io_proxy.ReadAllText(a.finish_maker_filename).Trim(), CultureInfo.InvariantCulture) : a.state)).ToList();
                         }
                         catch (Exception )
                         {
@@ -99,10 +99,10 @@ namespace svm_fs
                         {
                             //var pbs_options_filename = "";
 
-                            try { File.Delete(jc.job_id_filename); } catch (Exception) { }
-                            try { File.Delete(jc.finish_maker_filename); } catch (Exception) { }
-                            try { File.Delete(jc.pbs_script_filename); } catch (Exception) { }
-                            //try { File.Delete(jc.options_filename); } catch (Exception) { }
+                            try { io_proxy.Delete(jc.job_id_filename); } catch (Exception) { }
+                            try { io_proxy.Delete(jc.finish_maker_filename); } catch (Exception) { }
+                            try { io_proxy.Delete(jc.pbs_script_filename); } catch (Exception) { }
+                            //try { io_proxy.Delete(jc.options_filename); } catch (Exception) { }
                         }
 
                         var num_jobs_completed_svm_ctl = finish_marker_files.Count(a => a.cmd==cmd.ctl && a.state == 0);
@@ -111,7 +111,7 @@ namespace svm_fs
                         var num_jobs_other = finish_marker_files.Count(a => a.state != -1 && a.state != 0 && a.state != 1);
                         var num_jobs_not_started = finish_marker_files.Count(a => a.state == -1);
 
-                        svm_ctl.WriteLine($@"jobs completed: {num_jobs_completed}; jobs incomplete: {num_jobs_incompleted}, jobs other: {num_jobs_other}, jobs not started: {num_jobs_not_started}", nameof(svm_ldr), nameof(svm_ldr.status_task));
+                        io_proxy.WriteLine($@"jobs completed: {num_jobs_completed}; jobs incomplete: {num_jobs_incompleted}, jobs other: {num_jobs_other}, jobs not started: {num_jobs_not_started}", nameof(svm_ldr), nameof(svm_ldr.status_task));
 
                         if (num_jobs_completed_svm_ctl > 0)
                         {
@@ -136,8 +136,8 @@ namespace svm_fs
             //// wait for controller task to load
             // while (controller_)
 
-            var job_ctl_submission_folder = dataset_loader.convert_path(controller_options.pbs_ctl_submission_directory);
-            var job_wkr_submission_folder = dataset_loader.convert_path(controller_options.pbs_wkr_submission_directory);
+            var job_ctl_submission_folder = io_proxy.convert_path(controller_options.pbs_ctl_submission_directory);
+            var job_wkr_submission_folder = io_proxy.convert_path(controller_options.pbs_wkr_submission_directory);
             
             if (!Directory.Exists(job_ctl_submission_folder)) { try { Directory.CreateDirectory(job_ctl_submission_folder); } catch (Exception) { } }
             if (!Directory.Exists(job_wkr_submission_folder)) { try { Directory.CreateDirectory(job_wkr_submission_folder); } catch (Exception) { } }
@@ -161,9 +161,9 @@ namespace svm_fs
             {
                 var job_id_filename = $"{options.options_filename}.job_id";
 
-                job_id_filename = dataset_loader.convert_path(job_id_filename);
+                job_id_filename = io_proxy.convert_path(job_id_filename);
 
-                File.WriteAllText(job_id_filename, job_id);
+                io_proxy.WriteAllText(job_id_filename, job_id);
             }
         }
 
@@ -172,11 +172,11 @@ namespace svm_fs
             var job_id = "";
             var job_id_filename = $"{options.options_filename}.job_id";
 
-            job_id_filename = dataset_loader.convert_path(job_id_filename);
+            job_id_filename = io_proxy.convert_path(job_id_filename);
 
             if (svm_ctl.is_file_available(job_id_filename))
             {
-                job_id = File.ReadAllText(job_id_filename).Trim().Split().LastOrDefault();
+                job_id = io_proxy.ReadAllText(job_id_filename).Trim().Split().LastOrDefault();
             }
 
             return job_id;
@@ -241,7 +241,7 @@ namespace svm_fs
 
                     try
                     {
-                        fd = File.ReadAllLines(options_file);
+                        fd = io_proxy.ReadAllLines(options_file);
                         
                     }
                     catch (Exception)
@@ -254,7 +254,7 @@ namespace svm_fs
 
                     if (r.cmd == cmd.wkr)
                     {
-                        try { File.Delete(options_file); } catch (Exception) { }
+                        try { io_proxy.Delete(options_file); } catch (Exception) { }
                     }
                     return r;
 
@@ -305,7 +305,7 @@ namespace svm_fs
             if (!job_exists)
             {
 
-                options.options_filename = dataset_loader.convert_path(options.options_filename);
+                options.options_filename = io_proxy.convert_path(options.options_filename);
 
 
 
@@ -349,7 +349,7 @@ namespace svm_fs
                 //var pbs_script_filename = $@"~/svm_fs/pbs_job_{options.pbs_jobname}_{options.job_id}.pbs";
 
 
-                File.WriteAllLines(pbs_script_filename, pbs_script_lines);
+                io_proxy.WriteAllLines(pbs_script_filename, pbs_script_lines);
 
 
                 // 2. submit pbs script to scheduler
@@ -388,7 +388,7 @@ namespace svm_fs
                     // 4. add to list of submitted jobs
                     //add_submitted_job(options);
 
-                    svm_ctl.WriteLine($@"{options.cmd}: msub {pbs_script_filename} = {job_id}", nameof(svm_ldr), nameof(run_job));
+                    io_proxy.WriteLine($@"{options.cmd}: msub {pbs_script_filename} = {job_id}", nameof(svm_ldr), nameof(run_job));
 
                     lock (finish_marker_files_lock)
                     {
@@ -400,8 +400,8 @@ namespace svm_fs
                 }
                 else
                 {
-                    if (!string.IsNullOrWhiteSpace(stdout)) svm_ctl.WriteLine(stdout, nameof(svm_ldr), nameof(run_job));
-                    if (!string.IsNullOrWhiteSpace(stderr)) svm_ctl.WriteLine(stderr, nameof(svm_ldr), nameof(run_job));
+                    if (!string.IsNullOrWhiteSpace(stdout)) io_proxy.WriteLine(stdout, nameof(svm_ldr), nameof(run_job));
+                    if (!string.IsNullOrWhiteSpace(stderr)) io_proxy.WriteLine(stderr, nameof(svm_ldr), nameof(run_job));
                 }
             }
 

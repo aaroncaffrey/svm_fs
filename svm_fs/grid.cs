@@ -22,15 +22,15 @@ namespace svm_fs
                 common.libsvm_kernel_type kernel, 
                 int randomisation_cv_folds, int randomisation_cv_index, int outer_cv_folds, int outer_cv_index, int inner_cv_folds, bool probability_estimates, bool shrinking_heuristics, (double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)>();
 
-            cache_train_grid_csv = dataset_loader.convert_path(cache_train_grid_csv);
+            cache_train_grid_csv = io_proxy.convert_path(cache_train_grid_csv);
 
-            //*!string.IsNullOrWhiteSpace(cache_train_grid_csv) && File.Exists(cache_train_grid_csv) && new FileInfo(cache_train_grid_csv).Length > 0 && */
+            //*!string.IsNullOrWhiteSpace(cache_train_grid_csv) && io_proxy.Exists(cache_train_grid_csv) && new FileInfo(cache_train_grid_csv).Length > 0 && */
             
             if (svm_ctl.is_file_available(cache_train_grid_csv))
             {
                 //var grid = new List<(double cost, double gamma, double epsilon, double coef0, double degree, double rate)>();
 
-                cache = File.ReadAllLines(cache_train_grid_csv).Skip(1).Select(a =>
+                cache = io_proxy.ReadAllLines(cache_train_grid_csv).Skip(1).Select(a =>
                 {
                     try
                     {
@@ -81,7 +81,7 @@ namespace svm_fs
                 a.point.degree?.ToString("G17", CultureInfo.InvariantCulture), 
                 a.rate.ToString("G17", CultureInfo.InvariantCulture) })).ToList());
 
-            File.WriteAllLines(dataset_loader.convert_path(cache_file), lines);
+            io_proxy.WriteAllLines(io_proxy.convert_path(cache_file), lines);
         }
 
 
@@ -98,7 +98,7 @@ namespace svm_fs
 
             foreach (var r in res)
             {
-                svm_ctl.WriteLine(r.ToString(), nameof(grid), nameof(get_best_rate));
+                io_proxy.WriteLine(r.ToString(), nameof(grid), nameof(get_best_rate));
 
                 var is_rate_better = ((best_rate <= 0) || (r.rate > -1 && r.rate > best_rate));
                 
@@ -137,7 +137,7 @@ namespace svm_fs
 
             var ret = ((best_cost, best_gamma, best_epsilon, best_coef0, best_degree), best_rate);
 
-            svm_ctl.WriteLine("r: " + ret, nameof(grid), nameof(get_best_rate));
+            io_proxy.WriteLine("r: " + ret, nameof(grid), nameof(get_best_rate));
 
             return ret;
         }
@@ -409,9 +409,9 @@ namespace svm_fs
                     quiet_mode,
                     memory_limit_mb);
 
-                if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) svm_ctl.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(grid_parameter_search));
-                if (!string.IsNullOrWhiteSpace(train_result.stdout)) svm_ctl.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(grid_parameter_search));
-                if (!string.IsNullOrWhiteSpace(train_result.stderr)) svm_ctl.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(grid_parameter_search));
+                if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(grid_parameter_search));
+                if (!string.IsNullOrWhiteSpace(train_result.stdout)) io_proxy.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(grid_parameter_search));
+                if (!string.IsNullOrWhiteSpace(train_result.stderr)) io_proxy.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(grid_parameter_search));
 
                 var train_result_lines = train_result.stdout?.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
@@ -457,7 +457,7 @@ namespace svm_fs
 
             var xr = get_best_rate(results);
 
-            svm_ctl.WriteLine("Grid search complete.", nameof(grid), nameof(grid_parameter_search));
+            io_proxy.WriteLine("Grid search complete.", nameof(grid), nameof(grid_parameter_search));
             return xr;
         }
 

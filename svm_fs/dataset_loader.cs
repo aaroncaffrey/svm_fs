@@ -9,6 +9,9 @@ namespace svm_fs
     public static class dataset_loader
     {
 //        [Serializable]
+
+   
+
         public class dataset
         {
             public List<(int fid, string alphabet, string dimension, string category, string source, string group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> dataset_headers = null;
@@ -96,48 +99,48 @@ namespace svm_fs
             var table_member = new List<string>();
             var table_perspective = new List<string>();
 
-            dataset_folder = convert_path(dataset_folder);
+            dataset_folder = io_proxy.convert_path(dataset_folder);
 
             // formatting to always show sign :+#;-#;+0
 
             var dataset_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                io_proxy.convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                io_proxy.convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_header_csv_files = new List<string>()
             {
-                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                io_proxy.convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                io_proxy.convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_comment_csv_files = new List<string>
             {
-                convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                io_proxy.convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                io_proxy.convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
 
             
-            svm_ctl.WriteLine($@"{nameof(positive_class_id)} = {positive_class_id:+#;-#;+0}", nameof(dataset_loader), nameof(read_binary_dataset));
-            svm_ctl.WriteLine($@"{nameof(negative_class_id)} = {negative_class_id:+#;-#;+0}", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"{nameof(positive_class_id)} = {positive_class_id:+#;-#;+0}", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"{nameof(negative_class_id)} = {negative_class_id:+#;-#;+0}", nameof(dataset_loader), nameof(read_binary_dataset));
 
-            svm_ctl.WriteLine($@"{nameof(class_names)} = {string.Join(", ", class_names)}", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"{nameof(class_names)} = {string.Join(", ", class_names)}", nameof(dataset_loader), nameof(read_binary_dataset));
 
-            svm_ctl.WriteLine($@"{nameof(dataset_csv_files)}: {string.Join(", ", dataset_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
-            svm_ctl.WriteLine($@"{nameof(dataset_header_csv_files)}: {string.Join(", ", dataset_header_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
-            svm_ctl.WriteLine($@"{nameof(dataset_comment_csv_files)}: {string.Join(", ", dataset_comment_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"{nameof(dataset_csv_files)}: {string.Join(", ", dataset_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"{nameof(dataset_header_csv_files)}: {string.Join(", ", dataset_header_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"{nameof(dataset_comment_csv_files)}: {string.Join(", ", dataset_comment_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
 
-            svm_ctl.WriteLine($@"Reading non-novel dataset headers...", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"Reading non-novel dataset headers...", nameof(dataset_loader), nameof(read_binary_dataset));
 
             // READ HEADER CSV FILE - ALL CLASSES HAVE THE SAME HEADERS/FEATURES
 
-            //List<(int fid, string alphabet, string dimension, string category, string source, string group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> header_data = File.ReadAllLines(dataset_header_csv_files.First()).Skip(1).Select((a, i) =>
+            //List<(int fid, string alphabet, string dimension, string category, string source, string group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> header_data = io_proxy.ReadAllLines(dataset_header_csv_files.First()).Skip(1).Select((a, i) =>
 
 
 
-            var header_data = File.ReadAllLines(dataset_header_csv_files.First()).Skip(1)/*.AsParallel().AsOrdered()*/.Select((a, i) =>
+            var header_data = io_proxy.ReadAllLines(dataset_header_csv_files.First()).Skip(1)/*.AsParallel().AsOrdered()*/.Select((a, i) =>
             {
                 var b = a.Split(',');
                 var fid = int.Parse(b[0], NumberStyles.Integer, CultureInfo.InvariantCulture);
@@ -174,7 +177,7 @@ namespace svm_fs
 
                     //if (duplicate)
                     //{
-                        //svm_ctl.WriteLine("Duplicate: " + a);
+                        //io_proxy.WriteLine("Duplicate: " + a);
                         //Console.ReadLine();
                     //}
                 }
@@ -254,11 +257,11 @@ namespace svm_fs
 
 
             // data comments: load comment lines as key-value pairs.  note: these are variables associated with each example instance rather than specific features.
-            svm_ctl.WriteLine($@"Reading data comments...", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"Reading data comments...", nameof(dataset_loader), nameof(read_binary_dataset));
 
             if (use_parallel)
             {
-                dataset_comment_row_values = dataset_comment_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => File.ReadAllLines(filename).Skip(1/*header line*/).AsParallel().AsOrdered().Select((line, line_index) => {
+                dataset_comment_row_values = dataset_comment_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*header line*/).AsParallel().AsOrdered().Select((line, line_index) => {
 
                     var comment_columns = line.Split(',').Select((col, col_index) => (comment_header: data_comments_header[col_index], comment_value: col)).ToList();
                     comment_columns = comment_columns.Where(d => d.comment_header.FirstOrDefault() != '#').ToList();
@@ -270,7 +273,7 @@ namespace svm_fs
             }
             else
             {
-                dataset_comment_row_values = dataset_comment_csv_files.SelectMany((filename, filename_index) => File.ReadAllLines(filename).Skip(1/*header line*/).Select((line, line_index) => {
+                dataset_comment_row_values = dataset_comment_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*header line*/).Select((line, line_index) => {
 
                     var comment_columns = line.Split(',').Select((col, col_index) => (comment_header: data_comments_header[col_index], comment_value: col)).ToList();
                     comment_columns = comment_columns.Where(d => d.comment_header.FirstOrDefault() != '#').ToList();
@@ -295,10 +298,10 @@ namespace svm_fs
 
 
             // data set: load data
-            svm_ctl.WriteLine($@"Reading data...", nameof(dataset_loader), nameof(read_binary_dataset));
+            io_proxy.WriteLine($@"Reading data...", nameof(dataset_loader), nameof(read_binary_dataset));
             if (use_parallel)
             {
-                dataset_instance_list = dataset_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => File.ReadAllLines(filename).Skip(1/*skip header*/).AsParallel().AsOrdered().Select((line, line_index) =>
+                dataset_instance_list = dataset_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*skip header*/).AsParallel().AsOrdered().Select((line, line_index) =>
                 {
                     var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
@@ -323,7 +326,7 @@ namespace svm_fs
             }
             else
             {
-                dataset_instance_list = dataset_csv_files.SelectMany((filename, filename_index) => File.ReadAllLines(filename).Skip(1/*skip header*/)./*Take(20).*/Select((line, line_index) =>
+                dataset_instance_list = dataset_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*skip header*/)./*Take(20).*/Select((line, line_index) =>
                 {
                     var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
@@ -360,16 +363,16 @@ namespace svm_fs
 
             if (perform_integrity_checks)
             {
-                svm_ctl.WriteLine($@"Checking all dataset columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
+                io_proxy.WriteLine($@"Checking all dataset columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
                 var dataset_num_diferent_column_length = dataset_instance_list.Select(a => a.feature_data.Count).Distinct().Count();
                 if (dataset_num_diferent_column_length != 1) throw new Exception();
 
-                svm_ctl.WriteLine($@"Checking dataset headers and dataset columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
+                io_proxy.WriteLine($@"Checking dataset headers and dataset columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
                 var header_length = header_data.Count;
                 var dataset_column_length = dataset_instance_list.First().feature_data.Count;
                 if (dataset_column_length != header_length) throw new Exception();
 
-                svm_ctl.WriteLine($@"Checking all dataset comment columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
+                io_proxy.WriteLine($@"Checking all dataset comment columns are the same length...", nameof(dataset_loader), nameof(read_binary_dataset));
 
                 
                 var comments_num_different_column_length = dataset_instance_list.Select(a => a.comment_columns.Count).Distinct().Count();
@@ -429,7 +432,7 @@ namespace svm_fs
 
         public static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
         {
-            //svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(get_column_data_by_class));
+            //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(get_column_data_by_class));
 
             var total_headers = dataset.dataset_headers.Count;
             var total_classes = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().Count();
@@ -448,7 +451,7 @@ namespace svm_fs
 
         public static double[][] get_column_data(dataset dataset) // [column][row]
         {
-            //svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(get_column_data));
+            //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(get_column_data));
 
             var result = new double[dataset.dataset_headers.Count][];
 
@@ -463,7 +466,7 @@ namespace svm_fs
 
         public static void remove_large_groups(dataset dataset, int max_group_size )
         {
-            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_large_groups));
+            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_large_groups));
 
             var groups = dataset.dataset_headers.Skip(1).GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).OrderBy(a=>a.Count()).ToList();
 
@@ -482,12 +485,12 @@ namespace svm_fs
                 remove_fids(dataset, fids_to_remove);
             }
 
-            groups_too_large.ForEach(a => svm_ctl.WriteLine($@"Removed large group: {a.Key}", nameof(dataset_loader), nameof(remove_large_groups)));
+            groups_too_large.ForEach(a => io_proxy.WriteLine($@"Removed large group: {a.Key}", nameof(dataset_loader), nameof(remove_large_groups)));
         }
 
         public static void remove_duplicate_groups(dataset dataset)
         {
-            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_duplicate_groups));
+            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_duplicate_groups));
 
 
             var column_data = get_column_data(dataset);
@@ -632,7 +635,7 @@ namespace svm_fs
 
         public static void save_dataset(dataset dataset, List<(int class_id, string header_filename, string data_filename)> filenames)
         {
-            svm_ctl.WriteLine("started saving...", nameof(dataset_loader), nameof(save_dataset));
+            io_proxy.WriteLine("started saving...", nameof(dataset_loader), nameof(save_dataset));
 
             //var class_ids = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().OrderBy(a => a).ToList();
             var header_fids = Enumerable.Range(0, dataset.dataset_headers.Count);
@@ -649,17 +652,17 @@ namespace svm_fs
                 var header = dataset.dataset_headers.Select(a => $@"{a.fid},{a.alphabet},{a.dimension},{a.category},{a.source},{a.group},{a.member},{a.perspective}").ToList();
                 header.Insert(0, $@"fid,alphabet,dimension,category,source,group,member,perspective");
 
-                File.WriteAllLines(class_id_filenames.header_filename, header);
+                io_proxy.WriteAllLines(class_id_filenames.header_filename, header);
 
-                File.WriteAllLines(class_id_filenames.data_filename, data);
+                io_proxy.WriteAllLines(class_id_filenames.data_filename, data);
             }
 
-            svm_ctl.WriteLine("finished saving...", nameof(dataset_loader), nameof(save_dataset));
+            io_proxy.WriteLine("finished saving...", nameof(dataset_loader), nameof(save_dataset));
         }
 
         public static void remove_empty_features(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2)
         {
-            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features));
+            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features));
 
             var empty_fids = new List<int>();
 
@@ -694,13 +697,13 @@ namespace svm_fs
                 remove_fids(dataset, empty_fids);
             }
 
-            svm_ctl.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features));
+            io_proxy.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features));
 
         }
 
         public static void remove_empty_features_by_class(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2, string stats_filename = null)
         {
-            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
+            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
             var save_stats = !string.IsNullOrWhiteSpace(stats_filename);
 
@@ -804,21 +807,21 @@ namespace svm_fs
                 remove_fids(dataset, empty_fids);
             }
 
-            svm_ctl.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features_by_class));
+            io_proxy.WriteLine($@"Removed features ({empty_fids.Count}): {string.Join(",", empty_fids)}", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
             if (save_stats)
             {
                 var data = new List<string>();
                 data.Add("cid,fid,num_distinct_values,num_values_zero,num_values_zero_pct,num_values_non_zero,num_values_non_zero_pct,overlap,overlap_pct,non_overlap,non_overlap_pct");
                 data.AddRange(class_stats.Select(a => $@"{a.cid},{a.fid},{a.num_distinct_values},{a.num_values_zero},{a.num_values_zero_pct},{a.num_values_non_zero},{a.num_values_non_zero_pct},{a.overlap},{a.overlap_pct},{a.non_overlap},{a.non_overlap_pct}").ToList());
-                File.WriteAllLines(stats_filename, data);
+                io_proxy.WriteAllLines(stats_filename, data);
             }
         }
 
 
         public static void remove_fids(dataset dataset, List<int> fids_to_remove)
         {
-            svm_ctl.WriteLine("...", nameof(dataset_loader), nameof(remove_fids));
+            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_fids));
 
             // removed given fids and renumber the headers/features
 
@@ -915,74 +918,7 @@ namespace svm_fs
             return result;
         }
 
-        public static string convert_path(string path, bool temp_file = false)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return path;
-            }
-
-            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
-            {
-                // convert windows path to linux
-                
-                if (path.Length >= 2 && char.IsLetter(path[0]) && path[1] == ':')
-                {
-                    path = '~' + path.Substring(2);
-                }
-
-                if (path.Length > 0 && path[0] == '~')
-                {
-                    // convert ~ to home directory
-                }
-            }
-            else if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                // convert linux path to windows
-
-                if ((path.Length == 1 && path[0] == '~') || (path.Length > 1 && path[0] == '~' && (path[1] == '\\' || path[1] == '/')))
-                {
-                    //var ad = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    //var up = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                    var md = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-                    var p = path.Substring(path.Length > 1 && (path[1] == '\\' || path[1] == '/') ? 2 : 1);
-
-                    if (!string.IsNullOrWhiteSpace(p))
-                    {
-                        path = Path.Combine(md, p);
-                    }
-                    else
-                    {
-                        path = md;
-                    }
-                }
-                else if (path.Length > 0 && (path[0] == '\\' || path[0] == '/') && (path.Length == 1 || (path[1] != '\\' && path[1] != '/')))
-                {
-                    if (path.StartsWith("/home") || path.StartsWith("\\home")) path = path.Substring("/home".Length);
-
-                    if (path.FirstOrDefault() == '/' || path.FirstOrDefault() == '\\') path = path.Substring(1);
-
-                    var md = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-                    path = Path.Combine(md, path);
-                }
-                //else if (path.StartsWith("/home"))
-                
-            }
-
-            if (Path.DirectorySeparatorChar != '\\' && path.Contains('\\'))
-            {
-                path = path.Replace('\\', Path.DirectorySeparatorChar);
-            }
-
-            if (Path.DirectorySeparatorChar != '/' && path.Contains('/'))
-            {
-                path = path.Replace('/', Path.DirectorySeparatorChar);
-            }
-
-            return path;
-        }
+       
 
 
         public static double fix_double(string double_value)

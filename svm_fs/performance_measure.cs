@@ -25,7 +25,7 @@ namespace svm_fs
         {
             public static List<confusion_matrix> load(string filename, int column_offset = 0)
             {
-                var lines = File.ReadAllLines(filename).ToList();
+                var lines = io_proxy.ReadAllLines(filename).ToList();
                 var h1 = confusion_matrix.csv_header;
                 var h = string.Join(",", h1);
                 lines = lines.Where(a => {
@@ -1984,7 +1984,7 @@ namespace svm_fs
 
             // method untested
 
-            var lines = files.Select((a,i) => (test_file_lines: File.ReadAllLines(a.test_file).ToList(), test_comments_file_lines: File.ReadAllLines(a.test_comments_file).ToList(), prediction_file_lines: File.ReadAllLines(a.prediction_file).ToList())).ToList();
+            var lines = files.Select((a,i) => (test_file_lines: io_proxy.ReadAllLines(a.test_file).ToList(), test_comments_file_lines: io_proxy.ReadAllLines(a.test_comments_file).ToList(), prediction_file_lines: io_proxy.ReadAllLines(a.prediction_file).ToList())).ToList();
 
             // prediction file MAY have a header, but only if probability estimates are enabled
 
@@ -2009,21 +2009,21 @@ namespace svm_fs
 
         public static List<prediction> load_prediction_file_regression_values(string test_file, string test_comments_file, string prediction_file)
         {
-            if (string.IsNullOrWhiteSpace(test_file) || !File.Exists(test_file) || new FileInfo(test_file).Length == 0)
+            if (string.IsNullOrWhiteSpace(test_file) || !io_proxy.Exists(test_file) || new FileInfo(test_file).Length == 0)
             {
                 throw new Exception($@"Error: Test data file not found: ""{test_file}"".");
             }
 
-            if (string.IsNullOrWhiteSpace(prediction_file) || !File.Exists(prediction_file) || new FileInfo(prediction_file).Length == 0)
+            if (string.IsNullOrWhiteSpace(prediction_file) || !io_proxy.Exists(prediction_file) || new FileInfo(prediction_file).Length == 0)
             {
                 throw new Exception($@"Error: Prediction output file not found: ""{prediction_file}"".");
             }
 
-            var test_file_lines = File.ReadAllLines(test_file).ToList();
+            var test_file_lines = io_proxy.ReadAllLines(test_file).ToList();
 
-            var test_comments_file_lines = !string.IsNullOrWhiteSpace(test_comments_file) ? File.ReadAllLines(test_comments_file).ToList() : null;
+            var test_comments_file_lines = !string.IsNullOrWhiteSpace(test_comments_file) ? io_proxy.ReadAllLines(test_comments_file).ToList() : null;
 
-            var prediction_file_lines = File.ReadAllLines(prediction_file).ToList();
+            var prediction_file_lines = io_proxy.ReadAllLines(prediction_file).ToList();
 
             return load_prediction_file_regression_values_from_text(test_file_lines, test_comments_file_lines, prediction_file_lines);
         }
@@ -2124,8 +2124,8 @@ namespace svm_fs
 
             //var param_list = new List<(string key, string value)>()
             //{
-            //    (nameof(test_file),test_file.ToString()),
-            //    (nameof(prediction_file),prediction_file.ToString()),
+            //    (nameof(test_file),test_io_proxy.ToString()),
+            //    (nameof(prediction_file),prediction_io_proxy.ToString()),
             //    (nameof(output_threshold_adjustment_performance),output_threshold_adjustment_performance.ToString()),
             //};
 

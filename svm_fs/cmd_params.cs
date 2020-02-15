@@ -121,7 +121,7 @@ namespace svm_fs
         public int new_group_count = 0;
         public bool group_features = true;
         public int group_index = -1;
-        public int inner_cv_folds = 10; // set to 0 to skip inner-cv
+        public int inner_cv_folds = 0;//10; // set to 0 to skip inner-cv
         public int iteration = -1;
         public int job_id = -1;
         public int outer_cv_index = -1;
@@ -150,25 +150,25 @@ namespace svm_fs
 
         public void convert_paths()
         {
-            this.options_filename        = dataset_loader.convert_path(this.options_filename);
-            this.pbs_ctl_stderr_filename = dataset_loader.convert_path(this.pbs_ctl_stderr_filename);
-            this.pbs_ctl_stdout_filename = dataset_loader.convert_path(this.pbs_ctl_stdout_filename);
-            this.pbs_wkr_stderr_filename = dataset_loader.convert_path(this.pbs_wkr_stderr_filename);
-            this.pbs_wkr_stdout_filename = dataset_loader.convert_path(this.pbs_wkr_stdout_filename);
+            this.options_filename        = io_proxy.convert_path(this.options_filename);
+            this.pbs_ctl_stderr_filename = io_proxy.convert_path(this.pbs_ctl_stderr_filename);
+            this.pbs_ctl_stdout_filename = io_proxy.convert_path(this.pbs_ctl_stdout_filename);
+            this.pbs_wkr_stderr_filename = io_proxy.convert_path(this.pbs_wkr_stderr_filename);
+            this.pbs_wkr_stdout_filename = io_proxy.convert_path(this.pbs_wkr_stdout_filename);
 
 
-            this.test_filename              = dataset_loader.convert_path(this.test_filename);
-            this.test_id_filename           = dataset_loader.convert_path(this.test_id_filename);
-            this.test_meta_filename         = dataset_loader.convert_path(this.test_meta_filename);
-            this.test_predict_cm_filename   = dataset_loader.convert_path(this.test_predict_cm_filename);
-            this.test_predict_filename      = dataset_loader.convert_path(this.test_predict_filename);
-            this.train_filename             = dataset_loader.convert_path(this.train_filename);
-            this.train_grid_filename        = dataset_loader.convert_path(this.train_grid_filename);
-            this.train_id_filename          = dataset_loader.convert_path(this.train_id_filename);
-            this.train_meta_filename        = dataset_loader.convert_path(this.train_meta_filename);
-            this.train_model_filename       = dataset_loader.convert_path(this.train_model_filename);
-            this.train_predict_cm_filename  = dataset_loader.convert_path(this.train_predict_cm_filename);
-            this.train_predict_filename     = dataset_loader.convert_path(this.train_predict_filename);
+            this.test_filename              = io_proxy.convert_path(this.test_filename);
+            this.test_id_filename           = io_proxy.convert_path(this.test_id_filename);
+            this.test_meta_filename         = io_proxy.convert_path(this.test_meta_filename);
+            this.test_predict_cm_filename   = io_proxy.convert_path(this.test_predict_cm_filename);
+            this.test_predict_filename      = io_proxy.convert_path(this.test_predict_filename);
+            this.train_filename             = io_proxy.convert_path(this.train_filename);
+            this.train_grid_filename        = io_proxy.convert_path(this.train_grid_filename);
+            this.train_id_filename          = io_proxy.convert_path(this.train_id_filename);
+            this.train_meta_filename        = io_proxy.convert_path(this.train_meta_filename);
+            this.train_model_filename       = io_proxy.convert_path(this.train_model_filename);
+            this.train_predict_cm_filename  = io_proxy.convert_path(this.train_predict_cm_filename);
+            this.train_predict_filename     = io_proxy.convert_path(this.train_predict_filename);
 
             var files = new List<string>()
             {
@@ -456,7 +456,7 @@ namespace svm_fs
             convert_paths();
         }
 
-        public cmd_params(string params_filename) : this(File.ReadAllLines(dataset_loader.convert_path(params_filename)))
+        public cmd_params(string params_filename) : this(io_proxy.ReadAllLines(io_proxy.convert_path(params_filename)))
         {
 
         }
@@ -488,7 +488,7 @@ namespace svm_fs
 
             // 165,1777 --> 132,132 + 33,177 -->
 
-            var args2 = params_file_data.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => (key: a.Substring(0, a.IndexOf('=')), value: a.Substring(a.IndexOf('=') + 1))).ToList();
+            var args2 = params_file_data.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => (key: a.Substring(0, a.IndexOf('=') > -1 ? a.IndexOf('=') : 0), value: a.Substring(a.IndexOf('=') > -1 ? a.IndexOf('=') + 1 : 0))).ToList();
 
 
 

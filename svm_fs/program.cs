@@ -32,7 +32,7 @@ namespace svm_fs
         //};
         //var e = Process.Start(psi);
         //var x = e.StandardOutput.ReadToEnd();
-        //svm_ctl.WriteLine("Read: " + x);
+        //io_proxy.WriteLine("Read: " + x);
         //return;
         //args = new string[] { $@"c:\temp\iteration_0\rand_0\outer_fold_0\group_0\0_0_0_0_0.options" };
 
@@ -40,17 +40,17 @@ namespace svm_fs
         {
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
-                svm_ctl.WriteLine($@"Console.CancelKeyPress", nameof(program), nameof(Main));
+                io_proxy.WriteLine($@"Console.CancelKeyPress", nameof(program), nameof(Main));
                 cts.Cancel();
             };
             AssemblyLoadContext.Default.Unloading += context =>
             {
-                svm_ctl.WriteLine($@"AssemblyLoadContext.Default.Unloading", nameof(program), nameof(Main));
+                io_proxy.WriteLine($@"AssemblyLoadContext.Default.Unloading", nameof(program), nameof(Main));
                 cts.Cancel();
             };
             AppDomain.CurrentDomain.ProcessExit += (sender, eventArgs) =>
             {
-                svm_ctl.WriteLine($@"AppDomain.CurrentDomain.ProcessExit", nameof(program), nameof(Main));
+                io_proxy.WriteLine($@"AppDomain.CurrentDomain.ProcessExit", nameof(program), nameof(Main));
                 cts.Cancel();
             };
         }
@@ -122,17 +122,17 @@ namespace svm_fs
                 }
 
                 var options_filename = args[options_index];
-                options_filename = dataset_loader.convert_path(options_filename);
+                options_filename = io_proxy.convert_path(options_filename);
 
                 if (svm_ctl.is_file_available(options_filename))
                 {
-                    var file_data = File.ReadAllLines(options_filename);
+                    var file_data = io_proxy.ReadAllLines(options_filename);
                     options = new cmd_params(file_data);
                     options.options_filename = options_filename;
                 }
                 else
                 {
-                    svm_ctl.WriteLine($"File not found: {options_filename}", nameof(program), nameof(Main));
+                    io_proxy.WriteLine($"File not found: {options_filename}", nameof(program), nameof(Main));
                     return;
                 }
             }
@@ -143,13 +143,13 @@ namespace svm_fs
                 var test_params = new cmd_params(options)
                 {
                     experiment_name = "program_test",
-                    options_filename = dataset_loader.convert_path(Path.Combine(options.pbs_ctl_submission_directory, $@"{nameof(svm_ctl)}.options")),
+                    options_filename = io_proxy.convert_path(Path.Combine(options.pbs_ctl_submission_directory, $@"{nameof(svm_ctl)}.options")),
                     cmd = cmd.ctl,
                 }.get_options_ini_text();
 
                 options = new cmd_params(test_params);
 
-                File.WriteAllLines(options.options_filename, options.get_options_ini_text());
+                io_proxy.WriteAllLines(options.options_filename, options.get_options_ini_text());
             }
 
             if (bootstrap)
@@ -185,7 +185,7 @@ namespace svm_fs
             
             sw_program.Stop();
             
-            svm_ctl.WriteLine($@"Exiting {(bootstrap?"bootstrap":"job")}: {options.cmd}. Elapsed: {sw_program.Elapsed.ToString()}", nameof(program), nameof(Main));
+            io_proxy.WriteLine($@"Exiting {(bootstrap?"bootstrap":"job")}: {options.cmd}. Elapsed: {sw_program.Elapsed.ToString()}", nameof(program), nameof(Main));
         }
 
     }

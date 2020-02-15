@@ -182,7 +182,7 @@ namespace svm_fs
             //p.group_count = 0;
 
             // Load dataset
-            //svm_ctl.WriteLine("Start: Loading dataset...");
+            //io_proxy.WriteLine("Start: Loading dataset...");
 
 
 
@@ -211,7 +211,7 @@ namespace svm_fs
 
 
 
-            //svm_ctl.WriteLine("End: Loading dataset...");
+            //io_proxy.WriteLine("End: Loading dataset...");
 
             var class_ids = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().ToList();
 
@@ -244,16 +244,16 @@ namespace svm_fs
 
             if (group_keys.Count != group_keys_distinct.Count) throw new Exception();
 
-            svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            svm_ctl.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
 
             groups = groups.Take(10).ToList();
 
             //group count -- total groups currently selected/testing
             //feature count -- total features currently selected/testing
 
-            svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            svm_ctl.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
 
             var iteration_index = -1;
             var winning_iteration = 0;
@@ -283,8 +283,8 @@ namespace svm_fs
             var limit_iteration_not_better_than_last = 5;
             var limit_iteration_not_better_than_all = 10;
 
-            var root_folder = dataset_loader.convert_path(p.results_root_folder);
-            var summary_fn = dataset_loader.convert_path(Path.Combine(root_folder, "summary.csv"));
+            var root_folder = io_proxy.convert_path(p.results_root_folder);
+            var summary_fn = io_proxy.convert_path(Path.Combine(root_folder, "summary.csv"));
 
             var summary_lines = new List<string>();
 
@@ -292,9 +292,9 @@ namespace svm_fs
 
             do
             {
-                svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
-                svm_ctl.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
-                svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
 
 
                 highest_score_last_iteration_group_index = highest_score_this_iteration_group_index;
@@ -313,20 +313,20 @@ namespace svm_fs
                 sw_iteration.Start();
 
 
-                var iteration_folder = dataset_loader.convert_path(Path.Combine(root_folder, $"itr_{iteration_index}"));
-                var checkpoint_fn = dataset_loader.convert_path(Path.Combine(iteration_folder, $@"{nameof(currently_selected_group_indexes)}.txt"));
-                var previous_tests_fn = dataset_loader.convert_path(Path.Combine(iteration_folder, $@"previous_tests.txt"));
+                var iteration_folder = io_proxy.convert_path(Path.Combine(root_folder, $"itr_{iteration_index}"));
+                var checkpoint_fn = io_proxy.convert_path(Path.Combine(iteration_folder, $@"{nameof(currently_selected_group_indexes)}.txt"));
+                var previous_tests_fn = io_proxy.convert_path(Path.Combine(iteration_folder, $@"previous_tests.txt"));
 
                 if (is_file_available(checkpoint_fn))
                 {
-                    svm_ctl.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(interactive));
 
 
                     currently_selected_group_indexes.Clear();
                     highest_scoring_group_indexes.Clear();
 
-                    var checkpoint_data1 = File.ReadAllLines(checkpoint_fn);
-                    var previous_tests_data = File.ReadAllLines(previous_tests_fn);
+                    var checkpoint_data1 = io_proxy.ReadAllLines(checkpoint_fn);
+                    var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn);
                     previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b, CultureInfo.InvariantCulture)).ToList()).ToList();
 
                     foreach (var cpd in checkpoint_data1)
@@ -407,11 +407,11 @@ namespace svm_fs
                     // 2. selected features
 
 
-                    //svm_ctl.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
+                    //io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
-                    svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
 
                     //score_improved = false;
                     //var _iteration_index = iteration_index;
@@ -437,7 +437,7 @@ namespace svm_fs
                             // do not remove if the only selected feature 
                             if (currently_selected_group_indexes.Count == 1)
                             {
-                                svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1", nameof(svm_ctl), nameof(interactive));
+                                io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1", nameof(svm_ctl), nameof(interactive));
 
                                 return default;
                             }
@@ -446,7 +446,7 @@ namespace svm_fs
                             // do not remove if was just added
                             if (highest_score_last_iteration_group_index == group_index)
                             {
-                                svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index", nameof(svm_ctl), nameof(interactive));
+                                io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index", nameof(svm_ctl), nameof(interactive));
 
                                 return default;
                             }
@@ -461,7 +461,7 @@ namespace svm_fs
                         if (already_tested)
                         {
 
-                            svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}", nameof(svm_ctl), nameof(interactive));
+                            io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}", nameof(svm_ctl), nameof(interactive));
 
                             return default;
                         }
@@ -503,15 +503,15 @@ namespace svm_fs
 
                     }).ToList();
 
-                    svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
 
                     jobs_group_level = jobs_group_level.Where(a => a != default).ToList();
 
                     if (jobs_group_level == null || jobs_group_level.Count == 0)
                     {
-                        svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(interactive));
 
                         break;
                     }
@@ -523,7 +523,7 @@ namespace svm_fs
 
                     if (cm_inputs == null || cm_inputs.Count <= 0)
                     {
-                        svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}: cm_inputs == null || cm_inputs.Count <= 0", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: cm_inputs == null || cm_inputs.Count <= 0", nameof(svm_ctl), nameof(interactive));
 
                         break;
                     }
@@ -584,8 +584,8 @@ namespace svm_fs
                         highest_scoring_group_indexes = currently_selected_group_indexes.ToList();
                     }
 
-                    svm_ctl.WriteLine($@"Score {(score_better_than_last ? "improved" : "not improved")} from last iteration; score {(score_better_than_last ? "increased" : "decreased")} by {score_increase_from_last} from {highest_score_last_iteration} to {highest_score_this_iteration}.", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine($@"Best score {(score_better_than_last ? "is" : "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Score {(score_better_than_last ? "improved" : "not improved")} from last iteration; score {(score_better_than_last ? "increased" : "decreased")} by {score_increase_from_last} from {highest_score_last_iteration} to {highest_score_this_iteration}.", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Best score {(score_better_than_last ? "is" : "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(interactive));
 
                     // highest_score_last_iteration
 
@@ -598,10 +598,10 @@ namespace svm_fs
                     // 3. per feature: output cm (all results combined into one prediction file)
                     // 4. all features: output cm with features ordered by predictive ability rank
 
-                    svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
-                    svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-                    //svm_ctl.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+                    //io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
 
                     sw_iteration.Stop();
@@ -636,9 +636,9 @@ namespace svm_fs
                     checkpoint_data.AddRange(winner.cmd_params.get_options().Select(a => ($"p_{a.key}", a.value)).ToList());
                     //checkpoint_data.AddRange(winner.cms.);
 
-                    File.WriteAllLines(checkpoint_fn, checkpoint_data.Select(a => $"{a.key}={a.value}").ToList());
+                    io_proxy.WriteAllLines(checkpoint_fn, checkpoint_data.Select(a => $"{a.key}={a.value}").ToList());
 
-                    //var summary_fn = dataset_loader.convert_path(Path.Combine(iteration_folder, "summary.csv"));
+                    //var summary_fn = io_proxy.convert_path(Path.Combine(iteration_folder, "summary.csv"));
 
 
 
@@ -650,10 +650,10 @@ namespace svm_fs
 
                     winner.cms.cm_list.ForEach(c => summary_lines.Add($"{string.Join(",", checkpoint_data.Select(a => a.value).ToList())},{c.ToString()}"));
 
-                    File.WriteAllLines(summary_fn, summary_lines);
+                    io_proxy.WriteAllLines(summary_fn, summary_lines);
 
                     var previous_tests_data = previous_tests.Select(a => string.Join(";", a)).ToList();
-                    File.WriteAllLines(previous_tests_fn, previous_tests_data);
+                    io_proxy.WriteAllLines(previous_tests_fn, previous_tests_data);
 
                 }
 
@@ -661,11 +661,11 @@ namespace svm_fs
                 // route taken 
 
 
-                svm_ctl.WriteLine($@"score_better_than_last = {score_better_than_last}", nameof(svm_ctl), nameof(interactive));
-                svm_ctl.WriteLine($@"(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all) = {(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all)}", nameof(svm_ctl), nameof(interactive));
-                svm_ctl.WriteLine($@"currently_selected_group_indexes.Count < groups.Count = {currently_selected_group_indexes.Count < groups.Count}", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"score_better_than_last = {score_better_than_last}", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all) = {(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all)}", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"currently_selected_group_indexes.Count < groups.Count = {currently_selected_group_indexes.Count < groups.Count}", nameof(svm_ctl), nameof(interactive));
 
-                svm_ctl.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
 
             }
@@ -680,13 +680,13 @@ namespace svm_fs
 
             );
 
-            svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-            svm_ctl.WriteLine($@"Finished after {iteration_index} iterations", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"Finished after {iteration_index} iterations", nameof(svm_ctl), nameof(interactive));
 
-            svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-            svm_ctl.WriteLine($@"Winning iteration: {winning_iteration}", nameof(svm_ctl), nameof(interactive));
-            svm_ctl.WriteLine($@"Winning score: {highest_score_all_iteration}", nameof(svm_ctl), nameof(interactive));
-            svm_ctl.WriteLine($@"Winning group indexes: {string.Join(", ", highest_scoring_group_indexes)}", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"Winning iteration: {winning_iteration}", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"Winning score: {highest_score_all_iteration}", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"Winning group indexes: {string.Join(", ", highest_scoring_group_indexes)}", nameof(svm_ctl), nameof(interactive));
 
 
             // todo: save final list
@@ -694,9 +694,9 @@ namespace svm_fs
             var final_list_fn = Path.Combine(root_folder, "final_list.csv");
             var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";").Replace("(", "").Replace(")", "")},{string.Join(";", groups[a].columns)}").ToList();
             fl.Insert(0, "group_index,group_key,columns");
-            File.WriteAllLines(final_list_fn, fl);
+            io_proxy.WriteAllLines(final_list_fn, fl);
 
-            svm_ctl.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
 
 
             // after finding winning solution, check performance with different kernels and scaling methods
@@ -711,7 +711,7 @@ namespace svm_fs
                 var scale_functions = ((common.scale_function[])Enum.GetValues(typeof(common.scale_function))).Where(a => a != common.scale_function.none).ToList();
 
 
-                svm_ctl.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
 
                 iteration_index++;
                 var jobs_group_level1 = Enumerable.Range(0, kernel_types.Count).AsParallel().AsOrdered().Select(kernel_index =>
@@ -756,7 +756,7 @@ namespace svm_fs
 
                 var jobs_group_level0 = jobs_group_level1.Where(a => a != default).SelectMany(a => a.Where(b => b != default).ToList()).ToList();
 
-                svm_ctl.WriteLine($@"Finished to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"Finished to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
 
                 //foreach (common.libsvm_kernel_type kernel_type in Enum.GetValues(typeof(common.libsvm_kernel_type)))
                 //{
@@ -770,11 +770,11 @@ namespace svm_fs
                 // get ranks by kernel/scaling
 
 
-                var iteration_folder1 = dataset_loader.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+                var iteration_folder1 = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
                 var cm_inputs1 = get_cm_inputs(p, jobs_group_level0, groups, iteration_folder1, iteration_index);
 
-                svm_ctl.WriteLine($@"Finished ranking the highest scoring group...", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"Finished ranking the highest scoring group...", nameof(svm_ctl), nameof(interactive));
             }
 
             // output winner details
@@ -812,9 +812,9 @@ namespace svm_fs
                 score: a.cms.cm_list.Where(b => ranking_metric_params.feature_selection_classes == null || ranking_metric_params.feature_selection_classes.Count == 0 || ranking_metric_params.feature_selection_classes.Contains(b.class_id.Value))
                     .Average(b => b.get_perf_value_strings().Where(c => ranking_metric_params.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value)))).ToList();
 
-            svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            ranked_scores.ForEach(a => svm_ctl.WriteLine($"Rank index: {a.rank_index}, score: {a.score}, group_index: {a.group_index}, item: {a.group_key}", nameof(svm_ctl), nameof(interactive)));
-            svm_ctl.WriteLine("", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+            ranked_scores.ForEach(a => io_proxy.WriteLine($"Rank index: {a.rank_index}, score: {a.score}, group_index: {a.group_index}, item: {a.group_key}", nameof(svm_ctl), nameof(interactive)));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
 
 
 
@@ -831,8 +831,8 @@ namespace svm_fs
                 var cms_csv = cm_inputs.SelectMany(a => a.cms.cm_list.Select(b => $"{string.Join(",", a.cmd_params.get_options().Select(c => c.value).ToList())},{b.ToString()}").ToList()).ToList();
                 cms_csv.Insert(0, cms_header);
 
-                File.WriteAllLines(ranks_fn, cms_csv);
-                svm_ctl.WriteLine($"Saving: {ranks_fn}", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteAllLines(ranks_fn, cms_csv);
+                io_proxy.WriteLine($"Saving: {ranks_fn}", nameof(svm_ctl), nameof(interactive));
             }
 
             return cm_inputs;
@@ -871,7 +871,7 @@ namespace svm_fs
                 List<int> this_test_group_indexes = default
                 )
         {
-            svm_ctl.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv));
+            io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv));
 
             query_cols = query_cols.ToList();
 
@@ -1037,7 +1037,7 @@ namespace svm_fs
             //var cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
 
 
-            //var iteration_folder = dataset_loader.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+            //var iteration_folder = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
             // wait for results
             var wait_file_list = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.wait_file_list).ToList()).ToList();
@@ -1077,9 +1077,9 @@ namespace svm_fs
                     cm_data.AddRange(item.cms.cm_list.Select(a => $"{string.Join(",", item.cmd_params.get_options().Select(c => c.value).ToList())},{a.ToString()}").ToList());
 
 
-                    File.WriteAllLines(fn, cm_data);
+                    io_proxy.WriteAllLines(fn, cm_data);
 
-                    svm_ctl.WriteLine("Saved merged cm: " + fn, nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("Saved merged cm: " + fn, nameof(svm_ctl), nameof(interactive));
                 }
             }
 
@@ -1094,21 +1094,21 @@ namespace svm_fs
 
         public static void delete_temp_files(cmd_params p)
         {
-            //try { File.Delete(p.options_filename); } catch (Exception) { }
-            //try { File.Delete(p.pbs_stderr_filename); } catch (Exception) { }
-            //try { File.Delete(p.pbs_stdout_filename); } catch (Exception) { }
-            try { File.Delete(p.test_filename); } catch (Exception) { }
-            try { File.Delete(p.test_id_filename); } catch (Exception) { }
-            try { File.Delete(p.test_meta_filename); } catch (Exception) { }
-            //try { File.Delete(p.test_predict_cm_filename); } catch (Exception) { }
-            try { File.Delete(p.test_predict_filename); } catch (Exception) { }
-            try { File.Delete(p.train_filename); } catch (Exception) { }
-            try { File.Delete(p.train_grid_filename); } catch (Exception) { }
-            try { File.Delete(p.train_id_filename); } catch (Exception) { }
-            try { File.Delete(p.train_meta_filename); } catch (Exception) { }
-            try { File.Delete(p.train_model_filename); } catch (Exception) { }
-            //try { File.Delete(p.train_predict_cm_filename); } catch (Exception) { }
-            try { File.Delete(p.train_predict_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.options_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.pbs_stderr_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.pbs_stdout_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_id_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_meta_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_predict_cm_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_predict_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_grid_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_id_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_meta_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_model_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_predict_cm_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_predict_filename); } catch (Exception) { }
         }
 
         public static void delete_temp_files(List<cmd_params> cmd_params_list)
@@ -1130,7 +1130,7 @@ namespace svm_fs
 
                 var list = t.ToList();
 
-                var read = list.SelectMany((a, i) => File.ReadAllLines(a.merge_in_filename).Skip((i == 0 || !a.has_header) ? 0 : 1).ToList()).ToList();
+                var read = list.SelectMany((a, i) => io_proxy.ReadAllLines(a.merge_in_filename).Skip((i == 0 || !a.has_header) ? 0 : 1).ToList()).ToList();
 
                 var av_head = list.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.average_header)).average_header;
 
@@ -1231,14 +1231,14 @@ namespace svm_fs
                     }
 
                     //var fn2 = key.average_out_filename;
-                    //File.WriteAllLines(fn2, lines_data);
-                    //svm_ctl.WriteLine("Saved: " + fn2);
+                    //io_proxy.WriteAllLines(fn2, lines_data);
+                    //io_proxy.WriteLine("Saved: " + fn2);
                     read.AddRange(lines_data);
                 }
 
 
-                File.WriteAllLines(fn, read);
-                svm_ctl.WriteLine("Saved merged results: " + fn, nameof(svm_ctl), nameof(merge_post_results));
+                io_proxy.WriteAllLines(fn, read);
+                io_proxy.WriteLine("Saved merged results: " + fn, nameof(svm_ctl), nameof(merge_post_results));
             }
         }
 
@@ -1253,11 +1253,11 @@ namespace svm_fs
 
                 var list = t.ToList();
 
-                var read = list.SelectMany((a, i) => File.ReadAllLines(a.merge_in_filename).Skip(i == 0 || !a.has_header ? 0 : 1).ToList()).ToList();
+                var read = list.SelectMany((a, i) => io_proxy.ReadAllLines(a.merge_in_filename).Skip(i == 0 || !a.has_header ? 0 : 1).ToList()).ToList();
 
 
-                File.WriteAllLines(fn, read);
-                svm_ctl.WriteLine("Saved merged inputs: " + fn, nameof(svm_ctl), nameof(merge_pre_results));
+                io_proxy.WriteAllLines(fn, read);
+                io_proxy.WriteLine("Saved merged inputs: " + fn, nameof(svm_ctl), nameof(merge_pre_results));
             }
         }
 
@@ -1302,7 +1302,7 @@ namespace svm_fs
             ) job
         )
         {
-            svm_ctl.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_job));
+            io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_job));
 
             //var cmds = new List<string>();
             var wait_file_list = new List<string>();
@@ -1317,7 +1317,7 @@ namespace svm_fs
                         job.group_key.source, job.group_key.group, job.group_key.member, job.group_key.perspective,
             }.Select(a => string.IsNullOrWhiteSpace(a) ? "_" : a).ToArray());
 
-            var iteration_folder = dataset_loader.convert_path(Path.Combine(p.results_root_folder, $"itr_{job.iteration_index}"));
+            var iteration_folder = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{job.iteration_index}"));
 
             var group_folder = Path.Combine(p.results_root_folder, $"itr_{job.iteration_index}", $"grp_{group_str}", $"svm_{p.svm_type}_krnl_{p.svm_kernel}_scale_{p.scale_function}");
             var outer_fold_folder = Path.Combine(group_folder, $"rnd_{job.randomisation_cv_index}_ocvfld_{job.outer_cv_index}");
@@ -1392,86 +1392,86 @@ namespace svm_fs
 
             if (!is_file_available(cmd_params.options_filename))
             {
-                File.WriteAllLines(cmd_params.options_filename, options_text);
-                svm_ctl.WriteLine("Saved options: " + cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.options_filename, options_text);
+                io_proxy.WriteLine("Saved options: " + cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached options: " + cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached options: " + cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
             }
 
             if (!is_file_available(cmd_params.train_filename))
             {
-                File.WriteAllLines(cmd_params.train_filename, job.training_text);
-                svm_ctl.WriteLine("Saved training data: " + cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.train_filename, job.training_text);
+                io_proxy.WriteLine("Saved training data: " + cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached training data: " + cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached training data: " + cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
 
 
             }
 
             if (!is_file_available(cmd_params.train_id_filename))
             {
-                File.WriteAllLines(cmd_params.train_id_filename, job.training_id_text);
-                svm_ctl.WriteLine("Saved training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.train_id_filename, job.training_id_text);
+                io_proxy.WriteLine("Saved training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
 
 
             }
 
             if (!is_file_available(cmd_params.train_meta_filename))
             {
-                File.WriteAllLines(cmd_params.train_meta_filename, job.training_meta_text);
-                svm_ctl.WriteLine("Saved training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.train_meta_filename, job.training_meta_text);
+                io_proxy.WriteLine("Saved training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
 
             }
 
             if (!is_file_available(cmd_params.test_filename))
             {
-                File.WriteAllLines(cmd_params.test_filename, job.testing_text);
-                svm_ctl.WriteLine("Saved testing data: " + cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.test_filename, job.testing_text);
+                io_proxy.WriteLine("Saved testing data: " + cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached testing data: " + cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached testing data: " + cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
 
             }
 
             if (!is_file_available(cmd_params.test_id_filename))
             {
-                File.WriteAllLines(cmd_params.test_id_filename, job.testing_id_text);
-                svm_ctl.WriteLine("Saved testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.test_id_filename, job.testing_id_text);
+                io_proxy.WriteLine("Saved testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
 
             }
 
             if (!is_file_available(cmd_params.test_meta_filename))
             {
-                File.WriteAllLines(cmd_params.test_meta_filename, job.testing_meta_text);
-                svm_ctl.WriteLine("Saved testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteAllLines(cmd_params.test_meta_filename, job.testing_meta_text);
+                io_proxy.WriteLine("Saved testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                svm_ctl.WriteLine("Using cached testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine("Using cached testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
 
 
             }
@@ -1557,12 +1557,12 @@ namespace svm_fs
             if (cmd_params.cmd == cmd.ctl) sub_dir = cmd_params.pbs_ctl_submission_directory;
             if (cmd_params.cmd == cmd.wkr) sub_dir = cmd_params.pbs_wkr_submission_directory;
 
-            var source = dataset_loader.convert_path(cmd_params.options_filename);
-            var dest = dataset_loader.convert_path(Path.Combine(Path.GetDirectoryName(sub_dir), Path.GetFileName(cmd_params.options_filename)));
+            var source = io_proxy.convert_path(cmd_params.options_filename);
+            var dest = io_proxy.convert_path(Path.Combine(Path.GetDirectoryName(sub_dir), Path.GetFileName(cmd_params.options_filename)));
 
             if (source != dest)
             {
-                File.Copy(source, dest);
+                io_proxy.Copy(source, dest);
             }
 
             //var psi = new ProcessStartInfo()
@@ -1636,7 +1636,7 @@ namespace svm_fs
         //                cm_lines.Add(cm.ToString());
         //            }
         //
-        //            File.WriteAllLines(cm_output_file, cm_lines);
+        //            io_proxy.WriteAllLines(cm_output_file, cm_lines);
         //        }
 
         public static bool is_file_available(string filename)
@@ -1645,7 +1645,7 @@ namespace svm_fs
             {
                 if (string.IsNullOrWhiteSpace(filename)) return false;
 
-                if (!File.Exists(filename)) return false;
+                if (!io_proxy.Exists(filename)) return false;
 
                 if (new FileInfo(filename).Length <= 0) return false;
 
@@ -1683,7 +1683,7 @@ namespace svm_fs
 
         public static void wait_for_results(List<string> file_wait_list)
         {
-            svm_ctl.WriteLine($@"Waiting for {file_wait_list.Count} files.", nameof(svm_ctl), nameof(wait_for_results));
+            io_proxy.WriteLine($@"Waiting for {file_wait_list.Count} files.", nameof(svm_ctl), nameof(wait_for_results));
 
             if (file_wait_list == null || file_wait_list.Count == 0) return;
 
@@ -1711,10 +1711,10 @@ namespace svm_fs
                 {
                     itr = 0;
 
-                    svm_ctl.WriteLine("New files found: ", nameof(svm_ctl), nameof(wait_for_results));
+                    io_proxy.WriteLine("New files found: ", nameof(svm_ctl), nameof(wait_for_results));
                     for (var j = 0; j < new_files_found.Count; j++)
                     {
-                        svm_ctl.WriteLine($@"({j}): {new_files_found[j]}", nameof(svm_ctl), nameof(wait_for_results));
+                        io_proxy.WriteLine($@"({j}): {new_files_found[j]}", nameof(svm_ctl), nameof(wait_for_results));
                     }
 
 
@@ -1726,7 +1726,7 @@ namespace svm_fs
 
                     var pct = ((double)total_found / (double)total_files) * (double)100;
 
-                    svm_ctl.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
+                    io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
                 }
                 else if (itr >= 6)
                 {
@@ -1734,7 +1734,7 @@ namespace svm_fs
 
                     var pct = ((double)total_found / (double)total_files) * (double)100;
 
-                    svm_ctl.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
+                    io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
 
                 }
 
