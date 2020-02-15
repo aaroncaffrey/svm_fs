@@ -701,7 +701,7 @@ namespace svm_fs
 
             // after finding winning solution, check performance with different kernels and scaling methods
 
-            var find_best_params = false;
+            var find_best_params = true;
 
             if (find_best_params)
             {
@@ -727,6 +727,7 @@ namespace svm_fs
                         p2.scale_function = scale_function;
                         p2.iteration = -1;
 
+                        io_proxy.WriteLine($@"Trying kernel {p2.svm_kernel} with scale function {p2.scale_function} ", nameof(svm_ctl), nameof(interactive));
 
                         var currently_selected_groups = highest_scoring_group_indexes.Select(a => groups[a]).ToList();
                         var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
