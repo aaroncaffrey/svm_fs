@@ -20,7 +20,7 @@ namespace svm_fs
             //var path = Path.GetDirectoryName(filename);
             //var file = Path.GetFileName(filename);
 
-            var invalid = $"?%*:|<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\ as it is full paths input
+            var invalid = $"?%*|<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
 
             var filename2 = string.Join("", filename.Select(a => invalid.Any(b => a == b) ? '_' : a).ToList());
 

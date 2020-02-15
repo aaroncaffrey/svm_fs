@@ -1,4 +1,6 @@
-rm -rf ~/svm_fs/svm_fs/pbs_sub
+rm -rf ~/svm_fs/svm_fs/pbs_ctl_sub
+rm -rf ~/svm_fs/svm_fs/pbs_wkr_sub
+rm -rf ~/svm_fs/svm_fs/pbs_ldr_sub
 rm -rf ~/svm_fs/svm_fs/results
 rm -rf ~/svm_fs/svm_fs/obj
 rm -rf ~/svm_fs/svm_fs/bin
