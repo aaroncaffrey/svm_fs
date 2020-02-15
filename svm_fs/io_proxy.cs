@@ -76,9 +76,28 @@ namespace svm_fs
                 path = path.Replace('/', Path.DirectorySeparatorChar);
             }
 
+            // remove invalid chars
             var invalid = $"?%*|<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
 
             path = string.Join("", path.Select(a => invalid.Any(b => a == b) ? '_' : a).ToList()).Trim();
+
+            // make sure no part is more than 255 length
+
+            var path_split = path.Split(new char[] { '\\', '/' });
+            if (path_split.Any(a=> a.Length > 255))
+            {
+                var end_slash = path.Last() == '\\' || path.Last() == '/' ? "" + path.Last() : "";
+                
+                for (var i = 0; i < path_split.Length; i++)
+                {
+                    if (path_split[i].Length > 255)
+                    {
+                        path_split[i] = path_split[i].Substring(0, 255);
+                    }
+                }
+
+                path = end_slash.Length == 0 ? Path.Combine(path_split) : Path.Combine(path_split) + end_slash;
+            }
 
             return path;
         }

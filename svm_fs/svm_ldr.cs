@@ -115,6 +115,8 @@ namespace svm_fs
 
                         io_proxy.WriteLine($@"jobs completed: {num_jobs_completed}; jobs incomplete: {num_jobs_incompleted}, jobs other: {num_jobs_other}, jobs not started: {num_jobs_not_started}", nameof(svm_ldr), nameof(svm_ldr.status_task));
 
+                        finish_marker_files = finish_marker_files.Where(a => a.state != 0).ToList();
+
                         if (num_jobs_completed_svm_ctl > 0)
                         {
                             cts.Cancel();
@@ -122,7 +124,7 @@ namespace svm_fs
                         }
                     }
 
-                    Task.Delay(new TimeSpan(0, 0, 1, 0)).Wait();
+                    Task.Delay(new TimeSpan(0, 0, 0, 30)).Wait();
                 }
             });
 
