@@ -247,13 +247,13 @@ namespace svm_fs
             io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
             io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
 
-            groups = groups.Take(10).ToList();
+            //groups = groups.Take(10).ToList();
 
             //group count -- total groups currently selected/testing
             //feature count -- total features currently selected/testing
 
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
+            //io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+            //io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
 
             var iteration_index = -1;
             var winning_iteration = 0;
@@ -708,7 +708,7 @@ namespace svm_fs
                 // todo: make it do this for the winning iteration (rather than the last iteration)
 
                 var kernel_types = ((common.libsvm_kernel_type[])Enum.GetValues(typeof(common.libsvm_kernel_type))).Where(a => a != common.libsvm_kernel_type.precomputed).ToList();
-                var scale_functions = ((common.scale_function[])Enum.GetValues(typeof(common.scale_function))).Where(a => a != common.scale_function.none).ToList();
+                var scale_functions = ((common.scale_function[])Enum.GetValues(typeof(common.scale_function)))/*.Where(a => a != common.scale_function.none)*/.ToList();
 
 
                 io_proxy.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
