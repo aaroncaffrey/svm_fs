@@ -261,7 +261,7 @@ namespace svm_fs
 
             if (use_parallel)
             {
-                dataset_comment_row_values = dataset_comment_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*header line*/).AsParallel().AsOrdered().Select((line, line_index) => {
+                dataset_comment_row_values = dataset_comment_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename, nameof(dataset_loader), nameof(read_binary_dataset)).Skip(1/*header line*/).AsParallel().AsOrdered().Select((line, line_index) => {
 
                     var comment_columns = line.Split(',').Select((col, col_index) => (comment_header: data_comments_header[col_index], comment_value: col)).ToList();
                     comment_columns = comment_columns.Where(d => d.comment_header.FirstOrDefault() != '#').ToList();
@@ -273,7 +273,7 @@ namespace svm_fs
             }
             else
             {
-                dataset_comment_row_values = dataset_comment_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*header line*/).Select((line, line_index) => {
+                dataset_comment_row_values = dataset_comment_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename, nameof(dataset_loader), nameof(read_binary_dataset)).Skip(1/*header line*/).Select((line, line_index) => {
 
                     var comment_columns = line.Split(',').Select((col, col_index) => (comment_header: data_comments_header[col_index], comment_value: col)).ToList();
                     comment_columns = comment_columns.Where(d => d.comment_header.FirstOrDefault() != '#').ToList();
@@ -301,7 +301,7 @@ namespace svm_fs
             io_proxy.WriteLine($@"Reading data...", nameof(dataset_loader), nameof(read_binary_dataset));
             if (use_parallel)
             {
-                dataset_instance_list = dataset_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*skip header*/).AsParallel().AsOrdered().Select((line, line_index) =>
+                dataset_instance_list = dataset_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename, nameof(dataset_loader), nameof(read_binary_dataset)).Skip(1/*skip header*/).AsParallel().AsOrdered().Select((line, line_index) =>
                 {
                     var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
@@ -326,7 +326,7 @@ namespace svm_fs
             }
             else
             {
-                dataset_instance_list = dataset_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename).Skip(1/*skip header*/)./*Take(20).*/Select((line, line_index) =>
+                dataset_instance_list = dataset_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename, nameof(dataset_loader), nameof(read_binary_dataset)).Skip(1/*skip header*/)./*Take(20).*/Select((line, line_index) =>
                 {
                     var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);

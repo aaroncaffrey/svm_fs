@@ -77,9 +77,9 @@ namespace svm_fs
             }
 
             // remove invalid chars
-            var invalid = $"?%*|<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
-
-            path = string.Join("", path.Select(a => invalid.Any(b => a == b) ? '_' : a).ToList()).Trim();
+            //var invalid = $"?%*|¦<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
+            const string valid = ":\\/.qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789_-+()[]";
+            path = string.Join("", path.Select(a => !valid.Any(b => a == b) ? '_' : a).ToList());
 
             // make sure no part is more than 255 length
 

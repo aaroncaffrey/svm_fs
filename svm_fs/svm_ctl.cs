@@ -313,9 +313,9 @@ namespace svm_fs
                 sw_iteration.Start();
 
 
-                var iteration_folder = io_proxy.convert_path(Path.Combine(root_folder, $"itr_{iteration_index}"));
-                var checkpoint_fn = io_proxy.convert_path(Path.Combine(iteration_folder, $@"{nameof(currently_selected_group_indexes)}.txt"));
-                var previous_tests_fn = io_proxy.convert_path(Path.Combine(iteration_folder, $@"previous_tests.txt"));
+                var iteration_folder =   Path.Combine(p.results_root_folder, $@"itr_{iteration_index}");
+                var checkpoint_fn =      Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"{nameof(currently_selected_group_indexes)}.txt");
+                var previous_tests_fn =  Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"previous_tests.txt");
 
                 if (is_file_available(checkpoint_fn))
                 {
@@ -325,8 +325,8 @@ namespace svm_fs
                     currently_selected_group_indexes.Clear();
                     highest_scoring_group_indexes.Clear();
 
-                    var checkpoint_data1 = io_proxy.ReadAllLines(checkpoint_fn);
-                    var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn);
+                    var checkpoint_data1 =    io_proxy.ReadAllLines(checkpoint_fn, nameof(svm_ctl), nameof(interactive));
+                    var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn, nameof(svm_ctl), nameof(interactive));
                     previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b, CultureInfo.InvariantCulture)).ToList()).ToList();
 
                     foreach (var cpd in checkpoint_data1)
@@ -1131,7 +1131,7 @@ namespace svm_fs
 
                 var list = t.ToList();
 
-                var read = list.SelectMany((a, i) => io_proxy.ReadAllLines(a.merge_in_filename).Skip((i == 0 || !a.has_header) ? 0 : 1).ToList()).ToList();
+                var read = list.SelectMany((a, i) => io_proxy.ReadAllLines(a.merge_in_filename, nameof(svm_ctl), nameof(merge_post_results)).Skip((i == 0 || !a.has_header) ? 0 : 1).ToList()).ToList();
 
                 var av_head = list.FirstOrDefault(a => !string.IsNullOrWhiteSpace(a.average_header)).average_header;
 
@@ -1254,7 +1254,7 @@ namespace svm_fs
 
                 var list = t.ToList();
 
-                var read = list.SelectMany((a, i) => io_proxy.ReadAllLines(a.merge_in_filename).Skip(i == 0 || !a.has_header ? 0 : 1).ToList()).ToList();
+                var read = list.SelectMany((a, i) => io_proxy.ReadAllLines(a.merge_in_filename, nameof(svm_ctl), nameof(merge_pre_results)).Skip(i == 0 || !a.has_header ? 0 : 1).ToList()).ToList();
 
 
                 io_proxy.WriteAllLines(fn, read);
@@ -1312,16 +1312,16 @@ namespace svm_fs
             var to_merge = new List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)>();
             // each job is 1 outer-cv fold ... 1 grid search ... 1 prediction ... 1 fold cm  
 
-            var group_str = string.Join(".", new string[]
-            {
-                        job.group_key.alphabet, job.group_key.dimension, job.group_key.category,
-                        job.group_key.source, job.group_key.group, job.group_key.member, job.group_key.perspective,
-            }.Select(a => string.IsNullOrWhiteSpace(a) ? "_" : a).ToArray());
+            //var group_str = string.Join(".", new string[]
+            //{
+            //            job.group_key.alphabet, job.group_key.dimension, job.group_key.category,
+            //            job.group_key.source, job.group_key.group, job.group_key.member, job.group_key.perspective,
+            //}.Select(a => string.IsNullOrWhiteSpace(a) ? "_" : a).ToArray()); // todo: if used in future, also remove any invalid filename chars
 
-            var iteration_folder = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{job.iteration_index}"));
-
-            var group_folder = Path.Combine(p.results_root_folder, $"itr_{job.iteration_index}", $"grp_{group_str}", $"svm_{p.svm_type}_krnl_{p.svm_kernel}_scale_{p.scale_function}");
-            var outer_fold_folder = Path.Combine(group_folder, $"rnd_{job.randomisation_cv_index}_ocvfld_{job.outer_cv_index}");
+            var iteration_folder =  Path.Combine(p.results_root_folder, $@"itr_{job.iteration_index}");
+            var group_folder =      Path.Combine(p.results_root_folder, $@"itr_{job.iteration_index}", $@"grp_{job.group_index}", $@"svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}");
+            var outer_fold_folder = Path.Combine(p.results_root_folder, $@"itr_{job.iteration_index}", $@"grp_{job.group_index}", $@"svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}", $@"rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}");
+            
             var job_output_folder = outer_fold_folder;
             var merge_output_folder = group_folder;
 
@@ -1329,7 +1329,9 @@ namespace svm_fs
             Directory.CreateDirectory(group_folder);
             Directory.CreateDirectory(outer_fold_folder);
 
-            var filename = $"itr_{job.iteration_index}_grp_{job.group_index}_rnd_{job.randomisation_cv_index}_ocvfld_{job.outer_cv_index}_svm_{p.svm_type}_krnl_{p.svm_kernel}_scale_{p.scale_function}";//"_job_{job.job_id}";
+
+            // /home/k1040015/itr_0/grp_0/svm_0_kl_0_sl_0/rnd_0_cv_0/itr_0_grp_0_rnd_0_cv_0_svm_0_kl_0_sl_0
+            var filename = $@"itr_{job.iteration_index}_grp_{job.group_index}_svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}_rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}";//"_job_{job.job_id}";
 
             var pbs_jobname = $@"{nameof(svm_wkr)}_{job.job_id}";
             var pbs_walltime = new TimeSpan(0, 30, 0);
@@ -1499,9 +1501,9 @@ namespace svm_fs
                 }
             }
 
-            //var merge_filename = $"itr_{job.iteration_index}_grp_{job.group_index}_rnd_{job.randomisation_cv_index}_ocvfld_{job.outer_cv_index}_svm_{p.svm_type}_krnl_{p.svm_kernel}_scale_{p.scale_function}";//"_job_{job.job_id}";
+            //var merge_filename = $"itr_{job.iteration_index}_grp_{job.group_index}_rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}_svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}";//"_job_{job.job_id}";
 
-            var merge_filename = $"itr_{job.iteration_index}_grp_{job.group_index}_svm_{p.svm_type}_krnl_{p.svm_kernel}_scale_{p.scale_function}"; // note: randomsiations are included as part of the outer-cv, not separate results ... if wanted seperate use: _{job.randomisation}"; // note: no job id
+            var merge_filename = $"itr_{job.iteration_index}_grp_{job.group_index}_svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}"; // note: randomsiations are included as part of the outer-cv, not separate results ... if wanted seperate use: _{job.randomisation}"; // note: no job id
 
             var merge_cmd_params = new cmd_params(cmd_params)
             {

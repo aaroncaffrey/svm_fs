@@ -1984,7 +1984,7 @@ namespace svm_fs
 
             // method untested
 
-            var lines = files.Select((a,i) => (test_file_lines: io_proxy.ReadAllLines(a.test_file).ToList(), test_comments_file_lines: io_proxy.ReadAllLines(a.test_comments_file).ToList(), prediction_file_lines: io_proxy.ReadAllLines(a.prediction_file).ToList())).ToList();
+            var lines = files.Select((a,i) => (test_file_lines: io_proxy.ReadAllLines(a.test_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList(), test_comments_file_lines: io_proxy.ReadAllLines(a.test_comments_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList(), prediction_file_lines: io_proxy.ReadAllLines(a.prediction_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList())).ToList();
 
             // prediction file MAY have a header, but only if probability estimates are enabled
 
@@ -2009,21 +2009,31 @@ namespace svm_fs
 
         public static List<prediction> load_prediction_file_regression_values(string test_file, string test_comments_file, string prediction_file)
         {
-            if (string.IsNullOrWhiteSpace(test_file) || !io_proxy.Exists(test_file, nameof(performance_measure), nameof(load_prediction_file)) || new FileInfo(test_file).Length == 0)
+            if (string.IsNullOrWhiteSpace(test_file) || !io_proxy.Exists(test_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)) || new FileInfo(test_file).Length == 0)
             {
                 throw new Exception($@"Error: Test data file not found: ""{test_file}"".");
             }
 
-            if (string.IsNullOrWhiteSpace(prediction_file) || !io_proxy.Exists(prediction_file, nameof(performance_measure), nameof(load_prediction_file)) || new FileInfo(prediction_file).Length == 0)
+            if (!svm_ctl.is_file_available(test_file))
+            {
+                throw new Exception($@"Error: Test data file not available for access: ""{test_file}"".");
+            }
+
+            if (string.IsNullOrWhiteSpace(prediction_file) || !io_proxy.Exists(prediction_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)) || new FileInfo(prediction_file).Length == 0)
             {
                 throw new Exception($@"Error: Prediction output file not found: ""{prediction_file}"".");
             }
 
-            var test_file_lines = io_proxy.ReadAllLines(test_file).ToList();
+            if (!svm_ctl.is_file_available(prediction_file))
+            {
+                throw new Exception($@"Error: Prediction output file not available for access: ""{prediction_file}"".");
+            }
 
-            var test_comments_file_lines = !string.IsNullOrWhiteSpace(test_comments_file) ? io_proxy.ReadAllLines(test_comments_file).ToList() : null;
+            var test_file_lines = io_proxy.ReadAllLines(test_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList();
 
-            var prediction_file_lines = io_proxy.ReadAllLines(prediction_file).ToList();
+            var test_comments_file_lines = !string.IsNullOrWhiteSpace(test_comments_file) ? io_proxy.ReadAllLines(test_comments_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList() : null;
+
+            var prediction_file_lines = io_proxy.ReadAllLines(prediction_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList();
 
             return load_prediction_file_regression_values_from_text(test_file_lines, test_comments_file_lines, prediction_file_lines);
         }

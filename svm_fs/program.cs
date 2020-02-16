@@ -109,7 +109,7 @@ namespace svm_fs
                 {
                     var ot = options.get_options_ini_text().ToList();
 
-                    ot.ForEach(a => Console.WriteLine(a));
+                    ot.ForEach(a => io_proxy.WriteLine(a));
 
                     return;
                     
@@ -126,7 +126,7 @@ namespace svm_fs
 
                 if (svm_ctl.is_file_available(options_filename))
                 {
-                    var file_data = io_proxy.ReadAllLines(options_filename);
+                    var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
                     options = new cmd_params(file_data);
                     options.options_filename = options_filename;
                 }

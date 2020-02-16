@@ -245,7 +245,7 @@ namespace svm_fs
 
                     try
                     {
-                        fd = io_proxy.ReadAllLines(options_file);
+                        fd = io_proxy.ReadAllLines(options_file, nameof(svm_ldr), nameof(run_worker_jobs));
                         
                     }
                     catch (Exception)

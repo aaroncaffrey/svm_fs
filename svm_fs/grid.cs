@@ -30,7 +30,7 @@ namespace svm_fs
             {
                 //var grid = new List<(double cost, double gamma, double epsilon, double coef0, double degree, double rate)>();
 
-                cache = io_proxy.ReadAllLines(cache_train_grid_csv).Skip(1).Select(a =>
+                cache = io_proxy.ReadAllLines(cache_train_grid_csv, nameof(grid), nameof(read_cache)).Skip(1).Select(a =>
                 {
                     try
                     {

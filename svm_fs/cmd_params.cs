@@ -456,7 +456,7 @@ namespace svm_fs
             convert_paths();
         }
 
-        public cmd_params(string params_filename) : this(io_proxy.ReadAllLines(io_proxy.convert_path(params_filename)))
+        public cmd_params(string params_filename) : this(io_proxy.ReadAllLines(io_proxy.convert_path(params_filename), nameof(cmd_params), nameof(cmd_params)))
         {
 
         }
