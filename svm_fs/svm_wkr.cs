@@ -8,21 +8,20 @@ namespace svm_fs
 {
     public static class svm_wkr
     {
-        
-
         public static void cross_validation(cmd_params p)
         {
             var cached = true;
 
-            if (!svm_ctl.is_file_available(p.test_predict_cm_filename)) { cached = false; }
-            if (!svm_ctl.is_file_available(p.test_predict_filename)) { cached = false; }
-            if (!svm_ctl.is_file_available(p.test_filename)) { cached = false; }
-            if (!svm_ctl.is_file_available(p.train_model_filename)) { cached = false; }
-            if (!svm_ctl.is_file_available(p.test_meta_filename)) { cached = false; }
-            if (!svm_ctl.is_file_available(p.train_grid_filename)) { cached = false; }
+            if (!io_proxy.is_file_available(p.test_predict_cm_filename)) { cached = false; }
+            //if (!io_proxy.is_file_available(p.test_predict_filename)) { cached = false; }
+            //if (!io_proxy.is_file_available(p.test_filename)) { cached = false; }
+            //if (!io_proxy.is_file_available(p.train_model_filename)) { cached = false; }
+            //if (p.save_test_meta && !io_proxy.is_file_available(p.test_meta_filename)) { cached = false; }
+            //if (p.inner_cv_folds > 1 && !io_proxy.is_file_available(p.train_grid_filename)) { cached = false; }
 
             if (cached)
             {
+                delete_temp_wkr_files(p);
                 return;
             }
             
@@ -136,7 +135,7 @@ namespace svm_fs
             if (!string.IsNullOrWhiteSpace(predict_result.stderr)) io_proxy.WriteLine(predict_result.stderr, nameof(svm_wkr), nameof(cross_validation));
 
 
-            var prediction_file_data = performance_measure.load_prediction_file(p.test_filename, p.test_meta_filename, p.test_predict_filename, p.output_threshold_adjustment_performance);
+            var prediction_file_data = performance_measure.load_prediction_file(p.test_filename, p.save_test_meta ? p.test_meta_filename : null, p.test_predict_filename, p.output_threshold_adjustment_performance);
 
 
             svm_ctl.update_cm(p, prediction_file_data.cm_list);
@@ -172,25 +171,32 @@ namespace svm_fs
             }
             io_proxy.WriteAllLines(p.test_predict_cm_filename, cm_lines);
 
+            delete_temp_wkr_files(p);
+            // report finished
+            // rename output files
+        }
 
-            //try { io_proxy.Delete(p.options_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.pbs_stderr_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.pbs_stdout_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_id_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_meta_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_predict_cm_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_predict_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.train_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.train_grid_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.train_id_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.train_meta_filename); } catch (Exception) { }
-            //try { io_proxy.Delete(p.train_model_filename); } catch (Exception) { }
+        public static void delete_temp_wkr_files(cmd_params p)
+        {
+            try { io_proxy.Delete(p.options_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.pbs_wkr_stderr_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.pbs_wkr_stdout_filename); } catch (Exception) { }
+            
+            try { io_proxy.Delete(p.train_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_model_filename); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_filename); } catch (Exception) { }
+
+            try { if (p.save_test_id) io_proxy.Delete(p.test_id_filename); } catch (Exception) { }
+            try { if (p.save_test_meta) io_proxy.Delete(p.test_meta_filename); } catch (Exception) { }
+            try { if (p.save_train_id) io_proxy.Delete(p.train_id_filename); } catch (Exception) { }
+            try { if (p.save_train_meta) io_proxy.Delete(p.train_meta_filename); } catch (Exception) { }
+            
             //try { io_proxy.Delete(p.train_predict_cm_filename); } catch (Exception) { }
             //try { io_proxy.Delete(p.train_predict_filename); } catch (Exception) { }
 
-            // report finished
-            // rename output files
+            //try { io_proxy.Delete(p.train_grid_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_predict_cm_filename); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_predict_filename); } catch (Exception) { }
         }
     }
 }

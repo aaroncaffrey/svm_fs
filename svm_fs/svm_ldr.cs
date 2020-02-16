@@ -77,7 +77,7 @@ namespace svm_fs
                     {
                         try
                         {
-                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available ? a.was_available : svm_ctl.is_file_available(a.finish_maker_filename), a.state)).ToList();
+                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available ? a.was_available : io_proxy.is_file_available(a.finish_maker_filename), a.state)).ToList();
                         }
                         catch (Exception)
                         {
@@ -104,7 +104,7 @@ namespace svm_fs
                             try { io_proxy.Delete(jc.job_id_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
                             try { io_proxy.Delete(jc.finish_maker_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
                             try { io_proxy.Delete(jc.pbs_script_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
-                            //try { io_proxy.Delete(jc.options_filename); } catch (Exception) { }
+                            //try { io_proxy.Delete(jc.options_filename); } catch (Exception) { } // deleted elsewhere
                         }
 
                         var num_jobs_completed_svm_ctl = finish_marker_files.Count(a => a.cmd==cmd.ctl && a.state == 0);
@@ -178,7 +178,7 @@ namespace svm_fs
 
             job_id_filename = io_proxy.convert_path(job_id_filename);
 
-            if (svm_ctl.is_file_available(job_id_filename))
+            if (io_proxy.is_file_available(job_id_filename))
             {
                 job_id = io_proxy.ReadAllText(job_id_filename).Trim().Split().LastOrDefault();
             }
@@ -294,7 +294,7 @@ namespace svm_fs
             var pbs_script_filename = io_proxy.convert_path($@"{options.options_filename}.pbs");
             var pbs_finish_marker_filename = io_proxy.convert_path($@"{options.options_filename}.fin");
 
-            if (svm_ctl.is_file_available(job_id_filename) || svm_ctl.is_file_available(pbs_finish_marker_filename))
+            if (io_proxy.is_file_available(job_id_filename) || io_proxy.is_file_available(pbs_finish_marker_filename))
             {
                 return default;
             }

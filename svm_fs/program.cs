@@ -124,7 +124,7 @@ namespace svm_fs
                 var options_filename = args[options_index];
                 options_filename = io_proxy.convert_path(options_filename);
 
-                if (svm_ctl.is_file_available(options_filename))
+                if (io_proxy.is_file_available(options_filename))
                 {
                     var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
                     options = new cmd_params(file_data);

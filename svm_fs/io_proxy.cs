@@ -10,7 +10,36 @@ namespace svm_fs
 {
     public static class io_proxy
     {
-        public static string convert_path(string path, bool temp_file = false)
+        public static bool is_file_available(string filename)
+        {
+            try
+            {
+                filename = io_proxy.convert_path(filename);
+
+                if (string.IsNullOrWhiteSpace(filename)) return false;
+
+                if (!io_proxy.Exists(filename, nameof(svm_ctl), nameof(is_file_available))) return false;
+
+                if (new FileInfo(filename).Length <= 0) return false;
+
+                using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                {
+
+                }
+
+                return true;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static string convert_path(string path)//, bool temp_file = false)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -134,7 +163,7 @@ namespace svm_fs
 
         public static bool Exists(string filename, string module_name = "", string function_name = "")
         {
-            filename=convert_path(filename);
+            filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Exists));
 
             return File.Exists(filename);
@@ -146,24 +175,50 @@ namespace svm_fs
 
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
 
-            File.Delete(filename);
+            try
+            {
+                File.Delete(filename);
+            }
+            catch (Exception e)
+            { 
+                    WriteLine(e.ToString(), nameof(io_proxy), nameof(Delete));
+
+            }
         }
 
-        public static void Copy(string source, string dest, bool overwrite = false, string module_name = "", string function_name = "")
+        public static void Copy(string source, string dest, bool overwrite = false, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             source = convert_path(source);
             dest = convert_path(dest);
 
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} )", nameof(io_proxy), nameof(Copy));
 
-            File.Copy(source, dest, overwrite);
+            var tries = 0;
+
+            while (true)
+            {
+                try
+                {
+                    tries++;
+                    
+                    File.Copy(source, dest, overwrite);
+                }
+                catch (Exception e)
+                {
+                    WriteLine(e.ToString(), nameof(io_proxy), nameof(Copy));
+
+                    if (tries >= max_tries) throw;
+
+                    Task.Delay(new TimeSpan(0, 0, 10)).Wait();
+                }
+            }
         }
 
         public static void CreateDirectory(string filename, string module_name = "", string function_name = "")
         {
             filename = convert_path(filename);
 
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
+            //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
 
             var dir = Path.GetDirectoryName(filename);
 
@@ -177,15 +232,19 @@ namespace svm_fs
             }
         }
 
-        public static string[] ReadAllLines(string filename, string module_name = "", string function_name = "")
+        public static string[] ReadAllLines(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllLines));
+
+            int tries = 0;
 
             while (true)
             {
                 try
                 {
+                    tries++;
+
                     var ret = File.ReadAllLines(filename);
 
                     return ret;
@@ -193,6 +252,9 @@ namespace svm_fs
                 catch (Exception e)
                 {
                     WriteLine(e.ToString(), nameof(io_proxy), nameof(ReadAllLines));
+
+                    if (tries >= max_tries) throw;
+
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }
@@ -200,15 +262,19 @@ namespace svm_fs
 
 
 
-        public static string ReadAllText(string filename, string module_name = "", string function_name = "")
+        public static string ReadAllText(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllText));
+
+            int tries = 0;
 
             while (true)
             {
                 try
                 {
+                    tries++;
+
                     var ret = File.ReadAllText(filename);
 
                     return ret;
@@ -216,95 +282,120 @@ namespace svm_fs
                 catch (Exception e)
                 {
                     WriteLine(e.ToString(), nameof(io_proxy), nameof(ReadAllText));
+
+                    if (tries >= max_tries) throw;
+
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }
         }
 
 
-        public static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "")
+        public static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllLines));
 
             CreateDirectory(filename, module_name, function_name);
 
+            var tries = 0;
+
             while (true)
             {
                 try
                 {
+                    tries++;
+
                     File.WriteAllLines(filename, lines);
                     return;
                 }
                 catch (Exception e)
                 {
                     WriteLine(e.ToString(), nameof(io_proxy), nameof(WriteAllLines));
+
+                    if (tries >= max_tries) throw;
+
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }
         }
 
-        public static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "")
+        public static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllLines));
 
             CreateDirectory(filename, module_name, function_name);
 
+            var tries = 0;
             while (true)
             {
                 try
                 {
+                    tries++;
                     File.AppendAllLines(filename, lines);
                     return;
                 }
                 catch (Exception e)
                 {
                     WriteLine(e.ToString(), nameof(io_proxy), nameof(AppendAllLines));
+
+                    if (tries >= max_tries) throw;
+
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }
         }
 
-        public static void AppendAllText(string filename, string text, string module_name = "", string function_name = "")
+        public static void AppendAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllText));
 
             CreateDirectory(filename, module_name, function_name);
 
+            var tries = 0;
             while (true)
             {
                 try
                 {
+                    tries++;
                     File.AppendAllText(filename, text);
                     return;
                 }
                 catch (Exception e)
                 {
                     WriteLine(e.ToString(), nameof(io_proxy), nameof(AppendAllText));
+
+                    if (tries >= max_tries) throw;
+
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }
         }
 
-        public static void WriteAllText(string filename, string text, string module_name = "", string function_name = "")
+        public static void WriteAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllText));
 
             CreateDirectory(filename, module_name, function_name);
 
+            var tries = 0;
             while (true)
             {
                 try
                 {
+                    tries++;
                     File.WriteAllText(filename, text);
                     return;
                 }
                 catch (Exception e)
                 {
                     WriteLine(e.ToString(), nameof(io_proxy), nameof(WriteAllText));
+
+                    if (tries >= max_tries) throw;
+
                     Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
                 }
             }

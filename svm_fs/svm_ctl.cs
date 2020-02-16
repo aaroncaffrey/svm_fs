@@ -317,7 +317,7 @@ namespace svm_fs
                 var checkpoint_fn =      Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"{nameof(currently_selected_group_indexes)}.txt");
                 var previous_tests_fn =  Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"previous_tests.txt");
 
-                if (is_file_available(checkpoint_fn))
+                if (io_proxy.is_file_available(checkpoint_fn))
                 {
                     io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(interactive));
 
@@ -826,7 +826,7 @@ namespace svm_fs
                 ranks_fn = Path.Combine(iteration_folder, $@"ranks_cm_{iteration_index}.csv");
             }
 
-            if (!is_file_available(ranks_fn))
+            if (!io_proxy.is_file_available(ranks_fn))
             {
                 var cms_header = $"{string.Join(",", cmd_params.csv_header)},{string.Join(",", performance_measure.confusion_matrix.csv_header)}";
                 var cms_csv = cm_inputs.SelectMany(a => a.cms.cm_list.Select(b => $"{string.Join(",", a.cmd_params.get_options().Select(c => c.value).ToList())},{b.ToString()}").ToList()).ToList();
@@ -1070,7 +1070,7 @@ namespace svm_fs
                 var item = merge_cm_inputs[i];
 
                 var fn = item.filenames.cm_file;
-                if (!is_file_available(fn))
+                if (!io_proxy.is_file_available(fn))
                 {
 
                     var cm_data = new List<string>();
@@ -1127,7 +1127,7 @@ namespace svm_fs
                 var key = t.Key;
                 var fn = key.merge_out_filename;
 
-                if (is_file_available(fn)) continue;
+                if (io_proxy.is_file_available(fn)) continue;
 
                 var list = t.ToList();
 
@@ -1250,7 +1250,7 @@ namespace svm_fs
                 var key = t.Key;
                 var fn = key;
 
-                if (is_file_available(fn)) continue;
+                if (io_proxy.is_file_available(fn)) continue;
 
                 var list = t.ToList();
 
@@ -1305,11 +1305,10 @@ namespace svm_fs
         {
             io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_job));
 
-            //var cmds = new List<string>();
-            var wait_file_list = new List<string>();
+            //var merge_param_list = new List<cmd_params>();
 
-            var merge_param_list = new List<cmd_params>();
-            var to_merge = new List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)>();
+            //var cmds = new List<string>();
+
             // each job is 1 outer-cv fold ... 1 grid search ... 1 prediction ... 1 fold cm  
 
             //var group_str = string.Join(".", new string[]
@@ -1393,7 +1392,7 @@ namespace svm_fs
 
             var cached = true;
 
-            if (!is_file_available(cmd_params.options_filename))
+            if (!io_proxy.is_file_available(cmd_params.options_filename))
             {
                 io_proxy.WriteAllLines(cmd_params.options_filename, options_text);
                 io_proxy.WriteLine("Saved options: " + cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
@@ -1404,7 +1403,7 @@ namespace svm_fs
                 io_proxy.WriteLine("Using cached options: " + cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
             }
 
-            if (!is_file_available(cmd_params.train_filename))
+            if (!io_proxy.is_file_available(cmd_params.train_filename))
             {
                 io_proxy.WriteAllLines(cmd_params.train_filename, job.training_text);
                 io_proxy.WriteLine("Saved training data: " + cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
@@ -1413,36 +1412,37 @@ namespace svm_fs
             else
             {
                 io_proxy.WriteLine("Using cached training data: " + cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
-
-
             }
 
-            if (!is_file_available(cmd_params.train_id_filename))
+            if (p.save_train_id)
             {
-                io_proxy.WriteAllLines(cmd_params.train_id_filename, job.training_id_text);
-                io_proxy.WriteLine("Saved training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
-                cached = false;
+                if (!io_proxy.is_file_available(cmd_params.train_id_filename))
+                {
+                    io_proxy.WriteAllLines(cmd_params.train_id_filename, job.training_id_text);
+                    io_proxy.WriteLine("Saved training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
+                    cached = false;
+                }
+                else
+                {
+                    io_proxy.WriteLine("Using cached training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
+                }
             }
-            else
+
+            if (p.save_train_meta)
             {
-                io_proxy.WriteLine("Using cached training ids: " + cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
-
-
+                if (!io_proxy.is_file_available(cmd_params.train_meta_filename))
+                {
+                    io_proxy.WriteAllLines(cmd_params.train_meta_filename, job.training_meta_text);
+                    io_proxy.WriteLine("Saved training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
+                    cached = false;
+                }
+                else
+                {
+                    io_proxy.WriteLine("Using cached training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
+                }
             }
 
-            if (!is_file_available(cmd_params.train_meta_filename))
-            {
-                io_proxy.WriteAllLines(cmd_params.train_meta_filename, job.training_meta_text);
-                io_proxy.WriteLine("Saved training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
-                cached = false;
-            }
-            else
-            {
-                io_proxy.WriteLine("Using cached training meta: " + cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
-
-            }
-
-            if (!is_file_available(cmd_params.test_filename))
+            if (!io_proxy.is_file_available(cmd_params.test_filename))
             {
                 io_proxy.WriteAllLines(cmd_params.test_filename, job.testing_text);
                 io_proxy.WriteLine("Saved testing data: " + cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
@@ -1451,41 +1451,45 @@ namespace svm_fs
             else
             {
                 io_proxy.WriteLine("Using cached testing data: " + cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
-
             }
 
-            if (!is_file_available(cmd_params.test_id_filename))
+            if (p.save_test_id)
             {
-                io_proxy.WriteAllLines(cmd_params.test_id_filename, job.testing_id_text);
-                io_proxy.WriteLine("Saved testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
-                cached = false;
+                if (!io_proxy.is_file_available(cmd_params.test_id_filename))
+                {
+                    io_proxy.WriteAllLines(cmd_params.test_id_filename, job.testing_id_text);
+                    io_proxy.WriteLine("Saved testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
+                    cached = false;
+                }
+                else
+                {
+                    io_proxy.WriteLine("Using cached testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
+                }
             }
-            else
+
+            if (p.save_test_meta)
             {
-                io_proxy.WriteLine("Using cached testing ids: " + cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
-
-            }
-
-            if (!is_file_available(cmd_params.test_meta_filename))
-            {
-                io_proxy.WriteAllLines(cmd_params.test_meta_filename, job.testing_meta_text);
-                io_proxy.WriteLine("Saved testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
-                cached = false;
-            }
-            else
-            {
-                io_proxy.WriteLine("Using cached testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
-
-
+                if (!io_proxy.is_file_available(cmd_params.test_meta_filename))
+                {
+                    io_proxy.WriteAllLines(cmd_params.test_meta_filename, job.testing_meta_text);
+                    io_proxy.WriteLine("Saved testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
+                    cached = false;
+                }
+                else
+                {
+                    io_proxy.WriteLine("Using cached testing meta: " + cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
+                }
             }
             //cmds.Add($@"start cmd /c {cmd_params.program_runtime} -j {cmd_params.options_filename}");
+
+            var wait_file_list = new List<string>();
 
             if (cmd_params.inner_cv_folds > 1)
             {
                 wait_file_list.Add(cmd_params.train_grid_filename);
             }
 
-            wait_file_list.Add(cmd_params.train_model_filename);
+            //wait_file_list.Add(cmd_params.train_model_filename);
             wait_file_list.Add(cmd_params.test_predict_filename);
             wait_file_list.Add(cmd_params.test_predict_cm_filename);
 
@@ -1493,7 +1497,7 @@ namespace svm_fs
             {
                 foreach (var f in wait_file_list)
                 {
-                    if (!is_file_available(f))
+                    if (!io_proxy.is_file_available(f))
                     {
                         cached = false;
                         break;
@@ -1526,14 +1530,16 @@ namespace svm_fs
 
             merge_cmd_params.convert_paths();
 
-            if (cmd_params.inner_cv_folds > 1)
-            {
-                to_merge.Add((true, true, null, merge_cmd_params.train_grid_filename, cmd_params.train_grid_filename, null));
-            }
+            var to_merge = new List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)>();
 
+            if (p.save_train_id) { to_merge.Add((false, true, null, merge_cmd_params.train_id_filename, cmd_params.train_id_filename, null)); }
+            if (p.save_train_meta) { to_merge.Add((false, true, null, merge_cmd_params.train_meta_filename, cmd_params.train_meta_filename, null)); }
+
+            if (p.save_test_id) { to_merge.Add((false, true, null, merge_cmd_params.test_id_filename, cmd_params.test_id_filename, null)); }
+            if (p.save_test_meta) { to_merge.Add((false, true, null, merge_cmd_params.test_meta_filename, cmd_params.test_meta_filename, null)); }
+
+            if (cmd_params.inner_cv_folds > 1) { to_merge.Add((true, true, null, merge_cmd_params.train_grid_filename, cmd_params.train_grid_filename, null)); }
             to_merge.Add((false, false, null, merge_cmd_params.test_filename, cmd_params.test_filename, null));
-            to_merge.Add((false, true, null, merge_cmd_params.test_id_filename, cmd_params.test_id_filename, null));
-            to_merge.Add((false, true, null, merge_cmd_params.test_meta_filename, cmd_params.test_meta_filename, null));
             to_merge.Add((true, p.libsvm_train_probability_estimates, null, merge_cmd_params.test_predict_filename, cmd_params.test_predict_filename, null));
             to_merge.Add((true, true, null, merge_cmd_params.test_predict_cm_filename, cmd_params.test_predict_cm_filename, "class_id"));
 
@@ -1642,32 +1648,7 @@ namespace svm_fs
         //            io_proxy.WriteAllLines(cm_output_file, cm_lines);
         //        }
 
-        public static bool is_file_available(string filename)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(filename)) return false;
-
-                if (!io_proxy.Exists(filename, nameof(svm_ctl), nameof(is_file_available))) return false;
-
-                if (new FileInfo(filename).Length <= 0) return false;
-
-                using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-                {
-
-                }
-
-                return true;
-            }
-            catch (IOException)
-            {
-                return false;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
+        
 
         public static TimeSpan calc_eta(Stopwatch sw, int current_amount, int total_amount)
         {
@@ -1708,7 +1689,7 @@ namespace svm_fs
             {
                 itr++;
 
-                var new_files_found = file_wait_list.Where(a => is_file_available(a)).ToList();
+                var new_files_found = file_wait_list.Where(a => io_proxy.is_file_available(a)).ToList();
 
                 if (new_files_found.Count > 0)
                 {

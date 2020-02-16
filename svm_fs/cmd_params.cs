@@ -147,6 +147,10 @@ namespace svm_fs
         public string train_predict_cm_filename;
         public string train_predict_filename;
 
+        public bool save_test_meta = false;
+        public bool save_test_id = false;
+        public bool save_train_meta = false;
+        public bool save_train_id = false;
 
         public void convert_paths()
         {
@@ -215,6 +219,12 @@ namespace svm_fs
 
         public cmd_params(List<cmd_params> p)
         {
+            if (p.Select(a => a.save_test_id).Distinct().Count() == 1) this.save_test_id = p.FirstOrDefault().save_test_id;
+            if (p.Select(a => a.save_test_meta).Distinct().Count() == 1) this.save_test_meta = p.FirstOrDefault().save_test_meta;
+
+            if (p.Select(a => a.save_train_id).Distinct().Count() == 1) this.save_train_id = p.FirstOrDefault().save_train_id;
+            if (p.Select(a => a.save_train_meta).Distinct().Count() == 1) this.save_train_meta = p.FirstOrDefault().save_train_meta;
+
             if (p.Select(a => a.pbs_ctl_walltime).Distinct().Count() == 1) this.pbs_ctl_walltime = p.FirstOrDefault().pbs_ctl_walltime;
             if (p.Select(a => a.pbs_ctl_jobname).Distinct().Count() == 1) this.pbs_ctl_jobname = p.FirstOrDefault().pbs_ctl_jobname;
             if (p.Select(a => a.pbs_ctl_mail_opt).Distinct().Count() == 1) this.pbs_ctl_mail_opt = p.FirstOrDefault().pbs_ctl_mail_opt;
@@ -336,6 +346,13 @@ namespace svm_fs
 
         public cmd_params(cmd_params p)
         {
+            this.save_test_id = p.save_test_id;
+            this.save_test_meta = p.save_test_meta;
+
+            this.save_train_id = p.save_train_id;
+            this.save_train_meta = p.save_train_meta;
+
+
             this.pbs_ctl_walltime = p.pbs_ctl_walltime;
             this.pbs_ctl_jobname = p.pbs_ctl_jobname;
             this.pbs_ctl_mail_opt = p.pbs_ctl_mail_opt;
@@ -490,6 +507,10 @@ namespace svm_fs
 
             var args2 = params_file_data.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => (key: a.Substring(0, a.IndexOf('=') > -1 ? a.IndexOf('=') : 0), value: a.Substring(a.IndexOf('=') > -1 ? a.IndexOf('=') + 1 : 0))).ToList();
 
+            if (args2.Any(a => a.key == nameof(save_test_meta) && !string.IsNullOrWhiteSpace(a.value))) save_test_meta = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(save_test_meta)).value);
+            if (args2.Any(a => a.key == nameof(save_test_id) && !string.IsNullOrWhiteSpace(a.value))) save_test_id = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(save_test_id)).value);
+            if (args2.Any(a => a.key == nameof(save_train_meta) && !string.IsNullOrWhiteSpace(a.value))) save_train_meta = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(save_train_meta)).value);
+            if (args2.Any(a => a.key == nameof(save_train_id) && !string.IsNullOrWhiteSpace(a.value))) save_train_id = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(save_train_id)).value);
 
 
 
@@ -770,6 +791,12 @@ namespace svm_fs
                 nameof(train_model_filename),
                 nameof(train_predict_cm_filename),
                 nameof(train_predict_filename),
+
+                nameof(save_test_id),
+                nameof(save_test_meta),
+
+                nameof(save_train_id),
+                nameof(save_train_meta),
             };
 
 
@@ -899,6 +926,13 @@ namespace svm_fs
                 (nameof(train_model_filename), train_model_filename),
                 (nameof(train_predict_cm_filename), train_predict_cm_filename),
                 (nameof(train_predict_filename), train_predict_filename),
+
+                (nameof(save_test_id), save_test_id.ToString()),
+                (nameof(save_test_meta), save_test_meta.ToString()),
+
+                (nameof(save_train_id), save_train_id.ToString()),
+                (nameof(save_train_meta), save_train_meta.ToString())
+
             };
 
             //return string.Join(" ", list.Select(a => $"-{a.key} {a.value}").ToList());

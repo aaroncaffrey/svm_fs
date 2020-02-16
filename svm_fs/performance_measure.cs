@@ -2014,7 +2014,7 @@ namespace svm_fs
                 throw new Exception($@"Error: Test data file not found: ""{test_file}"".");
             }
 
-            if (!svm_ctl.is_file_available(test_file))
+            if (!io_proxy.is_file_available(test_file))
             {
                 throw new Exception($@"Error: Test data file not available for access: ""{test_file}"".");
             }
@@ -2024,14 +2024,14 @@ namespace svm_fs
                 throw new Exception($@"Error: Prediction output file not found: ""{prediction_file}"".");
             }
 
-            if (!svm_ctl.is_file_available(prediction_file))
+            if (!io_proxy.is_file_available(prediction_file))
             {
                 throw new Exception($@"Error: Prediction output file not available for access: ""{prediction_file}"".");
             }
 
             var test_file_lines = io_proxy.ReadAllLines(test_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList();
 
-            var test_comments_file_lines = !string.IsNullOrWhiteSpace(test_comments_file) ? io_proxy.ReadAllLines(test_comments_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList() : null;
+            var test_comments_file_lines = !string.IsNullOrWhiteSpace(test_comments_file) && io_proxy.Exists(test_comments_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)) ? io_proxy.ReadAllLines(test_comments_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList() : null;
 
             var prediction_file_lines = io_proxy.ReadAllLines(prediction_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)).ToList();
 
