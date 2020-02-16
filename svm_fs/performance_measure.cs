@@ -2040,6 +2040,16 @@ namespace svm_fs
 
         public static List<prediction> load_prediction_file_regression_values_from_text(List<string> test_file_lines, List<string> test_comments_file_lines, List<string> prediction_file_lines)
         {
+            if (test_file_lines == null || test_file_lines.Count == 0)
+            {
+                throw new ArgumentNullException(nameof(test_file_lines));
+            }
+
+            if (prediction_file_lines == null || prediction_file_lines.Count == 0)
+            {
+                throw new ArgumentNullException(nameof(prediction_file_lines));
+            }
+
             test_file_lines = test_file_lines.Select(a =>
             {
                 var hash_index = a.IndexOf('#');
@@ -2054,7 +2064,7 @@ namespace svm_fs
 
             
 
-            var test_file_comments_header = test_comments_file_lines.FirstOrDefault()?.Split(',');
+            var test_file_comments_header = test_comments_file_lines?.FirstOrDefault()?.Split(',') ?? null;
 
             if (test_comments_file_lines != null && test_comments_file_lines.Count > 0)
             {

@@ -12,6 +12,8 @@ namespace svm_fs
 {
     public class svm_ldr
     {
+        public static int total_jobs_completed = 0;
+
         public static List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)> finish_marker_files = new List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)>();
 
         public static object finish_marker_files_lock = new object();
@@ -113,7 +115,9 @@ namespace svm_fs
                         var num_jobs_other = finish_marker_files.Count(a => a.state != -1 && a.state != 0 && a.state != 1);
                         var num_jobs_not_started = finish_marker_files.Count(a => a.state == -1);
 
-                        io_proxy.WriteLine($@"jobs completed: {num_jobs_completed}; jobs incomplete: {num_jobs_incompleted}, jobs other: {num_jobs_other}, jobs not started: {num_jobs_not_started}", nameof(svm_ldr), nameof(svm_ldr.status_task));
+                        svm_ldr.total_jobs_completed += num_jobs_completed;
+
+                        io_proxy.WriteLine($@"total jobs completed: {svm_ldr.total_jobs_completed}, jobs newly completed: {num_jobs_completed}, jobs incomplete: {num_jobs_incompleted}, jobs other: {num_jobs_other}, jobs not started: {num_jobs_not_started}", nameof(svm_ldr), nameof(svm_ldr.status_task));
 
                         finish_marker_files = finish_marker_files.Where(a => a.state != 0).ToList();
 
