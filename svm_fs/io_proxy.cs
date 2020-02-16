@@ -181,8 +181,7 @@ namespace svm_fs
             }
             catch (Exception e)
             { 
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(Delete));
-
+                WriteLine(e.ToString(), nameof(io_proxy), nameof(Delete));
             }
         }
 
@@ -200,7 +199,8 @@ namespace svm_fs
                 try
                 {
                     tries++;
-                    
+
+                    CreateDirectory(dest);
                     File.Copy(source, dest, overwrite);
                 }
                 catch (Exception e)
