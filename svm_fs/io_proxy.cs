@@ -180,8 +180,9 @@ namespace svm_fs
                 File.Delete(filename);
             }
             catch (Exception e)
-            { 
-                WriteLine(e.ToString(), nameof(io_proxy), nameof(Delete));
+            {
+                WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
+
             }
         }
 
@@ -205,7 +206,9 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(Copy));
+                    
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Copy));
+
 
                     if (tries >= max_tries) throw;
 
@@ -251,7 +254,8 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(ReadAllLines));
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllLines));
+
 
                     if (tries >= max_tries) throw;
 
@@ -281,7 +285,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(ReadAllText));
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -311,7 +315,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(WriteAllLines));
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -338,7 +342,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(AppendAllLines));
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -365,7 +369,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(AppendAllText));
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -392,7 +396,8 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine(e.ToString(), nameof(io_proxy), nameof(WriteAllText));
+                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllText));
+
 
                     if (tries >= max_tries) throw;
 

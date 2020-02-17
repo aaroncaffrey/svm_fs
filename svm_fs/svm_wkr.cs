@@ -24,7 +24,7 @@ namespace svm_fs
                 delete_temp_wkr_files(p);
                 return;
             }
-            
+
 
             var train_stdout_filename = "";
             var train_stderr_filename = "";
@@ -54,19 +54,19 @@ namespace svm_fs
                     train_grid_search_result = grid.grid_parameter_search(
                         p.libsvm_train_runtime,
                         p.train_grid_filename,
-                        p.train_filename, 
-                        train_grid_stdout_file, 
-                        train_grid_stderr_file, 
-                        p.class_weights, 
+                        p.train_filename,
+                        train_grid_stdout_file,
+                        train_grid_stderr_file,
+                        p.class_weights,
                         p.svm_type,
                         p.svm_kernel,
                         p.randomisation_cv_folds,
                         p.randomisation_cv_index,
-                        p.outer_cv_folds, 
-                        p.outer_cv_index, 
+                        p.outer_cv_folds,
+                        p.outer_cv_index,
                         p.inner_cv_folds,
-                        p.libsvm_grid_probability_estimates, 
-                        p.libsvm_grid_shrinking_heuristics, 
+                        p.libsvm_grid_probability_estimates,
+                        p.libsvm_grid_shrinking_heuristics,
                         p.libsvm_grid_quiet_mode,
                         p.libsvm_grid_memory_limit_mb,
                         p.libsvm_grid_max_time,
@@ -78,7 +78,7 @@ namespace svm_fs
                         );
                 }
                 sw_grid.Stop();
-                
+
             }
             var sw_grid_dur = sw_grid.ElapsedMilliseconds;
 
@@ -88,20 +88,20 @@ namespace svm_fs
             var train_result = libsvm.train(
                 p.libsvm_train_runtime,
                 p.train_filename,
-                p.train_model_filename, 
+                p.train_model_filename,
                 train_stdout_filename,
                 train_stderr_filename,
-                train_grid_search_result.point.cost, 
+                train_grid_search_result.point.cost,
                 train_grid_search_result.point.gamma,
                 train_grid_search_result.point.epsilon,
-                train_grid_search_result.point.coef0, 
+                train_grid_search_result.point.coef0,
                 train_grid_search_result.point.degree,
                 null,
-                p.svm_type, 
+                p.svm_type,
                 p.svm_kernel,
                 null,
-                p.libsvm_train_probability_estimates, 
-                p.libsvm_train_shrinking_heuristics, 
+                p.libsvm_train_probability_estimates,
+                p.libsvm_train_shrinking_heuristics,
                 p.libsvm_train_max_time,
                 p.libsvm_train_quiet_mode,
                 p.libsvm_train_memory_limit_mb
@@ -110,8 +110,8 @@ namespace svm_fs
             var sw_train_dur = sw_train.ElapsedMilliseconds;
 
             if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(train_result.stdout)) io_proxy.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(train_result.stderr)) io_proxy.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(cross_validation));
+            if (!string.IsNullOrWhiteSpace(train_result.stdout)) train_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(train_result.stderr)) train_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
 
 
             // predict
@@ -119,11 +119,11 @@ namespace svm_fs
             sw_predict.Start();
             var predict_result = libsvm.predict(
                 p.libsvm_predict_runtime,
-                p.test_filename, 
+                p.test_filename,
                 p.train_model_filename,
-                p.test_predict_filename, 
+                p.test_predict_filename,
                 p.libsvm_train_probability_estimates,
-                predict_stdout_filename, 
+                predict_stdout_filename,
                 predict_stderr_filename
                 );
 
@@ -131,7 +131,7 @@ namespace svm_fs
             var sw_predict_dur = sw_train.ElapsedMilliseconds;
 
             if (!string.IsNullOrWhiteSpace(predict_result.cmd_line)) io_proxy.WriteLine(predict_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) predict_result.stdout.Split(new char[] { '\r', '\n' },StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a=> io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) predict_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
             if (!string.IsNullOrWhiteSpace(predict_result.stderr)) predict_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
 
 
@@ -143,20 +143,20 @@ namespace svm_fs
             for (var i = 0; i < prediction_file_data.cm_list.Count; i++)
             {
                 var cm = prediction_file_data.cm_list[i];
-             
-                cm.ext_cost = train_grid_search_result.point.cost; 
+
+                cm.ext_cost = train_grid_search_result.point.cost;
                 cm.ext_gamma = train_grid_search_result.point.gamma;
                 cm.ext_coef0 = train_grid_search_result.point.coef0;
                 cm.ext_epsilon = train_grid_search_result.point.epsilon;
                 cm.ext_degree = train_grid_search_result.point.degree;
                 cm.ext_libsvm_cv = train_grid_search_result.cv_rate ?? -1;
-                
+
                 cm.ext_duration_grid_search = sw_grid_dur.ToString();
                 cm.ext_duration_training = sw_train_dur.ToString();
                 cm.ext_duration_testing = sw_predict_dur.ToString();
-   
+
                 cm.calculate_ppf();
-                                
+
                 //join outer-cv-cms together to create 1 cm - roc - pr - etc
             }
 
@@ -164,7 +164,7 @@ namespace svm_fs
             var cms_header = $"{string.Join(",", cmd_params.csv_header)},{string.Join(",", performance_measure.confusion_matrix.csv_header)}";
             cm_lines.Add(cms_header);
             //var cms_csv = cms.SelectMany(a => a.pm.cm_list.Select(b => string.Join(",", p.get_options().Select(c=>c.value).ToList()) + "," + b.ToString()).ToList()).ToList();
-            for (var i=0; i< prediction_file_data.cm_list.Count; i++)
+            for (var i = 0; i < prediction_file_data.cm_list.Count; i++)
             {
                 var cm = prediction_file_data.cm_list[i];
                 cm_lines.Add($"{string.Join(",", p.get_options().Select(c => c.value).ToList())},{cm}");
