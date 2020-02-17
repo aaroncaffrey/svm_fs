@@ -228,7 +228,7 @@ namespace svm_fs
             }
             else
             {
-                throw new Exception();
+                //throw new Exception();
             }
         }
 

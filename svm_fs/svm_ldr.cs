@@ -320,6 +320,9 @@ namespace svm_fs
                 // 1. make pbs file to submit job
                 var pbs_script_lines = new List<string>();
 
+                var stdout_file = "";
+                var stderr_file = "";
+
                 if (options.cmd == cmd.ctl)
                 {
                     if (!string.IsNullOrWhiteSpace(options.pbs_ctl_walltime)) pbs_script_lines.Add($@"#PBS -l walltime={options.pbs_ctl_walltime}");
@@ -332,6 +335,9 @@ namespace svm_fs
                     if (!string.IsNullOrWhiteSpace(options.pbs_ctl_stdout_filename)) pbs_script_lines.Add($@"#PBS -o {io_proxy.convert_path(options.pbs_ctl_stdout_filename)}");
                     if (!string.IsNullOrWhiteSpace(options.pbs_ctl_stderr_filename)) pbs_script_lines.Add($@"#PBS -e {io_proxy.convert_path(options.pbs_ctl_stderr_filename)}");
                     if (!string.IsNullOrWhiteSpace(options.pbs_ctl_execution_directory)) pbs_script_lines.Add($@"#PBS -d {io_proxy.convert_path(options.pbs_ctl_execution_directory)}");
+
+                    stdout_file = io_proxy.convert_path(options.program_ctl_stdout_filename);
+                    stderr_file = io_proxy.convert_path(options.program_ctl_stderr_filename);
                 }
                 else if (options.cmd == cmd.wkr)
                 {
@@ -345,12 +351,16 @@ namespace svm_fs
                     if (!string.IsNullOrWhiteSpace(options.pbs_wkr_stdout_filename)) pbs_script_lines.Add($@"#PBS -o {io_proxy.convert_path(options.pbs_wkr_stdout_filename)}");
                     if (!string.IsNullOrWhiteSpace(options.pbs_wkr_stderr_filename)) pbs_script_lines.Add($@"#PBS -e {io_proxy.convert_path(options.pbs_wkr_stderr_filename)}");
                     if (!string.IsNullOrWhiteSpace(options.pbs_wkr_execution_directory)) pbs_script_lines.Add($@"#PBS -d {io_proxy.convert_path(options.pbs_wkr_execution_directory)}");
+
+                    stdout_file = io_proxy.convert_path(options.program_wkr_stdout_filename);
+                    stderr_file = io_proxy.convert_path(options.program_wkr_stderr_filename);
                 }
 
+                
                 pbs_script_lines.Add($@"module load GCCcore");
                 pbs_script_lines.Add($@"echo 1 > {pbs_finish_marker_filename}");
                 pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
-                pbs_script_lines.Add($@"{io_proxy.convert_path(options.program_runtime)} -j {io_proxy.convert_path(options.options_filename)}");
+                pbs_script_lines.Add($"{$@"{io_proxy.convert_path(options.program_runtime)} -j {io_proxy.convert_path(options.options_filename)}"}{(!string.IsNullOrEmpty(stdout_file) ? $@" 1> {stdout_file}" : "")}{(!string.IsNullOrEmpty(stderr_file) ? $@" 2> {stderr_file}" : "")}");
                 pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
                 pbs_script_lines.Add($@"echo 0 > {pbs_finish_marker_filename}");
 
@@ -388,7 +398,7 @@ namespace svm_fs
                     }
                 }
 
-                if (job_id.StartsWith("Moab."))
+                if (job_id.StartsWith($@"Moab."))
                 {
                     // 3. save job id
                     write_job_id(options, job_id);
