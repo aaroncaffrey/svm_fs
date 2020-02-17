@@ -11,23 +11,6 @@ namespace svm_fs
 {
     public static class svm_ctl
     {
-        public static void WriteLine(string text = "", string module_name = "", string function_name = "")
-        {
-            try
-            {
-                var pid = Process.GetCurrentProcess().Id;
-                var thread_id = Thread.CurrentThread.ManagedThreadId;
-                var task_id = Task.CurrentId ?? 0;
-
-                Console.WriteLine($@"{DateTime.Now:G} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}");
-
-            }
-            catch (Exception)
-            {
-
-            }
-        }
-
         public static List<(int randomisation_cv_index, int outer_cv_index, List<int> indexes)> folds(int examples, int outer_cv_folds, int randomisation_cv_folds, int? size_limit = null)
         {
             /*int first_index, int last_index, int num_items,*/
@@ -74,22 +57,22 @@ namespace svm_fs
             return x;
         }
 
-        public static double PopulationStandardDeviation(List<double> numberSet)
+        public static double standard_deviation_population(List<double> values)
         {
-            if (numberSet.Count == 0) return 0;
+            if (values.Count == 0) return 0;
 
-            double mean = numberSet.Average();
+            var mean = values.Average();
 
-            return Math.Sqrt(numberSet.Sum(x => Math.Pow(x - mean, 2)) / (numberSet.Count));
+            return Math.Sqrt(values.Sum(x => Math.Pow(x - mean, 2)) / (values.Count));
         }
 
-        public static double SampleStandardDeviation(List<double> numberSet)
+        public static double standard_deviation_sample(List<double> values)
         {
-            if (numberSet.Count < 2) return 0;
+            if (values.Count < 2) return 0;
 
-            double mean = numberSet.Average();
+            var mean = values.Average();
 
-            return Math.Sqrt(numberSet.Sum(x => Math.Pow(x - mean, 2)) / (numberSet.Count - 1));
+            return Math.Sqrt(values.Sum(x => Math.Pow(x - mean, 2)) / (values.Count - 1));
         }
 
         public static double sqrt_sumofsqrs(List<double> list)
@@ -201,9 +184,9 @@ namespace svm_fs
 
                         var time_remaining = TimeSpan.FromTicks((long)(DateTime.Now.Subtract(start_time).Ticks * ((double)incomplete / (double)(complete == 0 ? 1 : complete))));
 
-                        io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl), nameof(feature_selection));
                         io_proxy.WriteLine($@"{module_name}.{function_name} -> {complete} / {tasks.Length} ( {pct:0.00} % ) [ {time_remaining:dd\:hh\:mm\:ss\.fff} ]", nameof(svm_ctl), nameof(wait_tasks));
-                        io_proxy.WriteLine($@"{module_name}.{function_name} -> Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"{module_name}.{function_name} -> Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
                     }
                 }
 
@@ -213,7 +196,7 @@ namespace svm_fs
             Task.WaitAll(tasks.ToArray<Task>());
         }
 
-        public static void interactive(cmd_params p)
+        public static void feature_selection(cmd_params p)
         {
             //p.feature_count = 0;
             //p.group_count = 0;
@@ -281,8 +264,8 @@ namespace svm_fs
 
             if (group_keys.Count != group_keys_distinct.Count) throw new Exception();
 
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
 
             //groups = groups.Take(10).ToList();
 
@@ -341,9 +324,9 @@ namespace svm_fs
                 score_increase_from_all = 0d;
                 iteration_index++;
 
-                io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-                io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
-                io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
 
                 var sw_iteration = new Stopwatch();
                 sw_iteration.Start();
@@ -355,14 +338,14 @@ namespace svm_fs
 
                 if (io_proxy.is_file_available(checkpoint_fn))
                 {
-                    io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(feature_selection));
 
 
                     currently_selected_group_indexes.Clear();
                     highest_scoring_group_indexes.Clear();
 
-                    var checkpoint_data1 =    io_proxy.ReadAllLines(checkpoint_fn, nameof(svm_ctl), nameof(interactive));
-                    var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn, nameof(svm_ctl), nameof(interactive));
+                    var checkpoint_data1 =    io_proxy.ReadAllLines(checkpoint_fn, nameof(svm_ctl), nameof(feature_selection));
+                    var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn, nameof(svm_ctl), nameof(feature_selection));
                     previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b, CultureInfo.InvariantCulture)).ToList()).ToList();
 
                     foreach (var cpd in checkpoint_data1)
@@ -445,25 +428,25 @@ namespace svm_fs
 
                     //io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
 
                     //score_improved = false;
                     //var _iteration_index = iteration_index;
                     var currently_selected_groups = currently_selected_group_indexes.Select(a => groups[a]).ToList();
                     var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
 
-                    //var jobs_group_level = Enumerable.Range(0, groups.Count).AsParallel().AsOrdered().Select(group_index =>
+                    var jobs_group_level = Enumerable.Range(0, groups.Count).AsParallel().AsOrdered().Select(group_index =>
 
-                    var group_tasks = new List<Task<(List<List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)>> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
+                    //var group_tasks = new List<Task<(List<List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)>> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
 
-                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                    //for (var _group_index = 0; _group_index < groups.Count; _group_index++)
                     {
-                        var group_index = _group_index;
+                        //var group_index = _group_index;
 
-                        var task = Task.Run(() =>
-                        {
+                        //var task = Task.Run(() =>
+                        //{
                             var is_group_index_selected = currently_selected_group_indexes.Contains(group_index);
 
                             var forward = !is_group_index_selected;
@@ -484,7 +467,7 @@ namespace svm_fs
                                 {
                                     io_proxy.WriteLine(
                                         $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1",
-                                        nameof(svm_ctl), nameof(interactive));
+                                        nameof(svm_ctl), nameof(feature_selection));
 
                                     return default;
                                 }
@@ -495,7 +478,7 @@ namespace svm_fs
                                 {
                                     io_proxy.WriteLine(
                                         $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index",
-                                        nameof(svm_ctl), nameof(interactive));
+                                        nameof(svm_ctl), nameof(feature_selection));
 
                                     return default;
                                 }
@@ -512,7 +495,7 @@ namespace svm_fs
 
                                 io_proxy.WriteLine(
                                     $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}",
-                                    nameof(svm_ctl), nameof(interactive));
+                                    nameof(svm_ctl), nameof(feature_selection));
 
                                 return default;
                             }
@@ -556,24 +539,24 @@ namespace svm_fs
                                 this_test_group_indexes);
 
                             return jobs_randomisation_level;
-                        });
+                        //});
 
-                        group_tasks.Add(task);
-                    }//).ToList();
+                        //group_tasks.Add(task);
+                    }).ToList();
 
-                    wait_tasks(group_tasks.ToArray<Task>(), nameof(svm_ctl), nameof(interactive));
+                    //wait_tasks(group_tasks.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
 
-                    var jobs_group_level = group_tasks.Select(a => a.Result).ToList();
+                    //var jobs_group_level = group_tasks.Select(a => a.Result).ToList();
 
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
 
                     jobs_group_level = jobs_group_level.Where(a => a != default).ToList();
 
                     if (jobs_group_level == null || jobs_group_level.Count == 0)
                     {
-                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(feature_selection));
 
                         break;
                     }
@@ -585,7 +568,7 @@ namespace svm_fs
 
                     if (cm_inputs == null || cm_inputs.Count <= 0)
                     {
-                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: cm_inputs == null || cm_inputs.Count <= 0", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: cm_inputs == null || cm_inputs.Count <= 0", nameof(svm_ctl), nameof(feature_selection));
 
                         break;
                     }
@@ -646,8 +629,8 @@ namespace svm_fs
                         highest_scoring_group_indexes = currently_selected_group_indexes.ToList();
                     }
 
-                    io_proxy.WriteLine($@"Score {(score_better_than_last ? "improved" : "not improved")} from last iteration; score {(score_better_than_last ? "increased" : "decreased")} by {score_increase_from_last} from {highest_score_last_iteration} to {highest_score_this_iteration}.", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine($@"Best score {(score_better_than_last ? "is" : "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Score {(score_better_than_last ? "improved" : "not improved")} from last iteration; score {(score_better_than_last ? "increased" : "decreased")} by {score_increase_from_last} from {highest_score_last_iteration} to {highest_score_this_iteration}.", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine($@"Best score {(score_better_than_last ? "is" : "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(feature_selection));
 
                     // highest_score_last_iteration
 
@@ -660,9 +643,9 @@ namespace svm_fs
                     // 3. per feature: output cm (all results combined into one prediction file)
                     // 4. all features: output cm with features ordered by predictive ability rank
 
-                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(interactive));
-                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
+                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
                     //io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
 
 
@@ -723,11 +706,11 @@ namespace svm_fs
                 // route taken 
 
 
-                io_proxy.WriteLine($@"score_better_than_last = {score_better_than_last}", nameof(svm_ctl), nameof(interactive));
-                io_proxy.WriteLine($@"(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all) = {(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all)}", nameof(svm_ctl), nameof(interactive));
-                io_proxy.WriteLine($@"currently_selected_group_indexes.Count < groups.Count = {currently_selected_group_indexes.Count < groups.Count}", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"score_better_than_last = {score_better_than_last}", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all) = {(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all)}", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"currently_selected_group_indexes.Count < groups.Count = {currently_selected_group_indexes.Count < groups.Count}", nameof(svm_ctl), nameof(feature_selection));
 
-                io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(feature_selection));
 
 
             }
@@ -742,13 +725,13 @@ namespace svm_fs
 
             );
 
-            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-            io_proxy.WriteLine($@"Finished after {iteration_index} iterations", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Finished after {iteration_index} iterations", nameof(svm_ctl), nameof(feature_selection));
 
-            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
-            io_proxy.WriteLine($@"Winning iteration: {winning_iteration}", nameof(svm_ctl), nameof(interactive));
-            io_proxy.WriteLine($@"Winning score: {highest_score_all_iteration}", nameof(svm_ctl), nameof(interactive));
-            io_proxy.WriteLine($@"Winning group indexes: {string.Join(", ", highest_scoring_group_indexes)}", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Winning iteration: {winning_iteration}", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Winning score: {highest_score_all_iteration}", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Winning group indexes: {string.Join(", ", highest_scoring_group_indexes)}", nameof(svm_ctl), nameof(feature_selection));
 
 
             // todo: save final list
@@ -758,7 +741,7 @@ namespace svm_fs
             fl.Insert(0, "group_index,group_key,columns");
             io_proxy.WriteAllLines(final_list_fn, fl);
 
-            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
 
 
             // after finding winning solution, check performance with different kernels and scaling methods
@@ -773,7 +756,7 @@ namespace svm_fs
                 var scale_functions = ((common.scale_function[])Enum.GetValues(typeof(common.scale_function)))/*.Where(a => a != common.scale_function.none)*/.ToList();
 
 
-                io_proxy.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(feature_selection));
 
                 iteration_index++;
                 var jobs_group_level1 = Enumerable.Range(0, kernel_types.Count).AsParallel().AsOrdered().Select(kernel_index =>
@@ -789,7 +772,7 @@ namespace svm_fs
                         p2.scale_function = scale_function;
                         p2.iteration = -1;
 
-                        io_proxy.WriteLine($@"Trying kernel {p2.svm_kernel} with scale function {p2.scale_function} ", nameof(svm_ctl), nameof(interactive));
+                        io_proxy.WriteLine($@"Trying kernel {p2.svm_kernel} with scale function {p2.scale_function} ", nameof(svm_ctl), nameof(feature_selection));
 
                         var currently_selected_groups = highest_scoring_group_indexes.Select(a => groups[a]).ToList();
                         var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
@@ -819,7 +802,7 @@ namespace svm_fs
 
                 var jobs_group_level0 = jobs_group_level1.Where(a => a != default).SelectMany(a => a.Where(b => b != default).ToList()).ToList();
 
-                io_proxy.WriteLine($@"Finished to do kernel and scale ranking...", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"Finished to do kernel and scale ranking...", nameof(svm_ctl), nameof(feature_selection));
 
                 //foreach (common.libsvm_kernel_type kernel_type in Enum.GetValues(typeof(common.libsvm_kernel_type)))
                 //{
@@ -837,7 +820,7 @@ namespace svm_fs
 
                 var cm_inputs1 = get_cm_inputs(p, jobs_group_level0, groups, iteration_folder1, iteration_index);
 
-                io_proxy.WriteLine($@"Finished ranking the highest scoring group...", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($@"Finished ranking the highest scoring group...", nameof(svm_ctl), nameof(feature_selection));
             }
 
             // output winner details
@@ -875,9 +858,9 @@ namespace svm_fs
                 score: a.cms.cm_list.Where(b => ranking_metric_params.feature_selection_classes == null || ranking_metric_params.feature_selection_classes.Count == 0 || ranking_metric_params.feature_selection_classes.Contains(b.class_id.Value))
                     .Average(b => b.get_perf_value_strings().Where(c => ranking_metric_params.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value)))).ToList();
 
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            ranked_scores.ForEach(a => io_proxy.WriteLine($"Rank index: {a.rank_index}, score: {a.score}, group_index: {a.group_index}, item: {a.group_key}", nameof(svm_ctl), nameof(interactive)));
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+            ranked_scores.ForEach(a => io_proxy.WriteLine($"Rank index: {a.rank_index}, score: {a.score}, group_index: {a.group_index}, item: {a.group_key}", nameof(svm_ctl), nameof(feature_selection)));
+            io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
 
 
 
@@ -895,7 +878,7 @@ namespace svm_fs
                 cms_csv.Insert(0, cms_header);
 
                 io_proxy.WriteAllLines(ranks_fn, cms_csv);
-                io_proxy.WriteLine($"Saving: {ranks_fn}", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine($"Saving: {ranks_fn}", nameof(svm_ctl), nameof(feature_selection));
             }
 
             return cm_inputs;
@@ -1001,7 +984,7 @@ namespace svm_fs
                     {
                         var x = a.Select(b => b.fv).ToList();
 
-                        return (fid: a.Key, list: x, non_zero: x.Count(y => y != 0), abs_sum: x.Sum(y => Math.Abs(y)), srsos: sqrt_sumofsqrs(x), average: x.Average(), stdev: SampleStandardDeviation(x), min: x.Min(), max: x.Max());
+                        return (fid: a.Key, list: x, non_zero: x.Count(y => y != 0), abs_sum: x.Sum(y => Math.Abs(y)), srsos: sqrt_sumofsqrs(x), average: x.Average(), stdev: standard_deviation_sample(x), min: x.Min(), max: x.Max());
                     }).ToList();
 
                     var training_example_columns_scaled = training_example_columns.Select(a => (a.class_id, examples: a.examples.Select(b => (b.example, columns: b.columns.Select(c =>
@@ -1142,7 +1125,7 @@ namespace svm_fs
 
                     io_proxy.WriteAllLines(fn, cm_data);
 
-                    io_proxy.WriteLine($@"Saved merged cm: {fn}", nameof(svm_ctl), nameof(interactive));
+                    io_proxy.WriteLine($@"Saved merged cm: {fn}", nameof(svm_ctl), nameof(feature_selection));
                 }
             }
 

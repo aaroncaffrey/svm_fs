@@ -178,11 +178,12 @@ namespace svm_fs
             try
             {
                 File.Delete(filename);
+                return;
             }
             catch (Exception e)
             {
                 WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
-
+                return;
             }
         }
 
@@ -203,6 +204,8 @@ namespace svm_fs
 
                     CreateDirectory(dest);
                     File.Copy(source, dest, overwrite);
+
+                    return;
                 }
                 catch (Exception e)
                 {

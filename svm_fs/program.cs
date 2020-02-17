@@ -107,16 +107,19 @@ namespace svm_fs
 
                 if (args[0] == "-d")
                 {
+                    // print default settings and exit
+
                     var ot = options.get_options_ini_text().ToList();
 
                     ot.ForEach(a => io_proxy.WriteLine(a));
 
                     return;
-                    
                 }
 
                 if (args[0] == "-j")
                 {
+                    // run job
+
                     bootstrap = false;
                     options_index = 1;
                 }
@@ -132,7 +135,7 @@ namespace svm_fs
                 }
                 else
                 {
-                    io_proxy.WriteLine($"File not found: {options_filename}", nameof(program), nameof(Main));
+                    io_proxy.WriteLine($@"File not available: {options_filename}", nameof(program), nameof(Main));
                     return;
                 }
             }
@@ -171,7 +174,7 @@ namespace svm_fs
                 switch (options.cmd)
                 {
                     case cmd.ctl:
-                        svm_ctl.interactive(options);
+                        svm_ctl.feature_selection(options);
                         break;
 
                     case cmd.wkr:

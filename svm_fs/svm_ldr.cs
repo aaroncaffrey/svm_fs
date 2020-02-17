@@ -371,14 +371,32 @@ namespace svm_fs
 
 
                 // 2. submit pbs script to scheduler
-                var psi = new ProcessStartInfo()
+                var psi = new ProcessStartInfo();
+
+                var use_pbs = Environment.OSVersion.Platform != PlatformID.Win32NT;
+
+                if (use_pbs)
                 {
-                    FileName = $@"msub",
-                    Arguments = $@"{pbs_script_filename}",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                };
+                    psi = new ProcessStartInfo()
+                    {
+                        FileName = $@"msub",
+                        Arguments = $@"{pbs_script_filename}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        RedirectStandardInput = true,
+                    };
+                }
+                else
+                {
+                    psi = new ProcessStartInfo()
+                    {
+                        FileName = io_proxy.convert_path(options.program_runtime),
+                        Arguments = $@"-j {io_proxy.convert_path(options.options_filename)}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        RedirectStandardInput = true,
+                    };
+                }
 
                 job_id = "";
 

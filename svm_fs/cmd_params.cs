@@ -15,99 +15,29 @@ namespace svm_fs
 
     public class cmd_params
     {
+        //public bool probability_estimates = true;
+        //public bool shrinking_heuristics = true;
         //public List<(int class_id, string class_name)> class_training_sizes = null;
-
-        public const string user_home = "/home/k1040015";
-        public const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
-
-        public string dataset_dir = $@"{user_home}/dataset/";
-
-        public string pbs_ctl_walltime = "240:00:00";
-        public int pbs_ctl_nodes = 1;
-        public int pbs_ctl_ppn = 16;
-        public string pbs_ctl_mem = null;
-
-        public string pbs_ctl_jobname;
-        public string pbs_ctl_mail_opt = "n"; // abe|n
-        public string pbs_ctl_mail_addr; // 
-
-        
-        public string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.pbs.stdout";
-        public string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.pbs.stderr";
-        public string pbs_wkr_stdout_filename = $@"{nameof(svm_wkr)}.pbs.stdout";
-        public string pbs_wkr_stderr_filename = $@"{nameof(svm_wkr)}.pbs.stderr";
-
-        public string program_ctl_stdout_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout";
-        public string program_ctl_stderr_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr";
-        public string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout";
-        public string program_wkr_stderr_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr";
-
-        public string results_root_folder = $@"{svm_fs_home}/results/";
-        public string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        public string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
-        public string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
-
-
-        public string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        public string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        public string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        public string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-
-        public string pbs_wkr_walltime = "1:00:00";
-        public int pbs_wkr_nodes = 1;
-        public int pbs_wkr_ppn = 16;
-        public string pbs_wkr_mem = null;
-
-        public string pbs_wkr_jobname;
-        public string pbs_wkr_mail_opt = "n"; // abe|n
-        public string pbs_wkr_mail_addr; // 
-
-
-
         //public string pbs_jobid_filename;
-
-        public string options_filename = null;
-
-        public List<int> feature_selection_classes = new List<int>() { +1 };
-        public List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
-
-
-
-        public bool libsvm_grid_probability_estimates = true;
-        public bool libsvm_grid_shrinking_heuristics = true;
-        public TimeSpan libsvm_grid_max_time = new TimeSpan(0, 0, 10, 0);
-        public bool libsvm_grid_quiet_mode = true;
-        public int libsvm_grid_memory_limit_mb = 1024;
-
-        public bool libsvm_train_probability_estimates = true;
-        public bool libsvm_train_shrinking_heuristics = true;
-        public TimeSpan libsvm_train_max_time = new TimeSpan(0, 1, 0, 0);
-        public bool libsvm_train_quiet_mode = true;
-        public int libsvm_train_memory_limit_mb = 1024;
-
-        public int positive_class_id = +1;
-        public int negative_class_id = -1;
-
-        public int feature_id = -1;
-        public string alphabet;
-        public string dimension;
-        public string category;
-        public string source;
-        public string group;
-        public string member;
-        public string perspective;
         public bool forward;
-
-        public List<(int class_id, string class_name)> class_names = new List<(int class_id, string class_name)>() { (-1, "standard_coil"), (+1, "dimorphic_coil") };
-        public List<(int class_id, int class_size)> class_sizes = null;
-        public List<(int class_id, int class_training_size)> class_training_sizes = null;
-        public List<(int class_id, int class_testing_size)> class_testing_sizes = null;
-        public List<(int class_id, double class_weight)> class_weights = null;
+        public bool group_features = true;
+        public bool libsvm_grid_probability_estimates = true;
+        public bool libsvm_grid_quiet_mode = true;
+        public bool libsvm_grid_shrinking_heuristics = true;
+        public bool libsvm_train_probability_estimates = true;
+        public bool libsvm_train_quiet_mode = true;
+        public bool libsvm_train_shrinking_heuristics = true;
+        public bool output_threshold_adjustment_performance = false;
+        public bool save_test_id = false;
+        public bool save_test_meta = false;
+        public bool save_train_id = false;
+        public bool save_train_meta = false;
         public cmd cmd = cmd.none;
-
-        public string experiment_name = null;
-        public int old_feature_count = 0;
-        public int new_feature_count = 0;
+        public common.libsvm_kernel_type svm_kernel = common.libsvm_kernel_type.rbf;
+        public common.libsvm_svm_type svm_type = common.libsvm_svm_type.c_svc;
+        public common.scale_function scale_function = common.scale_function.rescale;
+        public const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
+        public const string user_home = "/home/k1040015";
         public double? grid_coef0_exp_begin = null;
         public double? grid_coef0_exp_end = null;
         public double? grid_coef0_exp_step = null;
@@ -123,25 +53,73 @@ namespace svm_fs
         public double? grid_gamma_exp_begin = 3;
         public double? grid_gamma_exp_end = -15;
         public double? grid_gamma_exp_step = -2;
-        public int old_group_count = 0;
-        public int new_group_count = 0;
-        public bool group_features = true;
+        public int feature_id = -1;
         public int group_index = -1;
         public int inner_cv_folds = 0;//10; // set to 0 to skip inner-cv
         public int iteration = -1;
         public int job_id = -1;
-        public int outer_cv_index = -1;
+        public int libsvm_grid_memory_limit_mb = 1024;
+        public int libsvm_train_memory_limit_mb = 1024;
+        public int negative_class_id = -1;
+        public int new_feature_count = 0;
+        public int new_group_count = 0;
+        public int old_feature_count = 0;
+        public int old_group_count = 0;
         public int outer_cv_folds = 10;
-        public bool output_threshold_adjustment_performance = false;
-        //public bool probability_estimates = true;
-        public int randomisation_cv_index = -1;
+        public int outer_cv_index = -1;
+        public int pbs_ctl_nodes = 1;
+        public int pbs_ctl_ppn = 16;
+        public int pbs_wkr_nodes = 1;
+        public int pbs_wkr_ppn = 16;
+        public int positive_class_id = +1;
         public int randomisation_cv_folds = 1;
-        public common.scale_function scale_function = common.scale_function.rescale;
-        //public bool shrinking_heuristics = true;
-        public common.libsvm_kernel_type svm_kernel = common.libsvm_kernel_type.rbf;
-        public common.libsvm_svm_type svm_type = common.libsvm_svm_type.c_svc;
+        public int randomisation_cv_index = -1;
+        public List<(int class_id, double class_weight)> class_weights = null;
+        public List<(int class_id, int class_size)> class_sizes = null;
+        public List<(int class_id, int class_testing_size)> class_testing_sizes = null;
+        public List<(int class_id, int class_training_size)> class_training_sizes = null;
+        public List<(int class_id, string class_name)> class_names = new List<(int class_id, string class_name)>() { (-1, "standard_coil"), (+1, "dimorphic_coil") };
+        public List<int> feature_selection_classes = new List<int>() { +1 };
+        public List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
+        public string alphabet;
+        public string category;
+        public string dataset_dir = $@"{user_home}/dataset/";
+        public string dimension;
+        public string experiment_name = null;
+        public string group;
+        public string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
+        public string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
+        public string member;
+        public string options_filename = null;
+        public string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+        public string pbs_ctl_jobname;
+        public string pbs_ctl_mail_addr; // 
+        public string pbs_ctl_mail_opt = "n"; // abe|n
+        public string pbs_ctl_mem = null;
+        public string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.pbs.stderr";
+        public string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.pbs.stdout";
+        public string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+        public string pbs_ctl_walltime = "240:00:00";
+        public string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        public string pbs_wkr_jobname;
+        public string pbs_wkr_mail_addr; // 
+        public string pbs_wkr_mail_opt = "n"; // abe|n
+        public string pbs_wkr_mem = null;
+        public string pbs_wkr_stderr_filename = $@"{nameof(svm_wkr)}.pbs.stderr";
+        public string pbs_wkr_stdout_filename = $@"{nameof(svm_wkr)}.pbs.stdout";
+        public string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        public string pbs_wkr_walltime = "1:00:00";
+        public string perspective;
+        public string program_ctl_stderr_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr";
+        public string program_ctl_stdout_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout";
+        public string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+        public string program_wkr_stderr_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr";
+        public string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout";
+        public string results_root_folder = $@"{svm_fs_home}/results/";
+        public string source;
         public string test_filename;
         public string test_id_filename;
+        public string test_labels_filename;
         public string test_meta_filename;
         public string test_predict_cm_filename;
         public string test_predict_filename;
@@ -152,11 +130,8 @@ namespace svm_fs
         public string train_model_filename;
         public string train_predict_cm_filename;
         public string train_predict_filename;
-
-        public bool save_test_meta = false;
-        public bool save_test_id = false;
-        public bool save_train_meta = false;
-        public bool save_train_id = false;
+        public TimeSpan libsvm_grid_max_time = new TimeSpan(0, 0, 10, 0);
+        public TimeSpan libsvm_train_max_time = new TimeSpan(0, 1, 0, 0);
 
         public void convert_paths()
         {
@@ -172,6 +147,7 @@ namespace svm_fs
             this.program_wkr_stdout_filename = io_proxy.convert_path(this.program_wkr_stdout_filename);
 
             this.test_filename = io_proxy.convert_path(this.test_filename);
+            this.test_labels_filename = io_proxy.convert_path(this.test_labels_filename);
             this.test_id_filename = io_proxy.convert_path(this.test_id_filename);
             this.test_meta_filename = io_proxy.convert_path(this.test_meta_filename);
             this.test_predict_cm_filename = io_proxy.convert_path(this.test_predict_cm_filename);
@@ -196,6 +172,7 @@ namespace svm_fs
                 this.program_wkr_stderr_filename       ,
                 this.program_wkr_stdout_filename       ,
                 this.test_filename             ,
+                this.test_labels_filename             ,
                 this.test_id_filename          ,
                 this.test_meta_filename        ,
                 this.test_predict_cm_filename  ,
@@ -215,10 +192,10 @@ namespace svm_fs
             {
                 try
                 {
-                    if (!Directory.Exists(a))
-                    {
+                    
+                    
                         Directory.CreateDirectory(a);
-                    }
+                    
                 }
                 catch (Exception)
                 {
@@ -284,6 +261,7 @@ namespace svm_fs
             if (p.Select(a => a.libsvm_train_runtime).Distinct().Count() == 1) this.libsvm_train_runtime = p.FirstOrDefault().libsvm_train_runtime;
             if (p.Select(a => a.libsvm_train_shrinking_heuristics).Distinct().Count() == 1) this.libsvm_train_shrinking_heuristics = p.FirstOrDefault().libsvm_train_shrinking_heuristics;
             if (p.Select(a => a.member).Distinct().Count() == 1) this.member = p.FirstOrDefault().member;
+            if (p.Select(a => a.negative_class_id).Distinct().Count() == 1) this.negative_class_id = p.FirstOrDefault().negative_class_id;
             if (p.Select(a => a.new_feature_count).Distinct().Count() == 1) this.new_feature_count = p.FirstOrDefault().new_feature_count;
             if (p.Select(a => a.new_group_count).Distinct().Count() == 1) this.new_group_count = p.FirstOrDefault().new_group_count;
             if (p.Select(a => a.old_feature_count).Distinct().Count() == 1) this.old_feature_count = p.FirstOrDefault().old_feature_count;
@@ -315,6 +293,7 @@ namespace svm_fs
             if (p.Select(a => a.pbs_wkr_submission_directory).Distinct().Count() == 1) this.pbs_wkr_submission_directory = p.FirstOrDefault().pbs_wkr_submission_directory;
             if (p.Select(a => a.pbs_wkr_walltime).Distinct().Count() == 1) this.pbs_wkr_walltime = p.FirstOrDefault().pbs_wkr_walltime;
             if (p.Select(a => a.perspective).Distinct().Count() == 1) this.perspective = p.FirstOrDefault().perspective;
+            if (p.Select(a => a.positive_class_id).Distinct().Count() == 1) this.positive_class_id = p.FirstOrDefault().positive_class_id;
             if (p.Select(a => a.program_ctl_stderr_filename).Distinct().Count() == 1) this.program_ctl_stderr_filename = p.FirstOrDefault().program_ctl_stderr_filename;
             if (p.Select(a => a.program_ctl_stdout_filename).Distinct().Count() == 1) this.program_ctl_stdout_filename = p.FirstOrDefault().program_ctl_stdout_filename;
             if (p.Select(a => a.program_runtime).Distinct().Count() == 1) this.program_runtime = p.FirstOrDefault().program_runtime;
@@ -332,6 +311,7 @@ namespace svm_fs
             if (p.Select(a => a.svm_kernel).Distinct().Count() == 1) this.svm_kernel = p.FirstOrDefault().svm_kernel;
             if (p.Select(a => a.svm_type).Distinct().Count() == 1) this.svm_type = p.FirstOrDefault().svm_type;
             if (p.Select(a => a.test_filename).Distinct().Count() == 1) this.test_filename = p.FirstOrDefault().test_filename;
+            if (p.Select(a => a.test_labels_filename).Distinct().Count() == 1) this.test_labels_filename = p.FirstOrDefault().test_labels_filename;
             if (p.Select(a => a.test_id_filename).Distinct().Count() == 1) this.test_id_filename = p.FirstOrDefault().test_id_filename;
             if (p.Select(a => a.test_meta_filename).Distinct().Count() == 1) this.test_meta_filename = p.FirstOrDefault().test_meta_filename;
             if (p.Select(a => a.test_predict_cm_filename).Distinct().Count() == 1) this.test_predict_cm_filename = p.FirstOrDefault().test_predict_cm_filename;
@@ -401,6 +381,7 @@ namespace svm_fs
             this.libsvm_train_runtime = p.libsvm_train_runtime;
             this.libsvm_train_shrinking_heuristics = p.libsvm_train_shrinking_heuristics;
             this.member = p.member;
+            this.negative_class_id = p.negative_class_id;
             this.new_feature_count = p.new_feature_count;
             this.new_group_count = p.new_group_count;
             this.old_feature_count = p.old_feature_count;
@@ -432,6 +413,7 @@ namespace svm_fs
             this.pbs_wkr_submission_directory = p.pbs_wkr_submission_directory;
             this.pbs_wkr_walltime = p.pbs_wkr_walltime;
             this.perspective = p.perspective;
+            this.positive_class_id = p.positive_class_id;
             this.program_ctl_stderr_filename = p.program_ctl_stderr_filename;
             this.program_ctl_stdout_filename = p.program_ctl_stdout_filename;
             this.program_runtime = p.program_runtime;
@@ -449,6 +431,7 @@ namespace svm_fs
             this.svm_kernel = p.svm_kernel;
             this.svm_type = p.svm_type;
             this.test_filename = p.test_filename;
+            this.test_labels_filename = p.test_labels_filename;
             this.test_id_filename = p.test_id_filename;
             this.test_meta_filename = p.test_meta_filename;
             this.test_predict_cm_filename = p.test_predict_cm_filename;
@@ -554,6 +537,7 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(libsvm_train_runtime) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_runtime = args2.FirstOrDefault(a => a.key == nameof(libsvm_train_runtime)).value;
             if (args2.Any(a => a.key == nameof(libsvm_train_shrinking_heuristics) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_shrinking_heuristics = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_shrinking_heuristics)).value);
             if (args2.Any(a => a.key == nameof(member) && !string.IsNullOrWhiteSpace(a.value))) member = args2.FirstOrDefault(a => a.key == nameof(member)).value;
+            if (args2.Any(a => a.key == nameof(negative_class_id) && !string.IsNullOrWhiteSpace(a.value))) negative_class_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(negative_class_id)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(new_feature_count) && !string.IsNullOrWhiteSpace(a.value))) new_feature_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(new_feature_count)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(new_group_count) && !string.IsNullOrWhiteSpace(a.value))) new_group_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(new_group_count)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(old_feature_count) && !string.IsNullOrWhiteSpace(a.value))) old_feature_count = int.Parse(args2.FirstOrDefault(a => a.key == nameof(old_feature_count)).value, CultureInfo.InvariantCulture);
@@ -585,6 +569,7 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(pbs_wkr_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_submission_directory)).value;
             if (args2.Any(a => a.key == nameof(pbs_wkr_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_walltime)).value;
             if (args2.Any(a => a.key == nameof(perspective) && !string.IsNullOrWhiteSpace(a.value))) perspective = args2.FirstOrDefault(a => a.key == nameof(perspective)).value;
+            if (args2.Any(a => a.key == nameof(positive_class_id) && !string.IsNullOrWhiteSpace(a.value))) positive_class_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(positive_class_id)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(program_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) program_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(program_ctl_stderr_filename)).value;
             if (args2.Any(a => a.key == nameof(program_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) program_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(program_ctl_stdout_filename)).value;
             if (args2.Any(a => a.key == nameof(program_runtime) && !string.IsNullOrWhiteSpace(a.value))) program_runtime = args2.FirstOrDefault(a => a.key == nameof(program_runtime)).value;
@@ -602,6 +587,7 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(svm_kernel) && !string.IsNullOrWhiteSpace(a.value))) svm_kernel = (common.libsvm_kernel_type)Enum.Parse(typeof(common.libsvm_kernel_type), args2.FirstOrDefault(a => a.key == nameof(svm_kernel)).value);
             if (args2.Any(a => a.key == nameof(svm_type) && !string.IsNullOrWhiteSpace(a.value))) svm_type = (common.libsvm_svm_type)Enum.Parse(typeof(common.libsvm_svm_type), args2.FirstOrDefault(a => a.key == nameof(svm_type)).value);
             if (args2.Any(a => a.key == nameof(test_filename) && !string.IsNullOrWhiteSpace(a.value))) test_filename = args2.FirstOrDefault(a => a.key == nameof(test_filename)).value;
+            if (args2.Any(a => a.key == nameof(test_labels_filename) && !string.IsNullOrWhiteSpace(a.value))) test_labels_filename = args2.FirstOrDefault(a => a.key == nameof(test_labels_filename)).value;
             if (args2.Any(a => a.key == nameof(test_id_filename) && !string.IsNullOrWhiteSpace(a.value))) test_id_filename = args2.FirstOrDefault(a => a.key == nameof(test_id_filename)).value;
             if (args2.Any(a => a.key == nameof(test_meta_filename) && !string.IsNullOrWhiteSpace(a.value))) test_meta_filename = args2.FirstOrDefault(a => a.key == nameof(test_meta_filename)).value;
             if (args2.Any(a => a.key == nameof(test_predict_cm_filename) && !string.IsNullOrWhiteSpace(a.value))) test_predict_cm_filename = args2.FirstOrDefault(a => a.key == nameof(test_predict_cm_filename)).value;
@@ -616,7 +602,10 @@ namespace svm_fs
 
 
             // fix any missing params
-            if (!string.IsNullOrWhiteSpace(train_filename) && string.IsNullOrWhiteSpace(train_model_filename)) train_model_filename = train_filename + ".model";
+            if (!string.IsNullOrWhiteSpace(train_filename) && string.IsNullOrWhiteSpace(train_model_filename))
+            {
+                train_model_filename = $@"{train_filename}.model";
+            }
 
             if (string.IsNullOrWhiteSpace(experiment_name))
             {
@@ -689,6 +678,7 @@ nameof(libsvm_train_quiet_mode),
 nameof(libsvm_train_runtime),
 nameof(libsvm_train_shrinking_heuristics),
 nameof(member),
+nameof(negative_class_id),
 nameof(new_feature_count),
 nameof(new_group_count),
 nameof(old_feature_count),
@@ -720,6 +710,7 @@ nameof(pbs_wkr_stdout_filename),
 nameof(pbs_wkr_submission_directory),
 nameof(pbs_wkr_walltime),
 nameof(perspective),
+nameof(positive_class_id),
 nameof(program_ctl_stderr_filename),
 nameof(program_ctl_stdout_filename),
 nameof(program_runtime),
@@ -737,6 +728,7 @@ nameof(source),
 nameof(svm_kernel),
 nameof(svm_type),
 nameof(test_filename),
+nameof(test_labels_filename),
 nameof(test_id_filename),
 nameof(test_meta_filename),
 nameof(test_predict_cm_filename),
@@ -806,6 +798,7 @@ nameof(train_predict_filename),
 (nameof(libsvm_train_runtime), libsvm_train_runtime),
 (nameof(libsvm_train_shrinking_heuristics), libsvm_train_shrinking_heuristics.ToString()),
 (nameof(member), member),
+(nameof(negative_class_id), negative_class_id.ToString()),
 (nameof(new_feature_count), new_feature_count.ToString()),
 (nameof(new_group_count), new_group_count.ToString()),
 (nameof(old_feature_count), old_feature_count.ToString()),
@@ -837,6 +830,7 @@ nameof(train_predict_filename),
 (nameof(pbs_wkr_submission_directory),     pbs_wkr_submission_directory   ),
 (nameof(pbs_wkr_walltime),     pbs_wkr_walltime   ),
 (nameof(perspective), perspective),
+(nameof(positive_class_id), positive_class_id.ToString()),
 (nameof(program_ctl_stderr_filename),          program_ctl_stderr_filename   ),
 (nameof(program_ctl_stdout_filename),          program_ctl_stdout_filename  ),
 (nameof(program_runtime), program_runtime),
@@ -854,6 +848,7 @@ nameof(train_predict_filename),
 (nameof(svm_kernel), svm_kernel.ToString()),
 (nameof(svm_type), svm_type.ToString()),
 (nameof(test_filename), test_filename),
+(nameof(test_labels_filename), test_labels_filename),
 (nameof(test_id_filename), test_id_filename),
 (nameof(test_meta_filename), test_meta_filename),
 (nameof(test_predict_cm_filename), test_predict_cm_filename),
