@@ -1098,6 +1098,7 @@ namespace svm_fs
             var merge_cm_inputs = merge_cmd_params_list.GroupBy(a =>
                 (
                     test_file: a.test_filename,
+                    //test_labels_filename: a.test_labels_filename,
                     test_comments_file: a.test_meta_filename,
                     prediction_file: a.test_predict_filename,
                     cm_file: Path.Combine(Path.GetDirectoryName(a.test_predict_cm_filename), $@"{Path.GetFileNameWithoutExtension(a.test_predict_cm_filename)}_merged_predictions{Path.GetExtension(a.test_predict_cm_filename)}")
@@ -1144,11 +1145,11 @@ namespace svm_fs
         {
             //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
-
             try { io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.pbs_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.pbs_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files)); } catch (Exception) { }
@@ -1180,16 +1181,17 @@ namespace svm_fs
             try { io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
-            //try { io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
+            //try { io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             //try { io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             //try { io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
             try { io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
-            try { io_proxy.Delete(p.train_predict_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
+            try { io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { } 
+            //try { io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
+            //try { io_proxy.Delete(p.train_predict_filename, nameof(svm_ctl), nameof(delete_temp_merge_files)); } catch (Exception) { }
         }
 
         public static void delete_temp_merge_files(List<cmd_params> cmd_params_list)
@@ -1461,6 +1463,7 @@ namespace svm_fs
             wkr_cmd_params.train_grid_filename = Path.Combine(job_output_folder, $"{filename}.train_grid.csv");
             wkr_cmd_params.train_model_filename = Path.Combine(job_output_folder, $"{filename}.train_model.libsvm");
             wkr_cmd_params.test_filename = Path.Combine(job_output_folder, $"{filename}.test.libsvm");
+            wkr_cmd_params.test_labels_filename = Path.Combine(job_output_folder, $"{filename}.test_labels.libsvm");
             wkr_cmd_params.test_id_filename = Path.Combine(job_output_folder, $"{filename}.test_id.csv");
             wkr_cmd_params.test_meta_filename = Path.Combine(job_output_folder, $"{filename}.test_meta.csv");
             wkr_cmd_params.test_predict_cm_filename = Path.Combine(job_output_folder, $"{filename}.test_predict_cm.csv");
@@ -1481,18 +1484,18 @@ namespace svm_fs
             }
             else
             {
-                io_proxy.WriteLine("Using cached options: " + wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine($"Using cached options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_job));
             }
 
             if (!io_proxy.is_file_available(wkr_cmd_params.train_filename))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.train_filename, job.training_text);
-                io_proxy.WriteLine("Saved training data: " + wkr_cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine($"Saved training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                io_proxy.WriteLine("Using cached training data: " + wkr_cmd_params.train_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine($"Using cached training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_job));
             }
 
             if (p.save_train_id)
@@ -1500,12 +1503,12 @@ namespace svm_fs
                 if (!io_proxy.is_file_available(wkr_cmd_params.train_id_filename))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.train_id_filename, job.training_id_text);
-                    io_proxy.WriteLine("Saved training ids: " + wkr_cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Saved training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine("Using cached training ids: " + wkr_cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Using cached training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_job));
                 }
             }
 
@@ -1514,24 +1517,36 @@ namespace svm_fs
                 if (!io_proxy.is_file_available(wkr_cmd_params.train_meta_filename))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.train_meta_filename, job.training_meta_text);
-                    io_proxy.WriteLine("Saved training meta: " + wkr_cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Saved training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine("Using cached training meta: " + wkr_cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Using cached training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_job));
                 }
             }
 
             if (!io_proxy.is_file_available(wkr_cmd_params.test_filename))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.test_filename, job.testing_text);
-                io_proxy.WriteLine("Saved testing data: " + wkr_cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine($"Saved testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_job));
                 cached = false;
             }
             else
             {
-                io_proxy.WriteLine("Using cached testing data: " + wkr_cmd_params.test_filename, nameof(svm_ctl), nameof(do_job));
+                io_proxy.WriteLine($"Using cached testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_job));
+            }
+
+            if (!io_proxy.is_file_available(wkr_cmd_params.test_labels_filename))
+            {
+                var test_labels = job.testing_text.Select(a => a.Length > 0 ? a.Substring(0, a.IndexOf(' ') > -1 ? a.IndexOf(' ') : 0) : "").ToList();
+                io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels);
+                io_proxy.WriteLine($"Saved testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_job));
+                cached = false;
+            }
+            else
+            {
+                io_proxy.WriteLine($"Using cached testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_job));
             }
 
             if (p.save_test_id)
@@ -1539,12 +1554,12 @@ namespace svm_fs
                 if (!io_proxy.is_file_available(wkr_cmd_params.test_id_filename))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text);
-                    io_proxy.WriteLine("Saved testing ids: " + wkr_cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine("Using cached testing ids: " + wkr_cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Using cached testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_job));
                 }
             }
 
@@ -1553,12 +1568,12 @@ namespace svm_fs
                 if (!io_proxy.is_file_available(wkr_cmd_params.test_meta_filename))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text);
-                    io_proxy.WriteLine("Saved testing meta: " + wkr_cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine("Using cached testing meta: " + wkr_cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_job));
+                    io_proxy.WriteLine($"Using cached testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_job));
                 }
             }
             //cmds.Add($@"start cmd /c {cmd_params.program_runtime} -j {cmd_params.options_filename}");
@@ -1607,6 +1622,7 @@ namespace svm_fs
                 train_grid_filename = Path.Combine(merge_output_folder, $"{merge_filename}.train_grid.csv"),
                 train_model_filename = Path.Combine(merge_output_folder, $"{merge_filename}.train_model.libsvm"),
                 test_filename = Path.Combine(merge_output_folder, $"{merge_filename}.test.libsvm"),
+                test_labels_filename = Path.Combine(merge_output_folder, $"{merge_filename}.test_labels.libsvm"),
                 test_id_filename = Path.Combine(merge_output_folder, $"{merge_filename}.test_id.csv"),
                 test_meta_filename = Path.Combine(merge_output_folder, $"{merge_filename}.test_meta.csv"),
                 test_predict_cm_filename = Path.Combine(merge_output_folder, $"{merge_filename}.test_predict_cm.csv"),
@@ -1625,6 +1641,7 @@ namespace svm_fs
 
             if (wkr_cmd_params.inner_cv_folds > 1) { to_merge.Add((true, true, null, merge_cmd_params.train_grid_filename, wkr_cmd_params.train_grid_filename, null)); }
             to_merge.Add((false, false, null, merge_cmd_params.test_filename, wkr_cmd_params.test_filename, null));
+            to_merge.Add((false, false, null, merge_cmd_params.test_labels_filename, wkr_cmd_params.test_labels_filename, null));
             to_merge.Add((true, p.libsvm_train_probability_estimates, null, merge_cmd_params.test_predict_filename, wkr_cmd_params.test_predict_filename, null));
             to_merge.Add((true, true, null, merge_cmd_params.test_predict_cm_filename, wkr_cmd_params.test_predict_cm_filename, "class_id"));
 
