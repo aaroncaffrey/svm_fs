@@ -187,7 +187,7 @@ namespace svm_fs
             }
         }
 
-        public static void Copy(string source, string dest, bool overwrite = false, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        public static void Copy(string source, string dest, bool overwrite = true, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             source = convert_path(source);
             dest = convert_path(dest);
