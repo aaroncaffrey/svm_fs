@@ -68,7 +68,7 @@ namespace svm_fs
         public int outer_cv_folds = 10;
         public int outer_cv_index = -1;
         public int pbs_ctl_nodes = 1;
-        public int pbs_ctl_ppn = 16;
+        public int pbs_ctl_ppn = 32;
         public int pbs_wkr_nodes = 1;
         public int pbs_wkr_ppn = 16;
         public int positive_class_id = +1;
@@ -95,7 +95,7 @@ namespace svm_fs
         public string pbs_ctl_jobname;
         public string pbs_ctl_mail_addr; // 
         public string pbs_ctl_mail_opt = "n"; // abe|n
-        public string pbs_ctl_mem = null;
+        public string pbs_ctl_mem = null;//"64GB";
         public string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.pbs.stderr";
         public string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.pbs.stdout";
         public string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";

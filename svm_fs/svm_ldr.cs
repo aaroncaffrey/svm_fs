@@ -313,61 +313,7 @@ namespace svm_fs
             if (!job_exists)
             {
 
-                options.options_filename = io_proxy.convert_path(options.options_filename);
-
-
-
-                // 1. make pbs file to submit job
-                var pbs_script_lines = new List<string>();
-
-                var stdout_file = "";
-                var stderr_file = "";
-
-                if (options.cmd == cmd.ctl)
-                {
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_walltime)) pbs_script_lines.Add($@"#PBS -l walltime={options.pbs_ctl_walltime}");
-                    if (options.pbs_ctl_nodes > 0) pbs_script_lines.Add($@"#PBS -l nodes={options.pbs_ctl_nodes}{(options.pbs_ctl_ppn > 0 ? $@":ppn={options.pbs_ctl_ppn}" : "")}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mem)) pbs_script_lines.Add($@"#PBS -l mem={options.pbs_ctl_mem}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mem)) pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_jobname)) pbs_script_lines.Add($@"#PBS -N {options.pbs_ctl_jobname}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mail_opt)) pbs_script_lines.Add($@"#PBS -m {options.pbs_ctl_mail_opt}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mail_addr)) pbs_script_lines.Add($@"#PBS -M {options.pbs_ctl_mail_addr}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_stdout_filename)) pbs_script_lines.Add($@"#PBS -o {io_proxy.convert_path(options.pbs_ctl_stdout_filename)}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_stderr_filename)) pbs_script_lines.Add($@"#PBS -e {io_proxy.convert_path(options.pbs_ctl_stderr_filename)}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_ctl_execution_directory)) pbs_script_lines.Add($@"#PBS -d {io_proxy.convert_path(options.pbs_ctl_execution_directory)}");
-
-                    stdout_file = io_proxy.convert_path(options.program_ctl_stdout_filename);
-                    stderr_file = io_proxy.convert_path(options.program_ctl_stderr_filename);
-                }
-                else if (options.cmd == cmd.wkr)
-                {
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_walltime)) pbs_script_lines.Add($@"#PBS -l walltime={options.pbs_wkr_walltime}");
-                    if (options.pbs_wkr_nodes > 0) pbs_script_lines.Add($@"#PBS -l nodes={options.pbs_wkr_nodes}{(options.pbs_wkr_ppn > 0 ? $@":ppn={options.pbs_wkr_ppn}" : "")}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mem)) pbs_script_lines.Add($@"#PBS -l mem={options.pbs_wkr_mem}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mem)) pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_jobname)) pbs_script_lines.Add($@"#PBS -N {options.pbs_wkr_jobname}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mail_opt)) pbs_script_lines.Add($@"#PBS -m {options.pbs_wkr_mail_opt}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mail_addr)) pbs_script_lines.Add($@"#PBS -M {options.pbs_wkr_mail_addr}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_stdout_filename)) pbs_script_lines.Add($@"#PBS -o {io_proxy.convert_path(options.pbs_wkr_stdout_filename)}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_stderr_filename)) pbs_script_lines.Add($@"#PBS -e {io_proxy.convert_path(options.pbs_wkr_stderr_filename)}");
-                    if (!string.IsNullOrWhiteSpace(options.pbs_wkr_execution_directory)) pbs_script_lines.Add($@"#PBS -d {io_proxy.convert_path(options.pbs_wkr_execution_directory)}");
-
-                    stdout_file = io_proxy.convert_path(options.program_wkr_stdout_filename);
-                    stderr_file = io_proxy.convert_path(options.program_wkr_stderr_filename);
-                }
-
-                
-                pbs_script_lines.Add($@"module load GCCcore");
-                pbs_script_lines.Add($@"echo 1 > {pbs_finish_marker_filename}");
-                pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
-                pbs_script_lines.Add($"{$@"{io_proxy.convert_path(options.program_runtime)} -j {io_proxy.convert_path(options.options_filename)}"}{(!string.IsNullOrEmpty(stdout_file) ? $@" 1> {stdout_file}" : "")}{(!string.IsNullOrEmpty(stderr_file) ? $@" 2> {stderr_file}" : "")}");
-                pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
-                pbs_script_lines.Add($@"echo 0 > {pbs_finish_marker_filename}");
-
-                //var pbs_script_filename = $@"~/svm_fs/pbs_job_{options.pbs_jobname}_{options.job_id}.pbs";
-
-
-                io_proxy.WriteAllLines(pbs_script_filename, pbs_script_lines);
+                make_pbs_script(options, rerunnable, pbs_finish_marker_filename, pbs_script_filename);
 
 
                 // 2. submit pbs script to scheduler
@@ -442,6 +388,87 @@ namespace svm_fs
             }
 
             return (job_id, job_id_filename, pbs_script_filename, pbs_finish_marker_filename/*, stdout, stderr*/);
+        }
+
+        private static void make_pbs_script(cmd_params options, bool rerunnable, string pbs_finish_marker_filename, string pbs_script_filename)
+        {
+            //options.options_filename = io_proxy.convert_path(options.options_filename);
+
+
+            // 1. make pbs file to submit job
+            var pbs_script_lines = new List<string>();
+
+            var stdout_file = "";
+            var stderr_file = "";
+
+            if (options.cmd == cmd.ctl)
+            {
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_walltime))
+                    pbs_script_lines.Add($@"#PBS -l walltime={options.pbs_ctl_walltime}");
+                if (options.pbs_ctl_nodes > 0)
+                    pbs_script_lines.Add(
+                        $@"#PBS -l nodes={options.pbs_ctl_nodes}{(options.pbs_ctl_ppn > 0 ? $@":ppn={options.pbs_ctl_ppn}" : "")}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mem))
+                    pbs_script_lines.Add($@"#PBS -l mem={options.pbs_ctl_mem}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mem))
+                    pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_jobname))
+                    pbs_script_lines.Add($@"#PBS -N {options.pbs_ctl_jobname}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mail_opt))
+                    pbs_script_lines.Add($@"#PBS -m {options.pbs_ctl_mail_opt}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_mail_addr))
+                    pbs_script_lines.Add($@"#PBS -M {options.pbs_ctl_mail_addr}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_stdout_filename))
+                    pbs_script_lines.Add($@"#PBS -o {io_proxy.convert_path(options.pbs_ctl_stdout_filename)}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_stderr_filename))
+                    pbs_script_lines.Add($@"#PBS -e {io_proxy.convert_path(options.pbs_ctl_stderr_filename)}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_ctl_execution_directory))
+                    pbs_script_lines.Add($@"#PBS -d {io_proxy.convert_path(options.pbs_ctl_execution_directory)}");
+
+                stdout_file = io_proxy.convert_path(options.program_ctl_stdout_filename);
+                stderr_file = io_proxy.convert_path(options.program_ctl_stderr_filename);
+            }
+            else if (options.cmd == cmd.wkr)
+            {
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_walltime))
+                    pbs_script_lines.Add($@"#PBS -l walltime={options.pbs_wkr_walltime}");
+                if (options.pbs_wkr_nodes > 0)
+                    pbs_script_lines.Add(
+                        $@"#PBS -l nodes={options.pbs_wkr_nodes}{(options.pbs_wkr_ppn > 0 ? $@":ppn={options.pbs_wkr_ppn}" : "")}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mem))
+                    pbs_script_lines.Add($@"#PBS -l mem={options.pbs_wkr_mem}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mem))
+                    pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_jobname))
+                    pbs_script_lines.Add($@"#PBS -N {options.pbs_wkr_jobname}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mail_opt))
+                    pbs_script_lines.Add($@"#PBS -m {options.pbs_wkr_mail_opt}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_mail_addr))
+                    pbs_script_lines.Add($@"#PBS -M {options.pbs_wkr_mail_addr}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_stdout_filename))
+                    pbs_script_lines.Add($@"#PBS -o {io_proxy.convert_path(options.pbs_wkr_stdout_filename)}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_stderr_filename))
+                    pbs_script_lines.Add($@"#PBS -e {io_proxy.convert_path(options.pbs_wkr_stderr_filename)}");
+                if (!string.IsNullOrWhiteSpace(options.pbs_wkr_execution_directory))
+                    pbs_script_lines.Add($@"#PBS -d {io_proxy.convert_path(options.pbs_wkr_execution_directory)}");
+
+                stdout_file = io_proxy.convert_path(options.program_wkr_stdout_filename);
+                stderr_file = io_proxy.convert_path(options.program_wkr_stderr_filename);
+            }
+
+
+            pbs_script_lines.Add($@"module load GCCcore");
+            pbs_script_lines.Add($@"echo 1 > {pbs_finish_marker_filename}");
+            pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
+            pbs_script_lines.Add(
+                $"{$@"{io_proxy.convert_path(options.program_runtime)} -j {io_proxy.convert_path(options.options_filename)}"}{(!string.IsNullOrEmpty(stdout_file) ? $@" 1> {stdout_file}" : "")}{(!string.IsNullOrEmpty(stderr_file) ? $@" 2> {stderr_file}" : "")}");
+            pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
+            pbs_script_lines.Add($@"echo 0 > {pbs_finish_marker_filename}");
+
+            //var pbs_script_filename = $@"~/svm_fs/pbs_job_{options.pbs_jobname}_{options.job_id}.pbs";
+
+
+            io_proxy.WriteAllLines(pbs_script_filename, pbs_script_lines);
         }
     }
 }
