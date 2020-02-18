@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -307,6 +308,13 @@ namespace svm_fs
             var summary_fn = io_proxy.convert_path(Path.Combine(root_folder, "summary.csv"));
 
             var summary_lines = new List<string>();
+            
+            //lock (wait_ready_lock)
+            //{
+            //    wait_items = groups.Count;
+            //    wait_items_ready = 0;
+            //    wait_ready = false;
+            //}
 
             sw_fs.Start();
 
@@ -437,24 +445,50 @@ namespace svm_fs
                     var currently_selected_groups = currently_selected_group_indexes.Select(a => groups[a]).ToList();
                     var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
 
-                    var jobs_group_level = Enumerable.Range(0, groups.Count).AsParallel().AsOrdered().Select(group_index =>
+                    //var jobs_group_level = Enumerable.Range(0, groups.Count).AsParallel().AsOrdered().Select(group_index =>
 
-                    //var group_tasks = new List<Task<(List<List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)>> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
 
-                    //for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                    /*var jobs_group_level = new 
+                        List<(
+                            List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level,
+                            List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, 
+                            List<int> this_test_group_indexes
+                        )>();
+                        */
+                    //var group_tasks = new List<Task<(
+                    //    List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level,
+                    //    List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs,
+                    //    List<int> this_test_group_indexes
+                    //    )>>();
+
+                    var group_tasks1 =
+                        new List<
+                            Task<
+                                (
+                                List<string> wait_file_list, 
+                                cmd_params p, 
+                                List<int> this_test_group_indexes, 
+                                List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm, 
+                                List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets,
+                                List<cmd_params> wkr_cmd_params_list
+                                )>>();
+                    
+                    //GCSettings.IsServerGC
+                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
                     {
-                        //var group_index = _group_index;
+                        var group_index = _group_index;
 
-                        //var task = Task.Run(() =>
-                        //{
+                        var task = Task.Run(() =>
+                        {
+                            //GC.TryStartNoGCRegion(1024 * 1000 * 1000);
                             var is_group_index_selected = currently_selected_group_indexes.Contains(group_index);
 
-                            var forward = !is_group_index_selected;
+                            var is_forward = !is_group_index_selected;
 
                             var this_test_group_indexes = currently_selected_group_indexes.ToList();
 
 
-                            if (forward)
+                            if (is_forward)
                             {
                                 this_test_group_indexes.Add(group_index);
                             }
@@ -469,6 +503,7 @@ namespace svm_fs
                                         $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1",
                                         nameof(svm_ctl), nameof(feature_selection));
 
+                                    //jobs_group_level.Add(default);
                                     return default;
                                 }
 
@@ -479,6 +514,8 @@ namespace svm_fs
                                     io_proxy.WriteLine(
                                         $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index",
                                         nameof(svm_ctl), nameof(feature_selection));
+
+                                    //jobs_group_level.Add(default);
 
                                     return default;
                                 }
@@ -496,6 +533,8 @@ namespace svm_fs
                                 io_proxy.WriteLine(
                                     $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}",
                                     nameof(svm_ctl), nameof(feature_selection));
+
+                                //jobs_group_level.Add(default);
 
                                 return default;
                             }
@@ -520,7 +559,7 @@ namespace svm_fs
 
 
 
-                            var jobs_randomisation_level = group_cv(
+                            var jobs_randomisation_level = group_cv_part1(
                                 0,
                                 p,
                                 downsampled_training_class_folds,
@@ -530,7 +569,7 @@ namespace svm_fs
                                 group_index,
                                 groups,
                                 query_cols,
-                                forward,
+                                is_forward,
                                 old_feature_count,
                                 new_feature_count,
                                 old_group_count,
@@ -538,33 +577,68 @@ namespace svm_fs
                                 group_key,
                                 this_test_group_indexes);
 
-                            return jobs_randomisation_level;
-                        //});
+                                return jobs_randomisation_level;
 
-                        //group_tasks.Add(task);
-                    }).ToList();
+                                //jobs_group_level.Add(jobs_randomisation_level);
 
-                    //wait_tasks(group_tasks.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
 
-                    //var jobs_group_level = group_tasks.Select(a => a.Result).ToList();
+
+
+                                //GC.EndNoGCRegion();
+                        });
+
+
+                        group_tasks1.Add(task);
+                    }//).ToList();
+
+                    wait_tasks(group_tasks1.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
+                    var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
+                    group_tasks1.Clear();
+
+                    var wait_file_list = jobs_group_level_part1.SelectMany(a => a.wait_file_list).ToList();
+                    wait_for_results(wait_file_list);
 
                     io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
                     io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
                     io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
 
-                    jobs_group_level = jobs_group_level.Where(a => a != default).ToList();
-
-                    if (jobs_group_level == null || jobs_group_level.Count == 0)
+                    if (jobs_group_level_part1 == null || jobs_group_level_part1.Count == 0)
                     {
                         io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(feature_selection));
 
                         break;
                     }
 
-                    jobs_group_level.ForEach(a => previous_tests.Add(a.this_test_group_indexes));
+                    var group_tasks2 = new List<Task<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
+
+                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                    {
+                        var group_index = _group_index;
+
+                        var task = Task.Run(() =>
+                        {
+                            var part1_result = jobs_group_level_part1[group_index];
+
+                            if (part1_result == default) return default;
+
+                            var part2_result = group_cv_part2(part1_result);
+
+                            return part2_result;
+                        });
+
+
+                        group_tasks2.Add(task);
+                    }
+
+
+                    wait_tasks(group_tasks2.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
+                    var jobs_group_level_part2 = group_tasks2.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
+                    group_tasks2.Clear();
+
+                    jobs_group_level_part2.ForEach(a => previous_tests.Add(a.this_test_group_indexes));
 
                     // get ranks by group
-                    var cm_inputs = get_cm_inputs(p, jobs_group_level, groups, iteration_folder, iteration_index);
+                    var cm_inputs = get_cm_inputs(p, jobs_group_level_part2, groups, iteration_folder, iteration_index);
 
                     if (cm_inputs == null || cm_inputs.Count <= 0)
                     {
@@ -750,20 +824,29 @@ namespace svm_fs
 
             if (find_best_params)
             {
-                // todo: make it do this for the winning iteration (rather than the last iteration)
+                test_group_kernel_scaling_perf(p, iteration_index, highest_scoring_group_indexes, groups, downsampled_training_class_folds, class_folds, dataset_instance_list_grouped);
+            }
 
-                var kernel_types = ((common.libsvm_kernel_type[])Enum.GetValues(typeof(common.libsvm_kernel_type))).Where(a => a != common.libsvm_kernel_type.precomputed).ToList();
-                var scale_functions = ((common.scale_function[])Enum.GetValues(typeof(common.scale_function)))/*.Where(a => a != common.scale_function.none)*/.ToList();
+            // output winner details
+        }
 
+        private static void test_group_kernel_scaling_perf(cmd_params p, int iteration_index, List<int> highest_scoring_group_indexes,
+            List<(int index, (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) key, List<(int fid, string alphabet, string dimension, string category, string source, string @group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> list, List<int> columns)> groups, List<(int class_id, int size, List<(int randomisation_cv_index, int outer_cv_index, List<int> indexes)> folds)> downsampled_training_class_folds, List<(int class_id, int size, List<(int randomisation_cv_index, int outer_cv_index, List<int> indexes)> folds)> class_folds, List<(int class_id, List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, List<(int fid, double fv)> feature_data)> examples)> dataset_instance_list_grouped)
+        {
+            // todo: make it do this for the winning iteration (rather than the last iteration)
 
-                io_proxy.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(feature_selection));
+            var kernel_types = ((common.libsvm_kernel_type[]) Enum.GetValues(typeof(common.libsvm_kernel_type))).Where(a => a != common.libsvm_kernel_type.precomputed).ToList();
+            var scale_functions = ((common.scale_function[]) Enum.GetValues(typeof(common.scale_function))) /*.Where(a => a != common.scale_function.none)*/.ToList();
+            
+            io_proxy.WriteLine($@"Starting to do kernel and scale ranking...", nameof(svm_ctl), nameof(feature_selection));
 
-                iteration_index++;
-                var jobs_group_level1 = Enumerable.Range(0, kernel_types.Count).AsParallel().AsOrdered().Select(kernel_index =>
-                {
-                    var kernel_type = kernel_types[kernel_index];
+            iteration_index++;
+            var jobs_group_level1 = Enumerable.Range(0, kernel_types.Count).AsParallel().AsOrdered().Select(kernel_index =>
+            {
+                var kernel_type = kernel_types[kernel_index];
 
-                    var jobs_group_level2 = Enumerable.Range(0, scale_functions.Count).AsParallel().AsOrdered().Select(scale_function_index =>
+                var jobs_group_level2 = Enumerable.Range(0, scale_functions.Count).AsParallel().AsOrdered().Select(
+                    scale_function_index =>
                     {
                         var scale_function = scale_functions[scale_function_index];
 
@@ -772,10 +855,12 @@ namespace svm_fs
                         p2.scale_function = scale_function;
                         p2.iteration = -1;
 
-                        io_proxy.WriteLine($@"Trying kernel {p2.svm_kernel} with scale function {p2.scale_function} ", nameof(svm_ctl), nameof(feature_selection));
+                        io_proxy.WriteLine($@"Trying kernel {p2.svm_kernel} with scale function {p2.scale_function} ",
+                            nameof(svm_ctl), nameof(feature_selection));
 
                         var currently_selected_groups = highest_scoring_group_indexes.Select(a => groups[a]).ToList();
-                        var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
+                        var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns)
+                            .OrderBy(a => a).Distinct().ToList();
                         var query_cols = currently_selected_groups_columns.OrderBy(a => a).Distinct().ToList();
 
 
@@ -790,47 +875,52 @@ namespace svm_fs
                         var this_test_group_indexes = highest_scoring_group_indexes.ToList();
 
 
+                        var group_cv_result1 = group_cv_part1(1, p2, downsampled_training_class_folds, class_folds,
+                            dataset_instance_list_grouped, iteration_index, group_index, groups, query_cols, forward,
+                            old_feature_count, new_feature_count, old_group_count, new_group_count, group_key,
+                            this_test_group_indexes);
 
-                        var group_cv_result = group_cv(1, p2, downsampled_training_class_folds, class_folds, dataset_instance_list_grouped, iteration_index, group_index, groups, query_cols, forward, old_feature_count, new_feature_count, old_group_count, new_group_count, group_key, this_test_group_indexes);
+                        wait_for_results(group_cv_result1.wait_file_list);
 
-                        return group_cv_result;
+                        var group_cv_result2 = group_cv_part2(group_cv_result1);
+
+                        return group_cv_result2;
                     }).ToList();
 
 
-                    return jobs_group_level2;
-                }).ToList();
+                return jobs_group_level2;
+            }).ToList();
 
-                var jobs_group_level0 = jobs_group_level1.Where(a => a != default).SelectMany(a => a.Where(b => b != default).ToList()).ToList();
+            var jobs_group_level0 = jobs_group_level1.Where(a => a != default)
+                .SelectMany(a => a.Where(b => b != default).ToList()).ToList();
 
-                io_proxy.WriteLine($@"Finished to do kernel and scale ranking...", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Finished to do kernel and scale ranking...", nameof(svm_ctl), nameof(feature_selection));
 
-                //foreach (common.libsvm_kernel_type kernel_type in Enum.GetValues(typeof(common.libsvm_kernel_type)))
-                //{
-                //    if (kernel_type == common.libsvm_kernel_type.precomputed) continue;
-                //    foreach (common.scale_function scale_function in Enum.GetValues(typeof(common.scale_function)))
-                //    {
-                //        if (scale_function == common.scale_function.none) continue;
-                //    }
-                //}
+            //foreach (common.libsvm_kernel_type kernel_type in Enum.GetValues(typeof(common.libsvm_kernel_type)))
+            //{
+            //    if (kernel_type == common.libsvm_kernel_type.precomputed) continue;
+            //    foreach (common.scale_function scale_function in Enum.GetValues(typeof(common.scale_function)))
+            //    {
+            //        if (scale_function == common.scale_function.none) continue;
+            //    }
+            //}
 
-                // get ranks by kernel/scaling
+            // get ranks by kernel/scaling
 
 
-                var iteration_folder1 = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+            var iteration_folder1 = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
-                var cm_inputs1 = get_cm_inputs(p, jobs_group_level0, groups, iteration_folder1, iteration_index);
+            var cm_inputs1 = get_cm_inputs(p, jobs_group_level0, groups, iteration_folder1, iteration_index);
 
-                io_proxy.WriteLine($@"Finished ranking the highest scoring group...", nameof(svm_ctl), nameof(feature_selection));
-            }
-
-            // output winner details
+            io_proxy.WriteLine($@"Finished ranking the highest scoring group...", nameof(svm_ctl), nameof(feature_selection));
+            
         }
 
         private static List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)>
 
             get_cm_inputs(
                 cmd_params ranking_metric_params,
-                List<(List<List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)>> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)> jobs_group_level,
+                List<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)> jobs_group_level,
                 List<(int index, (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) key, List<(int fid, string alphabet, string dimension, string category, string source, string @group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> list, List<int> columns)> groups,
                 string iteration_folder,
                 int iteration_index,
@@ -895,10 +985,11 @@ namespace svm_fs
 
         public static
 
-            (List<List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)>> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)
+            //(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)
             //List<List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)>> 
 
-            group_cv(
+            (List<string> wait_file_list, cmd_params p, List<int> this_test_group_indexes, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm, List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets, List<cmd_params> wkr_cmd_params_list)
+            group_cv_part1(
                 int stage,
                 cmd_params p,
                 List<(int class_id, int size, List<(int randomisation_cv_index, int outer_cv_index, List<int> indexes)> folds)> downsampled_training_class_folds,
@@ -917,7 +1008,7 @@ namespace svm_fs
                 List<int> this_test_group_indexes = default
                 )
         {
-            io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv));
+            io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv_part1));
 
             query_cols = query_cols.ToList();
 
@@ -948,10 +1039,21 @@ namespace svm_fs
             }
             ///
 
-            var jobs_randomisation_level = Enumerable.Range(0, p.randomisation_cv_folds).AsParallel().AsOrdered().Select(randomisation_cv_index =>
+            var rets =
+                new List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool
+                    wait_first, bool has_header, string average_out_filename, string merge_out_filename, string
+                    merge_in_filename, string average_header)> to_merge)>();
+
+            //var jobs_randomisation_level = Enumerable.Range(0, p.randomisation_cv_folds).AsParallel().AsOrdered().Select(randomisation_cv_index =>
+            for (var _randomisation_cv_index = 0; _randomisation_cv_index < p.randomisation_cv_folds; _randomisation_cv_index++)
             {
-                var jobs_outerfold_level = Enumerable.Range(0, p.outer_cv_folds).AsParallel().AsOrdered().Select(outer_cv_index =>
+                var randomisation_cv_index = _randomisation_cv_index;
+
+                //var jobs_outerfold_level = Enumerable.Range(0, p.outer_cv_folds).AsParallel().AsOrdered().Select(outer_cv_index =>
+                for (var _outer_cv_index = 0; _outer_cv_index < p.outer_cv_folds; _outer_cv_index++)
                 {
+                    var outer_cv_index = _outer_cv_index;
+
                     // get the fold index ranges for this outer-cv-fold
                     var training_fold_indexes = downsampled_training_class_folds.Select(a => (a.class_id, outer_cv_index: outer_cv_index, indexes: a.folds.Where(b => b.randomisation_cv_index == randomisation_cv_index && b.outer_cv_index != outer_cv_index).SelectMany(b => b.indexes).OrderBy(b => b).ToList())).ToList();
 
@@ -1061,55 +1163,85 @@ namespace svm_fs
 
                     var ret = do_job(stage, p, (groups != null && groups.Count > job_info.group_index && group_index > -1) ? groups[job_info.group_index] : default, job_info);
 
+                    if (ret != default)
+                    {
+                        rets.Add(ret);
+                    }
 
-                    return ret;
-                }).ToList();
+                    //return ret;
+                }//).ToList();
 
-                jobs_outerfold_level = jobs_outerfold_level.Where(a => a != default).ToList();
+                //jobs_outerfold_level = jobs_outerfold_level.Where(a => a != default).ToList();
 
-                return jobs_outerfold_level;
-            }).ToList();
+                //return jobs_outerfold_level;
+            }//).ToList();
 
-            jobs_randomisation_level = jobs_randomisation_level.Where(a => a != default).ToList();
+            //jobs_randomisation_level = jobs_randomisation_level.Where(a => a != default).ToList();
             //return jobs_randomisation_level;
 
             // merge job inputs (training/testing/etc. files, etc.)
-            var tm = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.to_merge).ToList()).ToList();
+            //var tm = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.to_merge).ToList()).ToList();
+            var tm = rets.SelectMany(a => a.to_merge).ToList();
             var pre_tm = tm.Where(a => !a.wait_first).ToList();
             var post_tm = tm.Where(a => a.wait_first).ToList();
             merge_pre_results(pre_tm);
 
             // submit jobs to scheduler
-            var wkr_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
+            //var wkr_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
+            var wkr_cmd_params_list = rets.Select(a => a.cmd_params).ToList();
 
 
             //var iteration_folder = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
             // wait for results
-            var wait_file_list = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.wait_file_list).ToList()).ToList();
-            wait_for_results(wait_file_list);
+            //var wait_file_list = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.wait_file_list).ToList()).ToList();
+            var wait_file_list = rets.SelectMany(a => a.wait_file_list).ToList();
+            //wait_for_results(wait_file_list);
 
 
+            var result = (wait_file_list, p, this_test_group_indexes, post_tm, rets, wkr_cmd_params_list);
+
+            return result;
+
+            //return group_cv_part2(p, this_test_group_indexes, post_tm, rets, wkr_cmd_params_list);
+        }
+
+        public static 
+            (List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes) 
+            group_cv_part2
+            (
+                (List<string> wait_file_list,
+                cmd_params p,
+                List<int> this_test_group_indexes, 
+                List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm, 
+                List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets,
+                List<cmd_params> wkr_cmd_params_list) x
+            )
+        {
             // merge prediction results... to create a single confusion matrix
-            merge_post_results(post_tm);
+            merge_post_results(x.post_tm);
 
-            var merge_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.merge_cmd_params).ToList()).ToList();
+            //var merge_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.merge_cmd_params).ToList()).ToList();
+            var merge_cmd_params_list = x.rets.Select(a => a.merge_cmd_params).ToList();
 
             var merge_cm_inputs = merge_cmd_params_list.GroupBy(a =>
-                (
-                    test_file: a.test_filename,
-                    //test_labels_filename: a.test_labels_filename,
-                    test_comments_file: a.test_meta_filename,
-                    prediction_file: a.test_predict_filename,
-                    cm_file: Path.Combine(Path.GetDirectoryName(a.test_predict_cm_filename), $@"{Path.GetFileNameWithoutExtension(a.test_predict_cm_filename)}_merged_predictions{Path.GetExtension(a.test_predict_cm_filename)}")
+            (
+                test_file: a.test_filename,
+                //test_labels_filename: a.test_labels_filename,
+                test_comments_file: a.test_meta_filename,
+                prediction_file: a.test_predict_filename,
+                cm_file: Path.Combine(Path.GetDirectoryName(a.test_predict_cm_filename),
+                    $@"{Path.GetFileNameWithoutExtension(a.test_predict_cm_filename)}_merged_predictions{Path.GetExtension(a.test_predict_cm_filename)}")
+            )).Select(a => (filenames: a.Key,
+                cms: performance_measure.load_prediction_file(a.Key.test_file, a.Key.test_comments_file, a.Key.prediction_file,
+                    x.p.output_threshold_adjustment_performance), cmd_params: new cmd_params(a.ToList()))).ToList();
 
-                    )).Select(a => (filenames: a.Key, cms: performance_measure.load_prediction_file(a.Key.test_file, a.Key.test_comments_file, a.Key.prediction_file, p.output_threshold_adjustment_performance), cmd_params: new cmd_params(a.ToList()))).ToList();
-
-            merge_cm_inputs.ForEach(a => update_cm(p, a.cms.cm_list));
+            merge_cm_inputs.ForEach(a => update_cm(x.p, a.cms.cm_list));
             merge_cm_inputs.ForEach(a => update_cm(a.cmd_params, a.cms.cm_list));
 
 
-            var cms_header = $@"{string.Join(",", cmd_params.csv_header)},{string.Join(",", performance_measure.confusion_matrix.csv_header)}";
+            var cms_header =
+                $@"{string.Join(",", cmd_params.csv_header)},{string.Join(",", performance_measure.confusion_matrix.csv_header)}";
 
             for (var i = 0; i < merge_cm_inputs.Count; i++)
             {
@@ -1118,10 +1250,11 @@ namespace svm_fs
                 var fn = item.filenames.cm_file;
                 if (!io_proxy.is_file_available(fn))
                 {
-
                     var cm_data = new List<string>();
                     cm_data.Add(cms_header);
-                    cm_data.AddRange(item.cms.cm_list.Select(a => $@"{string.Join(",", item.cmd_params.get_options().Select(c => c.value).ToList())},{a.ToString()}").ToList());
+                    cm_data.AddRange(item.cms.cm_list.Select(a =>
+                            $@"{string.Join(",", item.cmd_params.get_options().Select(c => c.value).ToList())},{a.ToString()}")
+                        .ToList());
 
 
                     io_proxy.WriteAllLines(fn, cm_data);
@@ -1131,14 +1264,13 @@ namespace svm_fs
             }
 
             // post merge, delete individual outer-cv files
-            delete_temp_wkr_files(wkr_cmd_params_list);
-            
+            delete_temp_wkr_files(x.wkr_cmd_params_list);
+
             delete_temp_merge_files(merge_cmd_params_list);
             // return results
 
 
-
-            return (jobs_randomisation_level, merge_cm_inputs, this_test_group_indexes);
+            return (x.rets, merge_cm_inputs, x.this_test_group_indexes);
         }
 
         public static void delete_temp_wkr_files(cmd_params p)
@@ -1765,9 +1897,32 @@ namespace svm_fs
 
             return result;
         }
+        
+        //public static Task file_wait_task;
+        //public static List<string> file_wait_list = new List<string>();
+
+        //public static object wait_ready_lock = new object();
+        //public static int wait_items;
+        //public static int wait_items_ready;
+        //public static bool wait_ready;
 
         public static void wait_for_results(List<string> file_wait_list)
         {
+            //lock (wait_ready_lock)
+            //{
+            //    wait_items_ready++;
+
+            //    if (wait_items_ready == wait_items)
+            //    {
+            //        wait_ready = true;
+            //    }
+            //}
+
+            //while (!wait_ready)
+            //{
+                
+            //}
+
             io_proxy.WriteLine($@"Waiting for {file_wait_list.Count} files.", nameof(svm_ctl), nameof(wait_for_results));
 
             if (file_wait_list == null || file_wait_list.Count == 0) return;
@@ -1828,7 +1983,7 @@ namespace svm_fs
                     return;
                 }
 
-                Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                Task.Delay(new TimeSpan(0, 0, 0, 30)).Wait();
             }
         }
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Runtime.Loader;
 using System.Threading;
 
@@ -57,6 +58,8 @@ namespace svm_fs
 
         public static void Main(string[] args)
         {
+            GCSettings.LatencyMode = GCLatencyMode.Batch;
+
             var cts = new CancellationTokenSource();
             close_notifications(cts);
 
