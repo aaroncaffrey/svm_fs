@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace svm_fs
 {
-    public static class program
+    internal static class program
     {
 
 
@@ -37,7 +37,7 @@ namespace svm_fs
         //return;
         //args = new string[] { $@"c:\temp\iteration_0\rand_0\outer_fold_0\group_0\0_0_0_0_0.options" };
 
-        public static void close_notifications(CancellationTokenSource cts)
+        internal static void close_notifications(CancellationTokenSource cts)
         {
             Console.CancelKeyPress += (sender, eventArgs) =>
             {
@@ -56,7 +56,7 @@ namespace svm_fs
             };
         }
 
-        public static void Main(string[] args)
+        internal static void Main(string[] args)
         {
             GCSettings.LatencyMode = GCLatencyMode.Batch;
 
@@ -162,14 +162,11 @@ namespace svm_fs
             {
                 if (options.cmd == cmd.ctl)
                 {
-
-
                     svm_ldr.start(options, cts);
-                    
                 }
                 else
                 {
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(options.cmd));
                 }
             }
             else
@@ -185,7 +182,7 @@ namespace svm_fs
                         break;
 
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(options.cmd));
                 }
             }
             

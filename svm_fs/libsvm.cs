@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace svm_fs
 {
-    public static class libsvm
+    internal static class libsvm
     {
 
 
-        public static (string cmd_line, string stdout, string stderr) train(
+        internal static (string cmd_line, string stdout, string stderr) train(
             string libsvm_train_exe_file,
             string train_file,
             string model_out_file,
@@ -251,7 +251,7 @@ namespace svm_fs
             return (cmd_line, null, null);
         }
 
-        public static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null)
+        internal static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null)
         {
             libsvm_predict_exe_file = io_proxy.convert_path(libsvm_predict_exe_file);
             test_file = io_proxy.convert_path(test_file);

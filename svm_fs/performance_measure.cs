@@ -8,22 +8,22 @@ namespace svm_fs
 { 
 
 
-    public static class performance_measure
+    internal static class performance_measure
     {
-        public class prediction
+        internal class prediction
         {
-            public int prediction_index;
-            public int actual_class;
-            public int default_predicted_class;
-            public bool probability_estimates_stated;
-            public List<(int class_id, double probability_estimate)> probability_estimates;
-            public string[] test_row_vector;
-            public List<(string comment_header, string comment_value)> comment;
+            internal int prediction_index;
+            internal int actual_class;
+            internal int default_predicted_class;
+            internal bool probability_estimates_stated;
+            internal List<(int class_id, double probability_estimate)> probability_estimates;
+            internal string[] test_row_vector;
+            internal List<(string comment_header, string comment_value)> comment;
         }
 
-        public class confusion_matrix
+        internal class confusion_matrix
         {
-            public static List<confusion_matrix> load(string filename, int column_offset = 0)
+            internal static List<confusion_matrix> load(string filename, int column_offset = 0)
             {
                 var lines = io_proxy.ReadAllLines(filename).ToList();
                 var h1 = confusion_matrix.csv_header;
@@ -38,7 +38,7 @@ namespace svm_fs
 
                     for (var i = 0; i < h1.Count; i++)
                     {
-                        if (!ls[i].StartsWith(h1[i]))
+                        if (!ls[i].StartsWith(h1[i], StringComparison.InvariantCulture))
                         {
                             m = false;
                             break;
@@ -290,240 +290,240 @@ namespace svm_fs
                 return cms;
             }
 
-            //public string duration_nm_search;
-            //public double libsvm_cv_precision;
-            //public double libsvm_cv_recall;
-            //public double libsvm_cv_fscore;
-            //public double libsvm_cv_bac;
-            //public double libsvm_cv_auc;
-            //public double libsvm_cv_accuracy;
-            //public double libsvm_cv_ap;
-            //public string training_resampling_method;
-            //public double training_size_pct;
-            //public double unused_size_pct;
-            //public double testing_size_pct;
-            //public string kernel_parameter_search_method;
+            //internal string duration_nm_search;
+            //internal double libsvm_cv_precision;
+            //internal double libsvm_cv_recall;
+            //internal double libsvm_cv_fscore;
+            //internal double libsvm_cv_bac;
+            //internal double libsvm_cv_auc;
+            //internal double libsvm_cv_accuracy;
+            //internal double libsvm_cv_ap;
+            //internal string training_resampling_method;
+            //internal double training_size_pct;
+            //internal double unused_size_pct;
+            //internal double testing_size_pct;
+            //internal string kernel_parameter_search_method;
 
-            public string ext_duration_grid_search;
-            public string ext_duration_training;
-            public string ext_duration_testing;
-            public string ext_experiment_name;
-            public string ext_scaling_function;
-            public double ext_libsvm_cv;         
-            public double? ext_prediction_threshold = -1;
-            public double? ext_prediction_threshold_class;
-            public int ext_old_feature_count;
-            public int ext_new_feature_count;
-            public int ext_old_group_count;
-            public int ext_new_group_count;
-            public string ext_features_included;
-            public int ext_inner_cv_folds;
-            public int ext_randomisation_cv_index;
-            public int ext_randomisation_cv_folds;
-            public int ext_outer_cv_index;
-            public int ext_outer_cv_folds;
-            public string ext_svm_type;
-            public string ext_svm_kernel;
-            public double? ext_cost;
-            public double? ext_gamma;
-            public double? ext_epsilon;
-            public double? ext_coef0;
-            public double? ext_degree;
-            public double? ext_class_weight;
-            public string ext_class_name;
-            public double ext_class_size;
-            public double ext_class_training_size;
-            public double ext_class_testing_size;
+            internal string ext_duration_grid_search;
+            internal string ext_duration_training;
+            internal string ext_duration_testing;
+            internal string ext_experiment_name;
+            internal string ext_scaling_function;
+            internal double ext_libsvm_cv;         
+            internal double? ext_prediction_threshold = -1;
+            internal double? ext_prediction_threshold_class;
+            internal int ext_old_feature_count;
+            internal int ext_new_feature_count;
+            internal int ext_old_group_count;
+            internal int ext_new_group_count;
+            internal string ext_features_included;
+            internal int ext_inner_cv_folds;
+            internal int ext_randomisation_cv_index;
+            internal int ext_randomisation_cv_folds;
+            internal int ext_outer_cv_index;
+            internal int ext_outer_cv_folds;
+            internal string ext_svm_type;
+            internal string ext_svm_kernel;
+            internal double? ext_cost;
+            internal double? ext_gamma;
+            internal double? ext_epsilon;
+            internal double? ext_coef0;
+            internal double? ext_degree;
+            internal double? ext_class_weight;
+            internal string ext_class_name;
+            internal double ext_class_size;
+            internal double ext_class_training_size;
+            internal double ext_class_testing_size;
 
-            public List<double> thresholds;
-            public string roc_xy_str_all;
-            public string roc_xy_str_11p;
-            public string pr_xy_str_all;
-            public string pr_xy_str_11p;
-            public string pri_xy_str_all;
-            public string pri_xy_str_11p;
+            internal List<double> thresholds;
+            internal string roc_xy_str_all;
+            internal string roc_xy_str_11p;
+            internal string pr_xy_str_all;
+            internal string pr_xy_str_11p;
+            internal string pri_xy_str_all;
+            internal string pri_xy_str_11p;
 
-            public int? class_id;
-            public double P;
-            public double N;
-            public double TP;
-            public double FP;
-            public double TN;
-            public double FN;
-            public double TPR;
-            public double TNR;
-            public double PPV;
-            public double Precision;
-            public double Prevalence;
-            public double MCR;
-            public double ER;
-            public double NER;
-            public double CNER;
-            public double Kappa;
-            public double Overlap;
-            public double RND_ACC;
-            public double Support;
-            public double BaseRate;
-            public double Youden;
-            public double NPV;
-            public double FNR;
-            public double FPR;
-            public double FDR;
-            public double FOR;
-            public double ACC;
-            public double GM;
-            public double F1S;
-            public double G1S;
-            public double MCC;
-            public double BM_;
-            public double MK_;
-            public double BAC;
-            public double ROC_AUC_Approx_All;
-            public double ROC_AUC_Approx_11p;
-            public double ROC_AUC_All;
-            //public double ROC_AUC_11p;
-            public double PR_AUC_Approx_All;
-            public double PR_AUC_Approx_11p;
-            public double PRI_AUC_Approx_All;
-            public double PRI_AUC_Approx_11p;
-            public double AP_All;
-            public double AP_11p;
-            public double API_All;
-            public double API_11p;
-            public double Brier_All;
-            public double LRP;
-            public double LRN;
-            public double F1B_00;
-            public double F1B_01;
-            public double F1B_02;
-            public double F1B_03;
-            public double F1B_04;
-            public double F1B_05;
-            public double F1B_06;
-            public double F1B_07;
-            public double F1B_08;
-            public double F1B_09;
-            public double F1B_10;
+            internal int? class_id;
+            internal double P;
+            internal double N;
+            internal double TP;
+            internal double FP;
+            internal double TN;
+            internal double FN;
+            internal double TPR;
+            internal double TNR;
+            internal double PPV;
+            internal double Precision;
+            internal double Prevalence;
+            internal double MCR;
+            internal double ER;
+            internal double NER;
+            internal double CNER;
+            internal double Kappa;
+            internal double Overlap;
+            internal double RND_ACC;
+            internal double Support;
+            internal double BaseRate;
+            internal double Youden;
+            internal double NPV;
+            internal double FNR;
+            internal double FPR;
+            internal double FDR;
+            internal double FOR;
+            internal double ACC;
+            internal double GM;
+            internal double F1S;
+            internal double G1S;
+            internal double MCC;
+            internal double BM_;
+            internal double MK_;
+            internal double BAC;
+            internal double ROC_AUC_Approx_All;
+            internal double ROC_AUC_Approx_11p;
+            internal double ROC_AUC_All;
+            //internal double ROC_AUC_11p;
+            internal double PR_AUC_Approx_All;
+            internal double PR_AUC_Approx_11p;
+            internal double PRI_AUC_Approx_All;
+            internal double PRI_AUC_Approx_11p;
+            internal double AP_All;
+            internal double AP_11p;
+            internal double API_All;
+            internal double API_11p;
+            internal double Brier_All;
+            internal double LRP;
+            internal double LRN;
+            internal double F1B_00;
+            internal double F1B_01;
+            internal double F1B_02;
+            internal double F1B_03;
+            internal double F1B_04;
+            internal double F1B_05;
+            internal double F1B_06;
+            internal double F1B_07;
+            internal double F1B_08;
+            internal double F1B_09;
+            internal double F1B_10;
 
-            public double PPF_TP;
-            public double PPF_FP;
-            public double PPF_TN;
-            public double PPF_FN;
-            public double PPF_TPR;
-            public double PPF_TNR;
-            public double PPF_PPV;
-            public double PPF_Precision;
-            public double PPF_Prevalence;
-            public double PPF_MCR;
-            public double PPF_ER;
-            public double PPF_NER;
-            public double PPF_CNER;
-            public double PPF_Kappa;
-            public double PPF_Overlap;
-            public double PPF_RND_ACC;
-            public double PPF_Support;
-            public double PPF_BaseRate;
-            public double PPF_Youden;
-            public double PPF_NPV;
-            public double PPF_FNR;
-            public double PPF_FPR;
-            public double PPF_FDR;
-            public double PPF_FOR;
-            public double PPF_ACC;
-            public double PPF_GM;
-            public double PPF_F1S;
-            public double PPF_G1S;
-            public double PPF_MCC;
-            public double PPF_BM_;
-            public double PPF_MK_;
-            public double PPF_BAC;
-            public double PPF_ROC_AUC_Approx_All;
-            public double PPF_ROC_AUC_Approx_11p;
-            public double PPF_ROC_AUC_All;
-            //public double PPF_ROC_AUC_11p;
-            public double PPF_PR_AUC_Approx_All;
-            public double PPF_PR_AUC_Approx_11p;
-            public double PPF_PRI_AUC_Approx_All;
-            public double PPF_PRI_AUC_Approx_11p;
-            public double PPF_AP_All;
-            public double PPF_AP_11p;
-            public double PPF_API_All;
-            public double PPF_API_11p;
-            public double PPF_Brier_All;
-            public double PPF_LRP;
-            public double PPF_LRN;
-            public double PPF_F1B_00;
-            public double PPF_F1B_01;
-            public double PPF_F1B_02;
-            public double PPF_F1B_03;
-            public double PPF_F1B_04;
-            public double PPF_F1B_05;
-            public double PPF_F1B_06;
-            public double PPF_F1B_07;
-            public double PPF_F1B_08;
-            public double PPF_F1B_09;
-            public double PPF_F1B_10;
+            internal double PPF_TP;
+            internal double PPF_FP;
+            internal double PPF_TN;
+            internal double PPF_FN;
+            internal double PPF_TPR;
+            internal double PPF_TNR;
+            internal double PPF_PPV;
+            internal double PPF_Precision;
+            internal double PPF_Prevalence;
+            internal double PPF_MCR;
+            internal double PPF_ER;
+            internal double PPF_NER;
+            internal double PPF_CNER;
+            internal double PPF_Kappa;
+            internal double PPF_Overlap;
+            internal double PPF_RND_ACC;
+            internal double PPF_Support;
+            internal double PPF_BaseRate;
+            internal double PPF_Youden;
+            internal double PPF_NPV;
+            internal double PPF_FNR;
+            internal double PPF_FPR;
+            internal double PPF_FDR;
+            internal double PPF_FOR;
+            internal double PPF_ACC;
+            internal double PPF_GM;
+            internal double PPF_F1S;
+            internal double PPF_G1S;
+            internal double PPF_MCC;
+            internal double PPF_BM_;
+            internal double PPF_MK_;
+            internal double PPF_BAC;
+            internal double PPF_ROC_AUC_Approx_All;
+            internal double PPF_ROC_AUC_Approx_11p;
+            internal double PPF_ROC_AUC_All;
+            //internal double PPF_ROC_AUC_11p;
+            internal double PPF_PR_AUC_Approx_All;
+            internal double PPF_PR_AUC_Approx_11p;
+            internal double PPF_PRI_AUC_Approx_All;
+            internal double PPF_PRI_AUC_Approx_11p;
+            internal double PPF_AP_All;
+            internal double PPF_AP_11p;
+            internal double PPF_API_All;
+            internal double PPF_API_11p;
+            internal double PPF_Brier_All;
+            internal double PPF_LRP;
+            internal double PPF_LRN;
+            internal double PPF_F1B_00;
+            internal double PPF_F1B_01;
+            internal double PPF_F1B_02;
+            internal double PPF_F1B_03;
+            internal double PPF_F1B_04;
+            internal double PPF_F1B_05;
+            internal double PPF_F1B_06;
+            internal double PPF_F1B_07;
+            internal double PPF_F1B_08;
+            internal double PPF_F1B_09;
+            internal double PPF_F1B_10;
 
-            public double PPG_TP;
-            public double PPG_FP;
-            public double PPG_TN;
-            public double PPG_FN;
-            public double PPG_TPR;
-            public double PPG_TNR;
-            public double PPG_PPV;
-            public double PPG_Precision;
-            public double PPG_Prevalence;
-            public double PPG_MCR;
-            public double PPG_ER;
-            public double PPG_NER;
-            public double PPG_CNER;
-            public double PPG_Kappa;
-            public double PPG_Overlap;
-            public double PPG_RND_ACC;
-            public double PPG_Support;
-            public double PPG_BaseRate;
-            public double PPG_Youden;
-            public double PPG_NPV;
-            public double PPG_FNR;
-            public double PPG_FPR;
-            public double PPG_FDR;
-            public double PPG_FOR;
-            public double PPG_ACC;
-            public double PPG_GM;
-            public double PPG_F1S;
-            public double PPG_G1S;
-            public double PPG_MCC;
-            public double PPG_BM_;
-            public double PPG_MK_;
-            public double PPG_BAC;
-            public double PPG_ROC_AUC_Approx_All;
-            public double PPG_ROC_AUC_Approx_11p;
-            public double PPG_ROC_AUC_All;
-            //public double PPG_ROC_AUC_11p;
-            public double PPG_PR_AUC_Approx_All;
-            public double PPG_PR_AUC_Approx_11p;
-            public double PPG_PRI_AUC_Approx_All;
-            public double PPG_PRI_AUC_Approx_11p;
-            public double PPG_AP_All;
-            public double PPG_AP_11p;
-            public double PPG_API_All;
-            public double PPG_API_11p;
-            public double PPG_Brier_All;
-            public double PPG_LRP;
-            public double PPG_LRN;
-            public double PPG_F1B_00;
-            public double PPG_F1B_01;
-            public double PPG_F1B_02;
-            public double PPG_F1B_03;
-            public double PPG_F1B_04;
-            public double PPG_F1B_05;
-            public double PPG_F1B_06;
-            public double PPG_F1B_07;
-            public double PPG_F1B_08;
-            public double PPG_F1B_09;
-            public double PPG_F1B_10;
+            internal double PPG_TP;
+            internal double PPG_FP;
+            internal double PPG_TN;
+            internal double PPG_FN;
+            internal double PPG_TPR;
+            internal double PPG_TNR;
+            internal double PPG_PPV;
+            internal double PPG_Precision;
+            internal double PPG_Prevalence;
+            internal double PPG_MCR;
+            internal double PPG_ER;
+            internal double PPG_NER;
+            internal double PPG_CNER;
+            internal double PPG_Kappa;
+            internal double PPG_Overlap;
+            internal double PPG_RND_ACC;
+            internal double PPG_Support;
+            internal double PPG_BaseRate;
+            internal double PPG_Youden;
+            internal double PPG_NPV;
+            internal double PPG_FNR;
+            internal double PPG_FPR;
+            internal double PPG_FDR;
+            internal double PPG_FOR;
+            internal double PPG_ACC;
+            internal double PPG_GM;
+            internal double PPG_F1S;
+            internal double PPG_G1S;
+            internal double PPG_MCC;
+            internal double PPG_BM_;
+            internal double PPG_MK_;
+            internal double PPG_BAC;
+            internal double PPG_ROC_AUC_Approx_All;
+            internal double PPG_ROC_AUC_Approx_11p;
+            internal double PPG_ROC_AUC_All;
+            //internal double PPG_ROC_AUC_11p;
+            internal double PPG_PR_AUC_Approx_All;
+            internal double PPG_PR_AUC_Approx_11p;
+            internal double PPG_PRI_AUC_Approx_All;
+            internal double PPG_PRI_AUC_Approx_11p;
+            internal double PPG_AP_All;
+            internal double PPG_AP_11p;
+            internal double PPG_API_All;
+            internal double PPG_API_11p;
+            internal double PPG_Brier_All;
+            internal double PPG_LRP;
+            internal double PPG_LRN;
+            internal double PPG_F1B_00;
+            internal double PPG_F1B_01;
+            internal double PPG_F1B_02;
+            internal double PPG_F1B_03;
+            internal double PPG_F1B_04;
+            internal double PPG_F1B_05;
+            internal double PPG_F1B_06;
+            internal double PPG_F1B_07;
+            internal double PPG_F1B_08;
+            internal double PPG_F1B_09;
+            internal double PPG_F1B_10;
 
-            public List<double> get_specific_values(cross_validation_metrics cross_validation_metrics)
+            internal List<double> get_specific_values(cross_validation_metrics cross_validation_metrics)
             {
                 var metric_values = new List<double>();
 
@@ -593,7 +593,7 @@ namespace svm_fs
                 return metric_values;
             }
 
-            public (string name, double value)[] get_perf_value_strings()
+            internal (string name, double value)[] get_perf_value_strings()
             {
                 var result = new (string name, double value)[] {
 
@@ -660,7 +660,7 @@ namespace svm_fs
             }
 
             [Flags]
-            public enum cross_validation_metrics : ulong
+            internal enum cross_validation_metrics : ulong
             {
                 None = 0UL,
                 TP = 1UL << 01,
@@ -725,7 +725,7 @@ namespace svm_fs
             }
 
 
-            public void calculate_ppf()
+            internal void calculate_ppf()
             {
                 if (ext_new_feature_count != 0)
                 {
@@ -855,7 +855,7 @@ namespace svm_fs
 
             }
 
-            public void calculate_metrics(bool calculate_auc, List<prediction> prediction_list)
+            internal void calculate_metrics(bool calculate_auc, List<prediction> prediction_list)
             {
                 //var cm = this;
 
@@ -971,7 +971,7 @@ namespace svm_fs
                 calculate_ppf();
             }
 
-            /*public static confusion_matrix Average2(List<confusion_matrix> cm)
+            /*internal static confusion_matrix Average2(List<confusion_matrix> cm)
             {
 
                 int? cid = cm.Select(a => a.class_id).Distinct().Count() == 1 ? cm.First().class_id : null;
@@ -1132,7 +1132,7 @@ namespace svm_fs
                 return result;
             }*/
 
-            /*public static List<confusion_matrix> Average1(List<confusion_matrix> confusion_matrices)//, bool class_specific = true)
+            /*internal static List<confusion_matrix> Average1(List<confusion_matrix> confusion_matrices)//, bool class_specific = true)
             {
                 //var print_params = true;
 
@@ -1337,7 +1337,7 @@ namespace svm_fs
                 return x;
             }*/
 
-            public static List<string> csv_header = new List<string>() 
+            internal static List<string> csv_header = new List<string>() 
             {
                 nameof(ext_experiment_name),
                 //nameof(experiment_id1),
@@ -1582,7 +1582,7 @@ namespace svm_fs
             };
 
 
-            public string[] get_values()
+            internal string[] get_values()
             {
                 var data = new string[]
                 {
@@ -1593,24 +1593,24 @@ namespace svm_fs
                     ext_scaling_function,
                     ext_libsvm_cv.ToString("G17", CultureInfo.InvariantCulture),
                     ext_prediction_threshold?.ToString("G17", CultureInfo.InvariantCulture),
-                    ext_prediction_threshold_class?.ToString(),
-                    ext_old_feature_count.ToString(),
-                    ext_new_feature_count.ToString(),
-                    ext_old_group_count.ToString(),
-                    ext_new_group_count.ToString(),
+                    ext_prediction_threshold_class?.ToString("G17", CultureInfo.InvariantCulture),
+                    ext_old_feature_count.ToString(CultureInfo.InvariantCulture),
+                    ext_new_feature_count.ToString(CultureInfo.InvariantCulture),
+                    ext_old_group_count.ToString(CultureInfo.InvariantCulture),
+                    ext_new_group_count.ToString(CultureInfo.InvariantCulture),
                     ext_features_included,
-                    ext_inner_cv_folds.ToString(),
-                    ext_randomisation_cv_index.ToString(),
-                    ext_randomisation_cv_folds.ToString(),
-                    ext_outer_cv_index.ToString(),
-                    ext_outer_cv_folds.ToString(),
-                    ext_svm_type?.ToString(),
-                    ext_svm_kernel?.ToString(),
-                    ext_cost?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";") ?? "",
-                    ext_gamma?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";") ?? "",
-                    ext_epsilon?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";") ?? "",
-                    ext_coef0?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";") ?? "",
-                    ext_degree?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";") ?? "",
+                    ext_inner_cv_folds.ToString(CultureInfo.InvariantCulture),
+                    ext_randomisation_cv_index.ToString(CultureInfo.InvariantCulture),
+                    ext_randomisation_cv_folds.ToString(CultureInfo.InvariantCulture),
+                    ext_outer_cv_index.ToString(CultureInfo.InvariantCulture),
+                    ext_outer_cv_folds.ToString(CultureInfo.InvariantCulture),
+                    ext_svm_type ?? "",
+                    ext_svm_kernel ?? "",
+                    ext_cost?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";", StringComparison.InvariantCulture) ?? "",
+                    ext_gamma?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";", StringComparison.InvariantCulture) ?? "",
+                    ext_epsilon?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";", StringComparison.InvariantCulture) ?? "",
+                    ext_coef0?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";", StringComparison.InvariantCulture) ?? "",
+                    ext_degree?.ToString("G17", CultureInfo.InvariantCulture).Replace(",",";", StringComparison.InvariantCulture) ?? "",
 
                     class_id?.ToString(CultureInfo.InvariantCulture),
                     ext_class_name,
@@ -1804,32 +1804,32 @@ namespace svm_fs
                     pri_xy_str_11p,
                 };
 
-                var data1 = data.Select(a => a?.ToString().Replace(",",";") ?? "").ToArray();
+                var data1 = data.Select(a => a?.ToString(CultureInfo.InvariantCulture).Replace(",",";", StringComparison.InvariantCulture) ?? "").ToArray();
 
                 return data1;
             }
 
             public override string ToString()
             {
-                return String.Join(",", get_values().Select(a => a?.ToString().Replace(",", ";") ?? "").ToList());
+                return String.Join(",", get_values().Select(a => a?.ToString(CultureInfo.InvariantCulture).Replace(",", ";", StringComparison.InvariantCulture) ?? "").ToList());
             }
         }
 
-        //public static double fbeta1(double PPV, double TPR, double fbeta)
+        //internal static double fbeta1(double PPV, double TPR, double fbeta)
         //{
         //    var fb = (PPV == 0.0 || TPR == 0.0) ? (double)0.0 : (double)(1 + (fbeta * fbeta)) * ((PPV * TPR) / (((fbeta * fbeta) * PPV) + TPR));
 
         //    return fb;
         //}
 
-        public static double fbeta2(double PPV, double TPR, double fbeta)
+        internal static double fbeta2(double PPV, double TPR, double fbeta)
         {
             var fb = (PPV == 0.0 || TPR == 0.0) ? (double)0.0 : (double)(1 / (fbeta * (1 / PPV) + (1 - fbeta) * (1 / TPR)));
 
             return fb;
         }
 
-        public static List<confusion_matrix> count_prediction_error(
+        internal static List<confusion_matrix> count_prediction_error(
             List<prediction> prediction_list,
             double? threshold = null,
             int? threshold_class = null,
@@ -1960,7 +1960,7 @@ namespace svm_fs
 
 
 
-        public static double area_under_curve_trapz(List<(double x, double y)> coordinate_list)//, bool interpolation = true)
+        internal static double area_under_curve_trapz(List<(double x, double y)> coordinate_list)//, bool interpolation = true)
         {
 
             //var param_list = new List<(string key, string value)>()
@@ -1979,7 +1979,7 @@ namespace svm_fs
         }
 
 
-        public static List<prediction> load_prediction_file_regression_values(List<(string test_file, string test_comments_file, string prediction_file)> files)
+        internal static List<prediction> load_prediction_file_regression_values(List<(string test_file, string test_comments_file, string prediction_file)> files)
         {
 
             // method untested
@@ -1990,7 +1990,7 @@ namespace svm_fs
 
             //var test_has_headers = false;
             //var test_comments_has_headers = true;
-            var prediction_has_headers = lines.Any(a => a.prediction_file_lines.FirstOrDefault().StartsWith("labels"));
+            var prediction_has_headers = lines.Any(a => a.prediction_file_lines.FirstOrDefault().StartsWith("labels", StringComparison.InvariantCulture));
             
 
             if (prediction_has_headers && lines.Select(a=>a.prediction_file_lines.FirstOrDefault()).Distinct().Count() != 1)
@@ -2007,7 +2007,7 @@ namespace svm_fs
             return load_prediction_file_regression_values_from_text(test_file_lines, test_comments_file_lines, prediction_file_lines);
         }
 
-        public static List<prediction> load_prediction_file_regression_values(string test_file, string test_comments_file, string prediction_file)
+        internal static List<prediction> load_prediction_file_regression_values(string test_file, string test_comments_file, string prediction_file)
         {
             if (string.IsNullOrWhiteSpace(test_file) || !io_proxy.Exists(test_file, nameof(performance_measure), nameof(load_prediction_file_regression_values)) || new FileInfo(test_file).Length == 0)
             {
@@ -2038,7 +2038,7 @@ namespace svm_fs
             return load_prediction_file_regression_values_from_text(test_file_lines, test_comments_file_lines, prediction_file_lines);
         }
 
-        public static List<prediction> load_prediction_file_regression_values_from_text(List<string> test_file_lines, List<string> test_comments_file_lines, List<string> prediction_file_lines)
+        internal static List<prediction> load_prediction_file_regression_values_from_text(List<string> test_file_lines, List<string> test_comments_file_lines, List<string> prediction_file_lines)
         {
             if (test_file_lines == null || test_file_lines.Count == 0)
             {
@@ -2052,7 +2052,7 @@ namespace svm_fs
 
             test_file_lines = test_file_lines.Select(a =>
             {
-                var hash_index = a.IndexOf('#');
+                var hash_index = a.IndexOf('#', StringComparison.InvariantCulture);
 
                 if (hash_index > -1)
                 {
@@ -2128,7 +2128,7 @@ namespace svm_fs
             return prediction_list;
         }
 
-        //public static (List<prediction> prediction_list, List<confusion_matrix> cm_list) load_prediction_file(List<(string test_file, string test_comments_file, string prediction_file)> files, bool output_threshold_adjustment_performance)
+        //internal static (List<prediction> prediction_list, List<confusion_matrix> cm_list) load_prediction_file(List<(string test_file, string test_comments_file, string prediction_file)> files, bool output_threshold_adjustment_performance)
         //{
 
 
@@ -2139,7 +2139,7 @@ namespace svm_fs
 
         //}
 
-        public static (List<prediction> prediction_list, List<confusion_matrix> cm_list) load_prediction_file(string test_file, string test_comments_file, string prediction_file, bool output_threshold_adjustment_performance)
+        internal static (List<prediction> prediction_list, List<confusion_matrix> cm_list) load_prediction_file(string test_file, string test_comments_file, string prediction_file, bool output_threshold_adjustment_performance)
         {
 
             //var param_list = new List<(string key, string value)>()
@@ -2158,7 +2158,7 @@ namespace svm_fs
             return (prediction_list, cm_list);
         }
 
-        public static List<confusion_matrix> load_prediction_file(List<prediction> prediction_list, bool output_threshold_adjustment_performance)
+        internal static List<confusion_matrix> load_prediction_file(List<prediction> prediction_list, bool output_threshold_adjustment_performance)
         {
 
             //var param_list = new List<(string key, string value)>()
@@ -2225,7 +2225,7 @@ namespace svm_fs
             return confusion_matrix_list;
         }
 
-        public static double brier(List<prediction> prediction_list, int positive_id)
+        internal static double brier(List<prediction> prediction_list, int positive_id)
         {
             if (prediction_list.Any(a => !a.probability_estimates_stated)) return default;
 
@@ -2238,13 +2238,13 @@ namespace svm_fs
             return brier_score;
         }
 
-        public enum threshold_type
+        internal enum threshold_type
         {
             all_thresholds,
             eleven_points
         }
 
-        public static (/*double brier_score,*/ double roc_auc_approx, double roc_auc_actual, double pr_auc_approx, double pri_auc_approx, double ap, double api, List<(double x, double y)> roc_xy, List<(double x, double y)> pr_xy, List<(double x, double y)> pri_xy)
+        internal static (/*double brier_score,*/ double roc_auc_approx, double roc_auc_actual, double pr_auc_approx, double pri_auc_approx, double ap, double api, List<(double x, double y)> roc_xy, List<(double x, double y)> pr_xy, List<(double x, double y)> pri_xy)
             Calculate_ROC_PR_AUC(List<prediction> prediction_list, int positive_id, threshold_type threshold_type = threshold_type.all_thresholds)
         {
             if (prediction_list.Any(a => !a.probability_estimates_stated)) return default;

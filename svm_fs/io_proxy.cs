@@ -8,9 +8,9 @@ using System.Linq;
 
 namespace svm_fs
 {
-    public static class io_proxy
+    internal static class io_proxy
     {
-        public static bool is_file_available(string filename)
+        internal static bool is_file_available(string filename)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace svm_fs
             }
         }
 
-        public static string convert_path(string path)//, bool temp_file = false)
+        internal static string convert_path(string path)//, bool temp_file = false)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -83,7 +83,7 @@ namespace svm_fs
                 }
                 else if (path.Length > 0 && (path[0] == '\\' || path[0] == '/') && (path.Length == 1 || (path[1] != '\\' && path[1] != '/')))
                 {
-                    if (path.StartsWith("/home") || path.StartsWith("\\home")) path = path.Substring("/home".Length);
+                    if (path.StartsWith("/home", StringComparison.InvariantCulture) || path.StartsWith("\\home", StringComparison.InvariantCulture)) path = path.Substring("/home".Length);
 
                     if (path.FirstOrDefault() == '/' || path.FirstOrDefault() == '\\') path = path.Substring(1);
 
@@ -95,12 +95,12 @@ namespace svm_fs
 
             }
 
-            if (Path.DirectorySeparatorChar != '\\' && path.Contains('\\'))
+            if (Path.DirectorySeparatorChar != '\\' && path.Contains('\\', StringComparison.InvariantCulture))
             {
                 path = path.Replace('\\', Path.DirectorySeparatorChar);
             }
 
-            if (Path.DirectorySeparatorChar != '/' && path.Contains('/'))
+            if (Path.DirectorySeparatorChar != '/' && path.Contains('/', StringComparison.InvariantCulture))
             {
                 path = path.Replace('/', Path.DirectorySeparatorChar);
             }
@@ -133,7 +133,7 @@ namespace svm_fs
 
         private static readonly object _console_lock = new object();
 
-        public static void WriteLine(string text = "", string module_name = "", string function_name = "", bool use_lock = false)
+        internal static void WriteLine(string text = "", string module_name = "", string function_name = "", bool use_lock = false)
         {
             //if (!program.verbose) return;
 
@@ -161,7 +161,7 @@ namespace svm_fs
             }
         }
 
-        public static bool Exists(string filename, string module_name = "", string function_name = "")
+        internal static bool Exists(string filename, string module_name = "", string function_name = "")
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Exists));
@@ -169,7 +169,7 @@ namespace svm_fs
             return File.Exists(filename);
         }
             
-        public static void Delete(string filename, string module_name = "", string function_name = "")
+        internal static void Delete(string filename, string module_name = "", string function_name = "")
         {
             filename = convert_path(filename);
 
@@ -187,7 +187,7 @@ namespace svm_fs
             }
         }
 
-        public static void Copy(string source, string dest, bool overwrite = true, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static void Copy(string source, string dest, bool overwrite = true, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             source = convert_path(source);
             dest = convert_path(dest);
@@ -220,7 +220,7 @@ namespace svm_fs
             }
         }
 
-        public static void CreateDirectory(string filename, string module_name = "", string function_name = "")
+        internal static void CreateDirectory(string filename, string module_name = "", string function_name = "")
         {
             filename = convert_path(filename);
 
@@ -238,7 +238,7 @@ namespace svm_fs
             }
         }
 
-        public static string[] ReadAllLines(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static string[] ReadAllLines(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllLines));
@@ -269,7 +269,7 @@ namespace svm_fs
 
 
 
-        public static string ReadAllText(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static string ReadAllText(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllText));
@@ -298,7 +298,7 @@ namespace svm_fs
         }
 
 
-        public static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllLines));
@@ -327,7 +327,7 @@ namespace svm_fs
             }
         }
 
-        public static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllLines));
@@ -354,7 +354,7 @@ namespace svm_fs
             }
         }
 
-        public static void AppendAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static void AppendAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllText));
@@ -381,7 +381,7 @@ namespace svm_fs
             }
         }
 
-        public static void WriteAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
+        internal static void WriteAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllText));

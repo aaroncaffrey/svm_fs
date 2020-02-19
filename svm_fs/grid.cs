@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace svm_fs
 {
-    public static class grid
+    internal static class grid
     {
-        //public class best_rate_container
+        //internal class best_rate_container
         //{
         //private static readonly object _file_lock = new object();
         //private readonly object _rate_lock = new object();
 
 
-        public static List<(common.libsvm_svm_type svm_type, common.libsvm_kernel_type svm_kernel, int randomisation_cv_folds, int randomisation_cv_index, int outer_cv_folds, int outer_cv_index, int inner_cv_folds, bool probability_estimates, bool shrinking_heuristics, (double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)> read_cache(string cache_train_grid_csv)
+        internal static List<(common.libsvm_svm_type svm_type, common.libsvm_kernel_type svm_kernel, int randomisation_cv_folds, int randomisation_cv_index, int outer_cv_folds, int outer_cv_index, int inner_cv_folds, bool probability_estimates, bool shrinking_heuristics, (double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)> read_cache(string cache_train_grid_csv)
         {
             var cache = new List<(
                 common.libsvm_svm_type svm_type,
@@ -68,11 +68,11 @@ namespace svm_fs
             return cache;
         }
 
-        public static void write_cache_file(string cache_file, common.libsvm_svm_type svm_type, common.libsvm_kernel_type kernel, int randomisation_cv_folds, int randomisation_cv_index, int outer_cv_folds, int outer_cv_index, int inner_cv_folds, bool probability_estimates, bool shrinking_heuristics, List<((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)> res)
+        internal static void write_cache_file(string cache_file, common.libsvm_svm_type svm_type, common.libsvm_kernel_type kernel, int randomisation_cv_folds, int randomisation_cv_index, int outer_cv_folds, int outer_cv_index, int inner_cv_folds, bool probability_estimates, bool shrinking_heuristics, List<((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)> res)
         {
             var lines = new List<string>();
             lines.Add(string.Join(",", new string[] { nameof(svm_type), nameof(kernel), nameof(randomisation_cv_folds), nameof(randomisation_cv_index), nameof(outer_cv_folds), nameof(outer_cv_index), nameof(inner_cv_folds), nameof(probability_estimates), nameof(shrinking_heuristics), "cost", "gamma", "epsilon", "coef0", "degree", "rate", }));
-            lines.AddRange(res.Select(a => string.Join(",", new string[] { svm_type.ToString(), kernel.ToString(), randomisation_cv_folds.ToString(), randomisation_cv_index.ToString(), outer_cv_folds.ToString(), outer_cv_index.ToString(), inner_cv_folds.ToString(), probability_estimates.ToString(), shrinking_heuristics.ToString(),
+            lines.AddRange(res.Select(a => string.Join(",", new string[] { svm_type.ToString(), kernel.ToString(), randomisation_cv_folds.ToString(CultureInfo.InvariantCulture), randomisation_cv_index.ToString(CultureInfo.InvariantCulture), outer_cv_folds.ToString(CultureInfo.InvariantCulture), outer_cv_index.ToString(CultureInfo.InvariantCulture), inner_cv_folds.ToString(CultureInfo.InvariantCulture), probability_estimates.ToString(CultureInfo.InvariantCulture), shrinking_heuristics.ToString(CultureInfo.InvariantCulture),
                 
                 a.point.cost?.ToString("G17", CultureInfo.InvariantCulture), 
                 a.point.gamma?.ToString("G17", CultureInfo.InvariantCulture), 
@@ -85,7 +85,7 @@ namespace svm_fs
         }
 
 
-        public static ((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double? rate) get_best_rate(List<((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)> res)
+        internal static ((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double? rate) get_best_rate(List<((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)> res)
         {
             // libsvm grid.py: if ((rate > best_rate) || (rate == best_rate && g == best_g && c < best_c))
 
@@ -143,7 +143,7 @@ namespace svm_fs
         }
 
 
-        public static ((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double? cv_rate) grid_parameter_search(
+        internal static ((double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double? cv_rate) grid_parameter_search(
             string libsvm_train_exe,
             string cache_train_grid_csv,
                 string training_file,
@@ -463,11 +463,11 @@ namespace svm_fs
 
 
 
-        public static double libsvm_cv_perf(List<string> libsvm_result_lines)
+        internal static double libsvm_cv_perf(List<string> libsvm_result_lines)
         {
             if (libsvm_result_lines == null || libsvm_result_lines.Count == 0) return -1;
 
-            var v_libsvm_default_cross_validation_index = libsvm_result_lines.FindIndex(a => a.StartsWith("Cross Validation Accuracy = "));
+            var v_libsvm_default_cross_validation_index = libsvm_result_lines.FindIndex(a => a.StartsWith("Cross Validation Accuracy = ", StringComparison.InvariantCulture));
 
             var v_libsvm_default_cross_validation_str = v_libsvm_default_cross_validation_index < 0 ? "" : libsvm_result_lines[v_libsvm_default_cross_validation_index].Split()[4];
 

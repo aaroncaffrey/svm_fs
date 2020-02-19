@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace svm_fs
 {
-    public static class hash
+    internal static class hash
     {
-        public static string calc_hash(string input)
+        internal static string calc_hash(string input)
         {
 
             using (SHA512 hashAlgorithm = SHA512.Create())
@@ -22,7 +23,7 @@ namespace svm_fs
                 // and format each one as a hexadecimal string.
                 for (int i = 0; i < data.Length; i++)
                 {
-                    sBuilder.Append(data[i].ToString("x2"));
+                    sBuilder.Append(data[i].ToString("x2", CultureInfo.InvariantCulture));
                 }
 
                 // Return the hexadecimal string.
@@ -31,7 +32,7 @@ namespace svm_fs
         }
 
         // Verify a hash against a string.
-        public static bool verify_hash(string input, string hash)
+        internal static bool verify_hash(string input, string hash)
         {
             // Hash the input.
             var hashOfInput = calc_hash(input);

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace svm_fs
 {
-    public static class common
+    internal static class common
     {
-        public enum scale_function : int
+        internal enum scale_function : int
         {
             none,
             rescale,
@@ -16,7 +16,7 @@ namespace svm_fs
             L2_norm,
         }
 
-        public enum libsvm_kernel_type : int
+        internal enum libsvm_kernel_type : int
         {
             //@default = rbf,
             linear = 0,
@@ -26,7 +26,7 @@ namespace svm_fs
             precomputed = 4,
         }
 
-        public enum libsvm_svm_type : int
+        internal enum libsvm_svm_type : int
         {
             //@default = c_svc,
             c_svc = 0,
@@ -38,9 +38,9 @@ namespace svm_fs
 
         //[ThreadStatic] private static Random _local;
 
-        //public static Random this_threads_random => _local ?? (_local = new Random(unchecked(Environment.TickCount * 31 + Thread.CurrentThread.ManagedThreadId)));
+        //internal static Random this_threads_random => _local ?? (_local = new Random(unchecked(Environment.TickCount * 31 + Thread.CurrentThread.ManagedThreadId)));
 
-        public static void shuffle<T>(this IList<T> list, Random random)// = null)
+        internal static void shuffle<T>(this IList<T> list, Random random)// = null)
         {
             //if (random == null) random = this_threads_random;
 

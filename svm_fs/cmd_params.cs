@@ -6,134 +6,134 @@ using System.Linq;
 
 namespace svm_fs
 {
-    public enum cmd
+    internal enum cmd
     {
         none,
         ctl,
         wkr
     }
 
-    public class cmd_params
+    internal class cmd_params
     {
-        //public bool probability_estimates = true;
-        //public bool shrinking_heuristics = true;
-        //public List<(int class_id, string class_name)> class_training_sizes = null;
-        //public string pbs_jobid_filename;
-        public bool forward;
-        public bool group_features = true;
-        public bool libsvm_grid_probability_estimates = true;
-        public bool libsvm_grid_quiet_mode = true;
-        public bool libsvm_grid_shrinking_heuristics = true;
-        public bool libsvm_train_probability_estimates = true;
-        public bool libsvm_train_quiet_mode = true;
-        public bool libsvm_train_shrinking_heuristics = true;
-        public bool output_threshold_adjustment_performance = false;
-        public bool save_test_id = false;
-        public bool save_test_meta = false;
-        public bool save_train_id = false;
-        public bool save_train_meta = false;
-        public cmd cmd = cmd.none;
-        public common.libsvm_kernel_type svm_kernel = common.libsvm_kernel_type.rbf;
-        public common.libsvm_svm_type svm_type = common.libsvm_svm_type.c_svc;
-        public common.scale_function scale_function = common.scale_function.rescale;
-        public const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
-        public const string user_home = "/home/k1040015";
-        public double? grid_coef0_exp_begin = null;
-        public double? grid_coef0_exp_end = null;
-        public double? grid_coef0_exp_step = null;
-        public double? grid_cost_exp_begin = -5;
-        public double? grid_cost_exp_end = 15;
-        public double? grid_cost_exp_step = 2;
-        public double? grid_degree_exp_begin = null;
-        public double? grid_degree_exp_end = null;
-        public double? grid_degree_exp_step = null;
-        public double? grid_epsilon_exp_begin = null;
-        public double? grid_epsilon_exp_end = null;
-        public double? grid_epsilon_exp_step = null;
-        public double? grid_gamma_exp_begin = 3;
-        public double? grid_gamma_exp_end = -15;
-        public double? grid_gamma_exp_step = -2;
-        public int feature_id = -1;
-        public int group_index = -1;
-        public int inner_cv_folds = 0;//10; // set to 0 to skip inner-cv
-        public int iteration = -1;
-        public int job_id = -1;
-        public int libsvm_grid_memory_limit_mb = 1024;
-        public int libsvm_train_memory_limit_mb = 1024;
-        public int negative_class_id = -1;
-        public int new_feature_count = 0;
-        public int new_group_count = 0;
-        public int old_feature_count = 0;
-        public int old_group_count = 0;
-        public int outer_cv_folds = 10;
-        public int outer_cv_index = -1;
-        public int pbs_ctl_nodes = 1;
-        public int pbs_ctl_ppn = 64;
-        public int pbs_wkr_nodes = 1;
-        public int pbs_wkr_ppn = 16;
-        public int positive_class_id = +1;
-        public int randomisation_cv_folds = 1;
-        public int randomisation_cv_index = -1;
-        public List<(int class_id, double class_weight)> class_weights = null;
-        public List<(int class_id, int class_size)> class_sizes = null;
-        public List<(int class_id, int class_testing_size)> class_testing_sizes = null;
-        public List<(int class_id, int class_training_size)> class_training_sizes = null;
-        public List<(int class_id, string class_name)> class_names = new List<(int class_id, string class_name)>() { (-1, "standard_coil"), (+1, "dimorphic_coil") };
-        public List<int> feature_selection_classes = new List<int>() { +1 };
-        public List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
-        public string alphabet;
-        public string category;
-        public string dataset_dir = $@"{user_home}/dataset/";
-        public string dimension;
-        public string experiment_name = null;
-        public string group;
-        public string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
-        public string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
-        public string member;
-        public string options_filename = null;
-        public string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        public string pbs_ctl_jobname;
-        public string pbs_ctl_mail_addr; // 
-        public string pbs_ctl_mail_opt = "n"; // abe|n
-        public string pbs_ctl_mem = "192GB";
-        public string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.pbs.stderr";
-        public string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.pbs.stdout";
-        public string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        public string pbs_ctl_walltime = "240:00:00";
-        public string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        public string pbs_wkr_jobname;
-        public string pbs_wkr_mail_addr; // 
-        public string pbs_wkr_mail_opt = "n"; // abe|n
-        public string pbs_wkr_mem = null;
-        public string pbs_wkr_stderr_filename = $@"{nameof(svm_wkr)}.pbs.stderr";
-        public string pbs_wkr_stdout_filename = $@"{nameof(svm_wkr)}.pbs.stdout";
-        public string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        public string pbs_wkr_walltime = "1:00:00";
-        public string perspective;
-        public string program_ctl_stderr_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr";
-        public string program_ctl_stdout_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout";
-        public string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        public string program_wkr_stderr_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr";
-        public string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout";
-        public string results_root_folder = $@"{svm_fs_home}/results/";
-        public string source;
-        public string test_filename;
-        public string test_id_filename;
-        public string test_labels_filename;
-        public string test_meta_filename;
-        public string test_predict_cm_filename;
-        public string test_predict_filename;
-        public string train_filename;
-        public string train_grid_filename;
-        public string train_id_filename;
-        public string train_meta_filename;
-        public string train_model_filename;
-        public string train_predict_cm_filename;
-        public string train_predict_filename;
-        public TimeSpan libsvm_grid_max_time = new TimeSpan(0, 0, 10, 0);
-        public TimeSpan libsvm_train_max_time = new TimeSpan(0, 1, 0, 0);
+        //internal bool probability_estimates = true;
+        //internal bool shrinking_heuristics = true;
+        //internal List<(int class_id, string class_name)> class_training_sizes = null;
+        //internal string pbs_jobid_filename;
+        internal bool forward;
+        internal bool group_features = true;
+        internal bool libsvm_grid_probability_estimates = true;
+        internal bool libsvm_grid_quiet_mode = true;
+        internal bool libsvm_grid_shrinking_heuristics = true;
+        internal bool libsvm_train_probability_estimates = true;
+        internal bool libsvm_train_quiet_mode = true;
+        internal bool libsvm_train_shrinking_heuristics = true;
+        internal bool output_threshold_adjustment_performance = false;
+        internal bool save_test_id = false;
+        internal bool save_test_meta = false;
+        internal bool save_train_id = false;
+        internal bool save_train_meta = false;
+        internal cmd cmd = cmd.none;
+        internal common.libsvm_kernel_type svm_kernel = common.libsvm_kernel_type.rbf;
+        internal common.libsvm_svm_type svm_type = common.libsvm_svm_type.c_svc;
+        internal common.scale_function scale_function = common.scale_function.rescale;
+        internal const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
+        internal const string user_home = "/home/k1040015";
+        internal double? grid_coef0_exp_begin = null;
+        internal double? grid_coef0_exp_end = null;
+        internal double? grid_coef0_exp_step = null;
+        internal double? grid_cost_exp_begin = -5;
+        internal double? grid_cost_exp_end = 15;
+        internal double? grid_cost_exp_step = 2;
+        internal double? grid_degree_exp_begin = null;
+        internal double? grid_degree_exp_end = null;
+        internal double? grid_degree_exp_step = null;
+        internal double? grid_epsilon_exp_begin = null;
+        internal double? grid_epsilon_exp_end = null;
+        internal double? grid_epsilon_exp_step = null;
+        internal double? grid_gamma_exp_begin = 3;
+        internal double? grid_gamma_exp_end = -15;
+        internal double? grid_gamma_exp_step = -2;
+        internal int feature_id = -1;
+        internal int group_index = -1;
+        internal int inner_cv_folds = 0;//10; // set to 0 to skip inner-cv
+        internal int iteration = -1;
+        internal int job_id = -1;
+        internal int libsvm_grid_memory_limit_mb = 1024;
+        internal int libsvm_train_memory_limit_mb = 1024;
+        internal int negative_class_id = -1;
+        internal int new_feature_count = 0;
+        internal int new_group_count = 0;
+        internal int old_feature_count = 0;
+        internal int old_group_count = 0;
+        internal int outer_cv_folds = 10;
+        internal int outer_cv_index = -1;
+        internal int pbs_ctl_nodes = 1;
+        internal int pbs_ctl_ppn = 64;
+        internal int pbs_wkr_nodes = 1;
+        internal int pbs_wkr_ppn = 16;
+        internal int positive_class_id = +1;
+        internal int randomisation_cv_folds = 1;
+        internal int randomisation_cv_index = -1;
+        internal List<(int class_id, double class_weight)> class_weights = null;
+        internal List<(int class_id, int class_size)> class_sizes = null;
+        internal List<(int class_id, int class_testing_size)> class_testing_sizes = null;
+        internal List<(int class_id, int class_training_size)> class_training_sizes = null;
+        internal List<(int class_id, string class_name)> class_names = new List<(int class_id, string class_name)>() { (-1, "standard_coil"), (+1, "dimorphic_coil") };
+        internal List<int> feature_selection_classes = new List<int>() { +1 };
+        internal List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
+        internal string alphabet;
+        internal string category;
+        internal string dataset_dir = $@"{user_home}/dataset/";
+        internal string dimension;
+        internal string experiment_name = null;
+        internal string group;
+        internal string libsvm_predict_runtime = $@"{user_home}/libsvm/svm-predict";
+        internal string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
+        internal string member;
+        internal string options_filename = null;
+        internal string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+        internal string pbs_ctl_jobname;
+        internal string pbs_ctl_mail_addr; // 
+        internal string pbs_ctl_mail_opt = "n"; // abe|n
+        internal string pbs_ctl_mem = "192GB";
+        internal string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.pbs.stderr";
+        internal string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.pbs.stdout";
+        internal string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
+        internal string pbs_ctl_walltime = "240:00:00";
+        internal string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        internal string pbs_wkr_jobname;
+        internal string pbs_wkr_mail_addr; // 
+        internal string pbs_wkr_mail_opt = "n"; // abe|n
+        internal string pbs_wkr_mem = null;
+        internal string pbs_wkr_stderr_filename = $@"{nameof(svm_wkr)}.pbs.stderr";
+        internal string pbs_wkr_stdout_filename = $@"{nameof(svm_wkr)}.pbs.stdout";
+        internal string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
+        internal string pbs_wkr_walltime = "1:00:00";
+        internal string perspective;
+        internal string program_ctl_stderr_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr";
+        internal string program_ctl_stdout_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout";
+        internal string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+        internal string program_wkr_stderr_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr";
+        internal string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout";
+        internal string results_root_folder = $@"{svm_fs_home}/results/";
+        internal string source;
+        internal string test_filename;
+        internal string test_id_filename;
+        internal string test_labels_filename;
+        internal string test_meta_filename;
+        internal string test_predict_cm_filename;
+        internal string test_predict_filename;
+        internal string train_filename;
+        internal string train_grid_filename;
+        internal string train_id_filename;
+        internal string train_meta_filename;
+        internal string train_model_filename;
+        internal string train_predict_cm_filename;
+        internal string train_predict_filename;
+        internal TimeSpan libsvm_grid_max_time = new TimeSpan(0, 0, 10, 0);
+        internal TimeSpan libsvm_train_max_time = new TimeSpan(0, 1, 0, 0);
 
-        public void convert_paths()
+        internal void convert_paths()
         {
             this.options_filename = io_proxy.convert_path(this.options_filename);
             this.pbs_ctl_stderr_filename = io_proxy.convert_path(this.pbs_ctl_stderr_filename);
@@ -203,12 +203,12 @@ namespace svm_fs
             });
         }
 
-        public cmd_params()
+        internal cmd_params()
         {
             convert_paths();
         }
 
-        public cmd_params(List<cmd_params> p)
+        internal cmd_params(List<cmd_params> p)
         {
             //if (p.Select(a => a.probability_estimates).Distinct().Count() == 1) this.probability_estimates = p.FirstOrDefault().probability_estimates;
             //if (p.Select(a => a.shrinking_heuristics).Distinct().Count() == 1) this.shrinking_heuristics = p.FirstOrDefault().shrinking_heuristics;
@@ -328,7 +328,7 @@ namespace svm_fs
             convert_paths();
         }
 
-        public cmd_params(cmd_params p)
+        internal cmd_params(cmd_params p)
         {
             //this.probability_estimates = p.probability_estimates;
             //this.shrinking_heuristics = p.shrinking_heuristics;
@@ -448,12 +448,12 @@ namespace svm_fs
             convert_paths();
         }
 
-        public cmd_params(string params_filename) : this(io_proxy.ReadAllLines(io_proxy.convert_path(params_filename), nameof(cmd_params), nameof(cmd_params)))
+        internal cmd_params(string params_filename) : this(io_proxy.ReadAllLines(io_proxy.convert_path(params_filename), nameof(cmd_params), nameof(cmd_params)))
         {
 
         }
 
-        public cmd_params(string[] params_file_data = null)//string[] args)
+        internal cmd_params(string[] params_file_data = null)//string[] args)
         {
             if (params_file_data == null || params_file_data.Length == 0) return;
 
@@ -480,7 +480,7 @@ namespace svm_fs
 
             // 165,1777 --> 132,132 + 33,177 -->
 
-            var args2 = params_file_data.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => (key: a.Substring(0, a.IndexOf('=') > -1 ? a.IndexOf('=') : 0), value: a.Substring(a.IndexOf('=') > -1 ? a.IndexOf('=') + 1 : 0))).ToList();
+            var args2 = params_file_data.Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => (key: a.Substring(0, a.IndexOf('=', StringComparison.InvariantCulture) > -1 ? a.IndexOf('=', StringComparison.InvariantCulture) : 0), value: a.Substring(a.IndexOf('=', StringComparison.InvariantCulture) > -1 ? a.IndexOf('=', StringComparison.InvariantCulture) + 1 : 0))).ToList();
             //if (args2.Any(a => a.key == nameof(probability_estimates) && !string.IsNullOrWhiteSpace(a.value))) probability_estimates = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(probability_estimates)).value);
             //if (args2.Any(a => a.key == nameof(shrinking_heuristics) && !string.IsNullOrWhiteSpace(a.value))) shrinking_heuristics = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(shrinking_heuristics)).value);
             //if (args2.Any(a => a.key == nameof(test_grid_filename))) test_grid_filename = args2.FirstOrDefault(a => a.key == nameof(test_grid_filename)).value;
@@ -524,13 +524,13 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(inner_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) inner_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(inner_cv_folds)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(iteration) && !string.IsNullOrWhiteSpace(a.value))) iteration = int.Parse(args2.FirstOrDefault(a => a.key == nameof(iteration)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(job_id) && !string.IsNullOrWhiteSpace(a.value))) job_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(job_id)).value, CultureInfo.InvariantCulture);
-            if (args2.Any(a => a.key == nameof(libsvm_grid_max_time) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_max_time = TimeSpan.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_max_time)).value);
+            if (args2.Any(a => a.key == nameof(libsvm_grid_max_time) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_max_time = TimeSpan.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_max_time)).value, DateTimeFormatInfo.InvariantInfo);
             if (args2.Any(a => a.key == nameof(libsvm_grid_memory_limit_mb) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_memory_limit_mb = int.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_memory_limit_mb)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(libsvm_grid_probability_estimates) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_probability_estimates = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_probability_estimates)).value);
             if (args2.Any(a => a.key == nameof(libsvm_grid_quiet_mode) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_quiet_mode = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_quiet_mode)).value);
             if (args2.Any(a => a.key == nameof(libsvm_grid_shrinking_heuristics) && !string.IsNullOrWhiteSpace(a.value))) libsvm_grid_shrinking_heuristics = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_grid_shrinking_heuristics)).value);
             if (args2.Any(a => a.key == nameof(libsvm_predict_runtime) && !string.IsNullOrWhiteSpace(a.value))) libsvm_predict_runtime = args2.FirstOrDefault(a => a.key == nameof(libsvm_predict_runtime)).value;
-            if (args2.Any(a => a.key == nameof(libsvm_train_max_time) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_max_time = TimeSpan.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_max_time)).value);
+            if (args2.Any(a => a.key == nameof(libsvm_train_max_time) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_max_time = TimeSpan.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_max_time)).value, DateTimeFormatInfo.InvariantInfo);
             if (args2.Any(a => a.key == nameof(libsvm_train_memory_limit_mb) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_memory_limit_mb = int.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_memory_limit_mb)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(libsvm_train_probability_estimates) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_probability_estimates = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_probability_estimates)).value);
             if (args2.Any(a => a.key == nameof(libsvm_train_quiet_mode) && !string.IsNullOrWhiteSpace(a.value))) libsvm_train_quiet_mode = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(libsvm_train_quiet_mode)).value);
@@ -609,13 +609,13 @@ namespace svm_fs
 
             if (string.IsNullOrWhiteSpace(experiment_name))
             {
-                throw new Exception($@"Exception: parameter {nameof(experiment_name)} must be specified.");
+                throw new ArgumentNullException(nameof(experiment_name));
             }
 
             convert_paths();
         }
 
-        public string[] get_options_ini_text()
+        internal string[] get_options_ini_text()
         {
             var x = get_options();
 
@@ -624,7 +624,7 @@ namespace svm_fs
             return result;
         }
 
-        public static List<string> csv_header = new List<string>()
+        internal static List<string> csv_header = new List<string>()
             {
 
 //nameof(probability_estimates),
@@ -745,7 +745,7 @@ nameof(train_predict_filename),
 
 
 
-        public List<(string key, string value)> get_options()
+        internal List<(string key, string value)> get_options()
         {
             var result = new List<(string key, string value)>()
             {
@@ -760,60 +760,60 @@ nameof(train_predict_filename),
 (nameof(dataset_dir), dataset_dir),
 (nameof(dimension), dimension),
 (nameof(experiment_name), experiment_name),
-(nameof(feature_id), feature_id.ToString()),
+(nameof(feature_id), feature_id.ToString(CultureInfo.InvariantCulture)),
 (nameof(feature_selection_classes), string.Join(";", feature_selection_classes == null ? new List<int>() : feature_selection_classes)),
 (nameof(feature_selection_metrics), string.Join(";", feature_selection_metrics == null ? new List<string>() : feature_selection_metrics)),
-(nameof(forward), forward.ToString()),
-(nameof(grid_coef0_exp_begin), grid_coef0_exp_begin?.ToString()),
-(nameof(grid_coef0_exp_end), grid_coef0_exp_end?.ToString()),
-(nameof(grid_coef0_exp_step), grid_coef0_exp_step?.ToString()),
-(nameof(grid_cost_exp_begin), grid_cost_exp_begin?.ToString()),
-(nameof(grid_cost_exp_end), grid_cost_exp_end?.ToString()),
-(nameof(grid_cost_exp_step), grid_cost_exp_step?.ToString()),
-(nameof(grid_degree_exp_begin), grid_degree_exp_begin?.ToString()),
-(nameof(grid_degree_exp_end), grid_degree_exp_end?.ToString()),
-(nameof(grid_degree_exp_step), grid_degree_exp_step?.ToString()),
-(nameof(grid_epsilon_exp_begin), grid_epsilon_exp_begin?.ToString()),
-(nameof(grid_epsilon_exp_end), grid_epsilon_exp_end?.ToString()),
-(nameof(grid_epsilon_exp_step), grid_epsilon_exp_step?.ToString()),
-(nameof(grid_gamma_exp_begin), grid_gamma_exp_begin?.ToString()),
-(nameof(grid_gamma_exp_end), grid_gamma_exp_end?.ToString()),
-(nameof(grid_gamma_exp_step), grid_gamma_exp_step?.ToString()),
+(nameof(forward), forward.ToString(CultureInfo.InvariantCulture)),
+(nameof(grid_coef0_exp_begin), grid_coef0_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_coef0_exp_end), grid_coef0_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_coef0_exp_step), grid_coef0_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_cost_exp_begin), grid_cost_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_cost_exp_end), grid_cost_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_cost_exp_step), grid_cost_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_degree_exp_begin), grid_degree_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_degree_exp_end), grid_degree_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_degree_exp_step), grid_degree_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_epsilon_exp_begin), grid_epsilon_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_epsilon_exp_end), grid_epsilon_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_epsilon_exp_step), grid_epsilon_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_gamma_exp_begin), grid_gamma_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_gamma_exp_end), grid_gamma_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
+(nameof(grid_gamma_exp_step), grid_gamma_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
 (nameof(group), group),
-(nameof(group_features), group_features.ToString()),
-(nameof(group_index), group_index.ToString()),
-(nameof(inner_cv_folds), inner_cv_folds.ToString()),
-(nameof(iteration), iteration.ToString()),
-(nameof(job_id), job_id.ToString()),
+(nameof(group_features), group_features.ToString(CultureInfo.InvariantCulture)),
+(nameof(group_index), group_index.ToString(CultureInfo.InvariantCulture)),
+(nameof(inner_cv_folds), inner_cv_folds.ToString(CultureInfo.InvariantCulture)),
+(nameof(iteration), iteration.ToString(CultureInfo.InvariantCulture)),
+(nameof(job_id), job_id.ToString(CultureInfo.InvariantCulture)),
 (nameof(libsvm_grid_max_time), libsvm_grid_max_time.ToString()),
-(nameof(libsvm_grid_memory_limit_mb), libsvm_grid_memory_limit_mb.ToString()),
-(nameof(libsvm_grid_probability_estimates), libsvm_grid_probability_estimates.ToString()),
-(nameof(libsvm_grid_quiet_mode), libsvm_grid_quiet_mode.ToString()),
-(nameof(libsvm_grid_shrinking_heuristics), libsvm_grid_shrinking_heuristics.ToString()),
+(nameof(libsvm_grid_memory_limit_mb), libsvm_grid_memory_limit_mb.ToString(CultureInfo.InvariantCulture)),
+(nameof(libsvm_grid_probability_estimates), libsvm_grid_probability_estimates.ToString(CultureInfo.InvariantCulture)),
+(nameof(libsvm_grid_quiet_mode), libsvm_grid_quiet_mode.ToString(CultureInfo.InvariantCulture)),
+(nameof(libsvm_grid_shrinking_heuristics), libsvm_grid_shrinking_heuristics.ToString(CultureInfo.InvariantCulture)),
 (nameof(libsvm_predict_runtime), libsvm_predict_runtime),
 (nameof(libsvm_train_max_time), libsvm_train_max_time.ToString()),
-(nameof(libsvm_train_memory_limit_mb), libsvm_train_memory_limit_mb.ToString()),
-(nameof(libsvm_train_probability_estimates), libsvm_train_probability_estimates.ToString()),
-(nameof(libsvm_train_quiet_mode), libsvm_train_quiet_mode.ToString()),
+(nameof(libsvm_train_memory_limit_mb), libsvm_train_memory_limit_mb.ToString(CultureInfo.InvariantCulture)),
+(nameof(libsvm_train_probability_estimates), libsvm_train_probability_estimates.ToString(CultureInfo.InvariantCulture)),
+(nameof(libsvm_train_quiet_mode), libsvm_train_quiet_mode.ToString(CultureInfo.InvariantCulture)),
 (nameof(libsvm_train_runtime), libsvm_train_runtime),
-(nameof(libsvm_train_shrinking_heuristics), libsvm_train_shrinking_heuristics.ToString()),
+(nameof(libsvm_train_shrinking_heuristics), libsvm_train_shrinking_heuristics.ToString(CultureInfo.InvariantCulture)),
 (nameof(member), member),
-(nameof(negative_class_id), negative_class_id.ToString()),
-(nameof(new_feature_count), new_feature_count.ToString()),
-(nameof(new_group_count), new_group_count.ToString()),
-(nameof(old_feature_count), old_feature_count.ToString()),
-(nameof(old_group_count), old_group_count.ToString()),
+(nameof(negative_class_id), negative_class_id.ToString(CultureInfo.InvariantCulture)),
+(nameof(new_feature_count), new_feature_count.ToString(CultureInfo.InvariantCulture)),
+(nameof(new_group_count), new_group_count.ToString(CultureInfo.InvariantCulture)),
+(nameof(old_feature_count), old_feature_count.ToString(CultureInfo.InvariantCulture)),
+(nameof(old_group_count), old_group_count.ToString(CultureInfo.InvariantCulture)),
 (nameof(options_filename), options_filename),
-(nameof(outer_cv_folds), outer_cv_folds.ToString()),
-(nameof(outer_cv_index), outer_cv_index.ToString()),
-(nameof(output_threshold_adjustment_performance), output_threshold_adjustment_performance.ToString()),
+(nameof(outer_cv_folds), outer_cv_folds.ToString(CultureInfo.InvariantCulture)),
+(nameof(outer_cv_index), outer_cv_index.ToString(CultureInfo.InvariantCulture)),
+(nameof(output_threshold_adjustment_performance), output_threshold_adjustment_performance.ToString(CultureInfo.InvariantCulture)),
 (nameof(pbs_ctl_execution_directory),      pbs_ctl_execution_directory  ),
 (nameof(pbs_ctl_jobname),      pbs_ctl_jobname  ),
 (nameof(pbs_ctl_mail_addr),     pbs_ctl_mail_addr   ),
 (nameof(pbs_ctl_mail_opt),     pbs_ctl_mail_opt   ),
 (nameof(pbs_ctl_mem),          pbs_ctl_mem   ),
-(nameof(pbs_ctl_nodes),        pbs_ctl_nodes.ToString()   ),
-(nameof(pbs_ctl_ppn),          pbs_ctl_ppn.ToString()   ),
+(nameof(pbs_ctl_nodes),        pbs_ctl_nodes.ToString(CultureInfo.InvariantCulture)   ),
+(nameof(pbs_ctl_ppn),          pbs_ctl_ppn.ToString(CultureInfo.InvariantCulture)   ),
 (nameof(pbs_ctl_stderr_filename),          pbs_ctl_stderr_filename   ),
 (nameof(pbs_ctl_stdout_filename),          pbs_ctl_stdout_filename  ),
 (nameof(pbs_ctl_submission_directory),     pbs_ctl_submission_directory   ),
@@ -823,26 +823,26 @@ nameof(train_predict_filename),
 (nameof(pbs_wkr_mail_addr),     pbs_wkr_mail_addr   ),
 (nameof(pbs_wkr_mail_opt),     pbs_wkr_mail_opt   ),
 (nameof(pbs_wkr_mem),          pbs_wkr_mem   ),
-(nameof(pbs_wkr_nodes),        pbs_wkr_nodes.ToString()   ),
-(nameof(pbs_wkr_ppn),          pbs_wkr_ppn.ToString()   ),
+(nameof(pbs_wkr_nodes),        pbs_wkr_nodes.ToString(CultureInfo.InvariantCulture)   ),
+(nameof(pbs_wkr_ppn),          pbs_wkr_ppn.ToString(CultureInfo.InvariantCulture)   ),
 (nameof(pbs_wkr_stderr_filename),          pbs_wkr_stderr_filename   ),
 (nameof(pbs_wkr_stdout_filename),          pbs_wkr_stdout_filename  ),
 (nameof(pbs_wkr_submission_directory),     pbs_wkr_submission_directory   ),
 (nameof(pbs_wkr_walltime),     pbs_wkr_walltime   ),
 (nameof(perspective), perspective),
-(nameof(positive_class_id), positive_class_id.ToString()),
+(nameof(positive_class_id), positive_class_id.ToString(CultureInfo.InvariantCulture)),
 (nameof(program_ctl_stderr_filename),          program_ctl_stderr_filename   ),
 (nameof(program_ctl_stdout_filename),          program_ctl_stdout_filename  ),
 (nameof(program_runtime), program_runtime),
 (nameof(program_wkr_stderr_filename),          program_wkr_stderr_filename   ),
 (nameof(program_wkr_stdout_filename),          program_wkr_stdout_filename  ),
-(nameof(randomisation_cv_folds), randomisation_cv_folds.ToString()),
-(nameof(randomisation_cv_index), randomisation_cv_index.ToString()),
+(nameof(randomisation_cv_folds), randomisation_cv_folds.ToString(CultureInfo.InvariantCulture)),
+(nameof(randomisation_cv_index), randomisation_cv_index.ToString(CultureInfo.InvariantCulture)),
 (nameof(results_root_folder), results_root_folder),
-(nameof(save_test_id), save_test_id.ToString()),
-(nameof(save_test_meta), save_test_meta.ToString()),
-(nameof(save_train_id), save_train_id.ToString()),
-(nameof(save_train_meta), save_train_meta.ToString()),
+(nameof(save_test_id), save_test_id.ToString(CultureInfo.InvariantCulture)),
+(nameof(save_test_meta), save_test_meta.ToString(CultureInfo.InvariantCulture)),
+(nameof(save_train_id), save_train_id.ToString(CultureInfo.InvariantCulture)),
+(nameof(save_train_meta), save_train_meta.ToString(CultureInfo.InvariantCulture)),
 (nameof(scale_function), scale_function.ToString()),
 (nameof(source), source),
 (nameof(svm_kernel), svm_kernel.ToString()),

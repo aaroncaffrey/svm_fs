@@ -10,15 +10,15 @@ using System.Threading.Tasks;
 
 namespace svm_fs
 {
-    public class svm_ldr
+    internal class svm_ldr
     {
-        public static int total_jobs_completed = 0;
+        internal static int total_jobs_completed = 0;
 
-        public static List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)> finish_marker_files = new List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)>();
+        internal static List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)> finish_marker_files = new List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)>();
 
-        public static object finish_marker_files_lock = new object();
+        internal static object finish_marker_files_lock = new object();
 
-        public static void fix_controller_name(cmd_params controller_options)
+        internal static void fix_controller_name(cmd_params controller_options)
         {
             if (string.IsNullOrWhiteSpace(controller_options.pbs_ctl_jobname))
             {
@@ -31,7 +31,7 @@ namespace svm_fs
             }
         }
 
-        public static Task controller_task(cmd_params controller_options, CancellationToken ct)
+        internal static Task controller_task(cmd_params controller_options, CancellationToken ct)
         {
 
             var controller_task = Task.Run(() =>
@@ -51,7 +51,7 @@ namespace svm_fs
             return controller_task;
         }
 
-        public static Task worker_jobs_task(string job_submission_folder, CancellationToken ct)
+        internal static Task worker_jobs_task(string job_submission_folder, CancellationToken ct)
         {
             io_proxy.WriteLine($@"Monitoring '{job_submission_folder}' for new jobs to run...", nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
 
@@ -69,7 +69,7 @@ namespace svm_fs
             return worker_jobs_task;
         }
 
-        public static Task status_task(CancellationTokenSource cts)
+        internal static Task status_task(CancellationTokenSource cts)
         {
             var status_task1 = Task.Run(() =>
             {
@@ -103,10 +103,10 @@ namespace svm_fs
                             // todo: bug: task will try to delete these files more than once (i.e. at each call)
                             //var pbs_options_filename = "";
 
-                            try { io_proxy.Delete(jc.job_id_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
-                            try { io_proxy.Delete(jc.finish_maker_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
-                            try { io_proxy.Delete(jc.pbs_script_filename, nameof(svm_ldr), nameof(status_task)); } catch (Exception) { }
-                            //try { io_proxy.Delete(jc.options_filename); } catch (Exception) { } // deleted elsewhere
+                            io_proxy.Delete(jc.job_id_filename, nameof(svm_ldr), nameof(status_task)); 
+                            io_proxy.Delete(jc.finish_maker_filename, nameof(svm_ldr), nameof(status_task));
+                            io_proxy.Delete(jc.pbs_script_filename, nameof(svm_ldr), nameof(status_task)); 
+                            //io_proxy.Delete(jc.options_filename); // deleted elsewhere
                         }
 
                         var num_jobs_completed_svm_ctl = finish_marker_files.Count(a => a.cmd==cmd.ctl && a.state == 0);
@@ -135,7 +135,7 @@ namespace svm_fs
             return status_task1;
         }
 
-        public static void start(cmd_params controller_options, CancellationTokenSource cts)
+        internal static void start(cmd_params controller_options, CancellationTokenSource cts)
         {
 
             fix_controller_name(controller_options);
@@ -147,8 +147,8 @@ namespace svm_fs
             var job_ctl_submission_folder = io_proxy.convert_path(controller_options.pbs_ctl_submission_directory);
             var job_wkr_submission_folder = io_proxy.convert_path(controller_options.pbs_wkr_submission_directory);
             
-            if (!Directory.Exists(job_ctl_submission_folder)) { try { Directory.CreateDirectory(job_ctl_submission_folder); } catch (Exception) { } }
-            if (!Directory.Exists(job_wkr_submission_folder)) { try { Directory.CreateDirectory(job_wkr_submission_folder); } catch (Exception) { } }
+            io_proxy.CreateDirectory(job_ctl_submission_folder);
+            io_proxy.CreateDirectory(job_wkr_submission_folder);
 
             var worker_jobs_task = svm_ldr.worker_jobs_task(job_wkr_submission_folder, cts.Token);
 
@@ -163,7 +163,7 @@ namespace svm_fs
             Task.WaitAll(tasks.ToArray<Task>());
         }
 
-        public static void write_job_id(cmd_params options, string job_id)
+        internal static void write_job_id(cmd_params options, string job_id)
         {
             if (!string.IsNullOrWhiteSpace(job_id))
             {
@@ -175,7 +175,7 @@ namespace svm_fs
             }
         }
 
-        public static string read_job_id(cmd_params options)
+        internal static string read_job_id(cmd_params options)
         {
             var job_id = "";
             var job_id_filename = $"{options.options_filename}.job_id";
@@ -190,7 +190,7 @@ namespace svm_fs
             return job_id;
         }
 
-        public static bool check_job_exists(string job_id)
+        internal static bool check_job_exists(string job_id)
         {
             if (string.IsNullOrWhiteSpace(job_id))
             {
@@ -220,7 +220,7 @@ namespace svm_fs
 
                     var stdout_lines = stdout.Split(new char[] { '\r', '\n' });
 
-                    var state = stdout_lines.FirstOrDefault(a => a.StartsWith("State:"));
+                    var state = stdout_lines.FirstOrDefault(a => a.StartsWith("State:", StringComparison.InvariantCulture));
 
                     if (!string.IsNullOrWhiteSpace(state))
                     {
@@ -232,10 +232,10 @@ namespace svm_fs
             return false;
         }
 
-        public static object submitted_options_files_lock = new object();
-        public static List<string> submitted_options_files = new List<string>();
+        internal static object submitted_options_files_lock = new object();
+        internal static List<string> submitted_options_files = new List<string>();
 
-        public static List<string> run_worker_jobs(string job_submission_folder)
+        internal static List<string> run_worker_jobs(string job_submission_folder)
         {
             lock (submitted_options_files_lock)
             {
@@ -282,7 +282,7 @@ namespace svm_fs
             }
         }
 
-        public static Task<(string job_id, string job_id_filename, string pbs_script_filename, string pbs_finish_marker_filename)> run_job_async(cmd_params options, string job_id = null, bool rerunnable = true)
+        internal static Task<(string job_id, string job_id_filename, string pbs_script_filename, string pbs_finish_marker_filename)> run_job_async(cmd_params options, string job_id = null, bool rerunnable = true)
         {
             var task = Task.Run(() => { return run_job(options, job_id, rerunnable); });
 
@@ -291,7 +291,7 @@ namespace svm_fs
 
 
 
-        public static (string job_id, string job_id_filename, string pbs_script_filename, string pbs_finish_marker_filename/*, string msub_stdout, string msub_stderr*/) run_job(cmd_params options, string job_id = null, bool rerunnable = true)
+        internal static (string job_id, string job_id_filename, string pbs_script_filename, string pbs_finish_marker_filename/*, string msub_stdout, string msub_stderr*/) run_job(cmd_params options, string job_id = null, bool rerunnable = true)
         {
             var options_filename = io_proxy.convert_path($"{options.options_filename}");
             var job_id_filename = io_proxy.convert_path($"{options.options_filename}.job_id");
@@ -356,13 +356,13 @@ namespace svm_fs
                         stdout = process.StandardOutput.ReadToEnd();
                         stderr = process.StandardError.ReadToEnd();
 
-                        job_id = stdout.Split().Where(a => !string.IsNullOrWhiteSpace(a)).LastOrDefault();
+                        job_id = stdout.Split().LastOrDefault(a => !string.IsNullOrWhiteSpace(a));
 
                         process.WaitForExit();
                     }
                 }
 
-                if (job_id.StartsWith($@"Moab."))
+                if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCulture))
                 {
                     // 3. save job id
                     write_job_id(options, job_id);

@@ -6,19 +6,19 @@ using System.Linq;
 
 namespace svm_fs
 {
-    public static class dataset_loader
+    internal static class dataset_loader
     {
 //        [Serializable]
 
    
 
-        public class dataset
+        internal class dataset
         {
-            public List<(int fid, string alphabet, string dimension, string category, string source, string group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> dataset_headers = null;
-            public List<(int filename_index, int line_index, List<(string comment_header, string comment_value)> comment_columns/*, string comment_columns_hash*/)> dataset_comment_row_values = null;
-            public List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, /*string comment_columns_hash,*/ List<(int fid, double fv)> feature_data/*, string feature_data_hash*/)> dataset_instance_list = null;
+            internal List<(int fid, string alphabet, string dimension, string category, string source, string group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> dataset_headers = null;
+            internal List<(int filename_index, int line_index, List<(string comment_header, string comment_value)> comment_columns/*, string comment_columns_hash*/)> dataset_comment_row_values = null;
+            internal List<(int class_id, int example_id, int class_example_id, List<(string comment_header, string comment_value)> comment_columns, /*string comment_columns_hash,*/ List<(int fid, double fv)> feature_data/*, string feature_data_hash*/)> dataset_instance_list = null;
 
-            //public static void serialise(datax datax, string filename)
+            //internal static void serialise(datax datax, string filename)
             //{
             //    IFormatter formatter = new BinaryFormatter();
             //    Stream stream = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None);
@@ -26,12 +26,12 @@ namespace svm_fs
             //    stream.Close();
             //}
 
-            //public void serialise(string filename)
+            //internal void serialise(string filename)
             //{
             //    datax.serialise(this, filename);
             //}
 
-            //public static datax deserialise(string filename)
+            //internal static datax deserialise(string filename)
             //{
             //    IFormatter formatter = new BinaryFormatter();
             //    Stream stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -41,25 +41,25 @@ namespace svm_fs
             //}
         }
 
-        public static bool matches(string text, string search_pattern)
+        internal static bool matches(string text, string search_pattern)
         {
             if (string.IsNullOrWhiteSpace(search_pattern) || search_pattern == "*")
             {
                 return true;
             }
-            else if (search_pattern.StartsWith("*") && search_pattern.EndsWith("*"))
+            else if (search_pattern.StartsWith("*", StringComparison.InvariantCulture) && search_pattern.EndsWith("*", StringComparison.InvariantCulture))
             {
                 search_pattern = search_pattern.Substring(1, search_pattern.Length - 2);
 
                 return text.Contains(search_pattern, StringComparison.InvariantCultureIgnoreCase);
             }
-            else if (search_pattern.StartsWith("*"))
+            else if (search_pattern.StartsWith("*", StringComparison.InvariantCulture))
             {
                 search_pattern = search_pattern.Substring(1);
 
                 return text.EndsWith(search_pattern, StringComparison.InvariantCultureIgnoreCase);
             }
-            else if (search_pattern.EndsWith("*"))
+            else if (search_pattern.EndsWith("*", StringComparison.InvariantCulture))
             {
                 search_pattern = search_pattern.Substring(0, search_pattern.Length - 1);
 
@@ -71,7 +71,7 @@ namespace svm_fs
             }
         }
 
-        public static
+        internal static
             dataset
            read_binary_dataset(
 
@@ -82,7 +82,7 @@ namespace svm_fs
            List<(int class_id, string class_name)> class_names,
            bool use_parallel = true,
            bool perform_integrity_checks = false,
-           bool fix_double = true,
+           //bool fix_double = true,
            bool required_default = true,
            List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)> required_matches = null,
            bool fix_dataset = false
@@ -303,7 +303,7 @@ namespace svm_fs
             {
                 dataset_instance_list = dataset_csv_files.AsParallel().AsOrdered().SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename, nameof(dataset_loader), nameof(read_binary_dataset)).Skip(1/*skip header*/).AsParallel().AsOrdered().Select((line, line_index) =>
                 {
-                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
+                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',', StringComparison.InvariantCulture)), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
                     //var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
 
@@ -328,7 +328,7 @@ namespace svm_fs
             {
                 dataset_instance_list = dataset_csv_files.SelectMany((filename, filename_index) => io_proxy.ReadAllLines(filename, nameof(dataset_loader), nameof(read_binary_dataset)).Skip(1/*skip header*/)./*Take(20).*/Select((line, line_index) =>
                 {
-                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',')), CultureInfo.InvariantCulture);
+                    var class_id = int.Parse(line.Substring(0, line.IndexOf(',', StringComparison.InvariantCulture)), CultureInfo.InvariantCulture);
                     var feature_data = parse_csv_line_doubles(line, required);
                     //var feature_data_hash = hash.calc_hash(string.Join(" ", feature_data.Select(d => $"{d.fid}:{d.value}").ToList()));
 
@@ -430,7 +430,7 @@ namespace svm_fs
         }
 
 
-        public static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
+        internal static double[][][] get_column_data_by_class(dataset dataset) // [column][row]
         {
             //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(get_column_data_by_class));
 
@@ -449,7 +449,7 @@ namespace svm_fs
             return result;
         }
 
-        public static double[][] get_column_data(dataset dataset) // [column][row]
+        internal static double[][] get_column_data(dataset dataset) // [column][row]
         {
             //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(get_column_data));
 
@@ -464,7 +464,7 @@ namespace svm_fs
         }
 
 
-        public static void remove_large_groups(dataset dataset, int max_group_size )
+        internal static void remove_large_groups(dataset dataset, int max_group_size )
         {
             io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_large_groups));
 
@@ -488,7 +488,7 @@ namespace svm_fs
             groups_too_large.ForEach(a => io_proxy.WriteLine($@"Removed large group: {a.Key}", nameof(dataset_loader), nameof(remove_large_groups)));
         }
 
-        public static void remove_duplicate_groups(dataset dataset)
+        internal static void remove_duplicate_groups(dataset dataset)
         {
             io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_duplicate_groups));
 
@@ -633,7 +633,7 @@ namespace svm_fs
             }
         }
 
-        public static void save_dataset(dataset dataset, List<(int class_id, string header_filename, string data_filename)> filenames)
+        internal static void save_dataset(dataset dataset, List<(int class_id, string header_filename, string data_filename)> filenames)
         {
             io_proxy.WriteLine("started saving...", nameof(dataset_loader), nameof(save_dataset));
 
@@ -660,7 +660,7 @@ namespace svm_fs
             io_proxy.WriteLine("finished saving...", nameof(dataset_loader), nameof(save_dataset));
         }
 
-        public static void remove_empty_features(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2)
+        internal static void remove_empty_features(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2)
         {
             io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features));
 
@@ -701,7 +701,7 @@ namespace svm_fs
 
         }
 
-        public static void remove_empty_features_by_class(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2, string stats_filename = null)
+        internal static void remove_empty_features_by_class(dataset dataset, /*double min_non_zero_pct = 0.25,*/ int min_distinct_numbers = 2, string stats_filename = null)
         {
             io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_empty_features_by_class));
 
@@ -819,7 +819,7 @@ namespace svm_fs
         }
 
 
-        public static void remove_fids(dataset dataset, List<int> fids_to_remove)
+        internal static void remove_fids(dataset dataset, List<int> fids_to_remove)
         {
             io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_fids));
 
@@ -852,7 +852,7 @@ namespace svm_fs
         }
 
 
-        public static List<(int fid, double value)> parse_csv_line_doubles(string line, bool[] required = null)
+        internal static List<(int fid, double value)> parse_csv_line_doubles(string line, bool[] required = null)
         {
             var result = new List<(int fid, double value)>();
 
@@ -886,7 +886,7 @@ namespace svm_fs
             return result;
         }
 
-        public static List<string> parse_csv_line_strings(string line)
+        internal static List<string> parse_csv_line_strings(string line)
         {
             var result = new List<string>();
 
@@ -921,7 +921,7 @@ namespace svm_fs
        
 
 
-        public static double fix_double(string double_value)
+        internal static double fix_double(string double_value)
         {
             const char infinity = '∞';
             const string neg_infinity = "-∞";
@@ -931,14 +931,14 @@ namespace svm_fs
             if (double.TryParse(double_value, NumberStyles.Float, CultureInfo.InvariantCulture, out var value1)) return fix_double(value1);
 
             if (double_value.Length == 1 && double_value[0] == infinity) return fix_double(double.PositiveInfinity);
-            else if (double_value.Contains(pos_infinity)) return fix_double(double.PositiveInfinity);
-            else if (double_value.Contains(neg_infinity)) return fix_double(double.NegativeInfinity);
-            else if (double_value.Contains(infinity)) return fix_double(double.PositiveInfinity);
-            else if (double_value.Contains(NaN)) return fix_double(double.NaN);
+            else if (double_value.Contains(pos_infinity, StringComparison.InvariantCulture)) return fix_double(double.PositiveInfinity);
+            else if (double_value.Contains(neg_infinity, StringComparison.InvariantCulture)) return fix_double(double.NegativeInfinity);
+            else if (double_value.Contains(infinity, StringComparison.InvariantCulture)) return fix_double(double.PositiveInfinity);
+            else if (double_value.Contains(NaN, StringComparison.InvariantCulture)) return fix_double(double.NaN);
             else return 0d;
         }
 
-        public static double fix_double(double value)
+        internal static double fix_double(double value)
         {
             // the doubles must be compatible with libsvm which is written in C (C and CSharp have different min/max values for double)
             const double c_double_max = (double)1.79769e+308;
