@@ -221,7 +221,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 10)).Wait();
+                    try{Task.Delay(new TimeSpan(0, 0, 15)).Wait();}catch (Exception) { }
                 }
             }
         }
@@ -271,7 +271,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try{Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception) { }
                 }
             }
         }
@@ -302,7 +302,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                 }
             }
         }
@@ -333,7 +333,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                 }
             }
         }
@@ -362,7 +362,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                 }
             }
         }
@@ -390,7 +390,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                 }
             }
         }
@@ -419,7 +419,7 @@ namespace svm_fs
 
                     if (tries >= max_tries) throw;
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                 }
             }
         }

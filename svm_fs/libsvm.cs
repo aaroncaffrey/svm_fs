@@ -191,7 +191,7 @@ namespace svm_fs
 
                                 do
                                 {
-                                    try { Task.WaitAll(tasks.ToArray(), process_max_time.Value); } catch (Exception) { }
+                                    try { Task.WaitAll(tasks.ToArray<Task>(), process_max_time.Value); } catch (Exception) { }
                                     //time_taken = DateTime.Now - process.StartTime;
                                     cpu_time = process.TotalProcessorTime;
                                 } while (tasks.Any(a => !a.IsCompleted) && cpu_time < process_max_time.Value && !process.HasExited);
@@ -243,7 +243,7 @@ namespace svm_fs
                     retry = true;
 
                     io_proxy.WriteLine(e.ToString(), nameof(libsvm), nameof(train));
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try{Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception) { }
                 }
             }
             while (retry && retry_index < 10_000);
@@ -355,7 +355,7 @@ namespace svm_fs
                 {
                     retry = true;
                     io_proxy.WriteLine(e.ToString(), nameof(libsvm), nameof(predict));
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try{Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception) { }
                 }
             }
             while (retry && retry_index < 10_000);

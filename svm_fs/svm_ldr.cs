@@ -46,6 +46,9 @@ namespace svm_fs
 
                     try{Task.Delay(new TimeSpan(0, 0, 1, 0),ct).Wait(ct);} catch (Exception) { }
                 }
+
+                io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.controller_task)}.", nameof(svm_ldr), nameof(svm_ldr.controller_task));
+
             });
 
             return controller_task;
@@ -65,7 +68,7 @@ namespace svm_fs
                     try{Task.Delay(new TimeSpan(0, 0, 0, 10), ct).Wait(ct);} catch (Exception) { }
                 }
 
-                io_proxy.WriteLine($@"Exiting {nameof(svm_ldr.worker_jobs_task)}.");
+                io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.worker_jobs_task)}.", nameof(svm_ldr), nameof(worker_jobs_task));
             });
 
             return worker_jobs_task1;
@@ -133,7 +136,7 @@ namespace svm_fs
                    try { Task.Delay(new TimeSpan(0, 0, 0, 30),cts.Token).Wait(cts.Token);} catch { }
                 }
 
-                io_proxy.WriteLine($@"Exiting {nameof(svm_ldr.status_task)}.");
+                io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.status_task)}.", nameof(svm_ldr), nameof(status_task));
 
             });
 
@@ -164,8 +167,9 @@ namespace svm_fs
             var tasks = new List<Task>();
             tasks.Add(controller_task);
             tasks.Add(worker_jobs_task);
-            tasks.Add(status_task);
-            Task.WaitAll(tasks.ToArray<Task>());
+            tasks.Add(status_task); 
+            //Task.WaitAll(tasks.ToArray<Task>());
+            svm_ctl.wait_tasks(tasks.ToArray<Task>(), nameof(svm_ldr), nameof(start));
         }
 
         internal static void write_job_id(cmd_params options, string job_id)
@@ -277,7 +281,8 @@ namespace svm_fs
 
                 var job_id_tasks = cmd_params_list.Select((cmd_params, i) => cmd_params != null && cmd_params.cmd == cmd.wkr ? run_job_async(cmd_params) : null).ToList();
 
-                Task.WaitAll(job_id_tasks.Where(a => a != null).ToArray<Task>());
+                //Task.WaitAll(job_id_tasks.Where(a => a != null).ToArray<Task>());
+                svm_ctl.wait_tasks(job_id_tasks.Where(a => a != null).ToArray<Task>(), nameof(svm_ldr), nameof(run_worker_jobs));
 
                 var job_ids = job_id_tasks.Select((a, i) => a?.Result.job_id).ToList();
 
