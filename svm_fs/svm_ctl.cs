@@ -1338,10 +1338,14 @@ namespace svm_fs
         {
             if (delete_logs)
             {
+                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+
+                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+
                 //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
                 //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-                io_proxy.Delete(p.pbs_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-                io_proxy.Delete(p.pbs_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
             }
 
             io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
@@ -1353,6 +1357,7 @@ namespace svm_fs
             io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // test predictions
+            io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
             io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
             io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
@@ -1363,9 +1368,8 @@ namespace svm_fs
             io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // sanity train predictions
-            io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.train_predict_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(p.train_predict_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
         }
 
         internal static void delete_temp_wkr_files(List<cmd_params> cmd_params_list, bool delete_logs = true)

@@ -182,7 +182,7 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
+                io_proxy.WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
                 return;
             }
         }
@@ -228,7 +228,7 @@ namespace svm_fs
 
             var dir = Path.GetDirectoryName(filename);
 
-            if (!String.IsNullOrWhiteSpace(dir))
+            if (!string.IsNullOrWhiteSpace(dir))
             {
                 Directory.CreateDirectory(dir);
             }
