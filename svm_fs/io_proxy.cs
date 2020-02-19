@@ -182,7 +182,7 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                io_proxy.WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
+                io_proxy.WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
                 return;
             }
         }
@@ -210,7 +210,7 @@ namespace svm_fs
                 catch (Exception e)
                 {
                     
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Copy));
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Copy));
 
 
                     if (tries >= max_tries) throw;
@@ -257,7 +257,8 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllLines));
+                    
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllLines));
 
 
                     if (tries >= max_tries) throw;
@@ -288,7 +289,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllText));
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -318,7 +319,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllLines));
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -345,7 +346,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllLines));
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -372,7 +373,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllText));
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -399,7 +400,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllText));
+                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllText));
 
 
                     if (tries >= max_tries) throw;

@@ -58,7 +58,8 @@ namespace svm_fs
 
         internal static void Main(string[] args)
         {
-            GCSettings.LatencyMode = GCLatencyMode.Batch;
+            //GCSettings.LatencyMode = GCLatencyMode.Batch;
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
             var cts = new CancellationTokenSource();
             close_notifications(cts);

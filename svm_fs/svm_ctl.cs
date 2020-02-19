@@ -1625,9 +1625,9 @@ namespace svm_fs
             var job_output_folder = outer_fold_folder;
             var merge_output_folder = group_folder;
 
-            Directory.CreateDirectory(iteration_folder);
-            Directory.CreateDirectory(group_folder);
-            Directory.CreateDirectory(outer_fold_folder);
+            io_proxy.CreateDirectory(iteration_folder);
+            io_proxy.CreateDirectory(group_folder);
+            io_proxy.CreateDirectory(outer_fold_folder);
 
 
             // /home/k1040015/itr_0/grp_0/svm_0_kl_0_sl_0/rnd_0_cv_0/itr_0_grp_0_rnd_0_cv_0_svm_0_kl_0_sl_0

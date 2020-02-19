@@ -194,7 +194,7 @@ namespace svm_fs
                 {
                     
                     
-                        Directory.CreateDirectory(a);
+                        io_proxy.CreateDirectory(a);
                     
                 }
                 catch (Exception)
