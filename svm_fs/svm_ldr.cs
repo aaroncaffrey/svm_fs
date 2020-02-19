@@ -44,7 +44,7 @@ namespace svm_fs
 
                     controller_job_id = run_job_result.job_id;
 
-                    Task.Delay(new TimeSpan(0, 0, 1, 0)).Wait();
+                    try{Task.Delay(new TimeSpan(0, 0, 1, 0),ct).Wait(ct);} catch (Exception) { }
                 }
             });
 
@@ -55,18 +55,20 @@ namespace svm_fs
         {
             io_proxy.WriteLine($@"Monitoring '{job_submission_folder}' for new jobs to run...", nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
 
-            var worker_jobs_task = Task.Run(() =>
+            var worker_jobs_task1 = Task.Run(() =>
             {
                 while (!ct.IsCancellationRequested)
                 {
 
                     var job_ids = run_worker_jobs(job_submission_folder);
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 10)).Wait();
+                    try{Task.Delay(new TimeSpan(0, 0, 0, 10), ct).Wait(ct);} catch (Exception) { }
                 }
+
+                io_proxy.WriteLine($@"Exiting {nameof(svm_ldr.worker_jobs_task)}.");
             });
 
-            return worker_jobs_task;
+            return worker_jobs_task1;
         }
 
         internal static Task status_task(CancellationTokenSource cts)
@@ -79,7 +81,7 @@ namespace svm_fs
                     {
                         try
                         {
-                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available ? a.was_available : io_proxy.is_file_available(a.finish_maker_filename), a.state)).ToList();
+                            finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available ? a.was_available : io_proxy.is_file_available(a.finish_maker_filename, nameof(svm_ldr), nameof(status_task)), a.state)).ToList();
                         }
                         catch (Exception)
                         {
@@ -128,8 +130,11 @@ namespace svm_fs
                         }
                     }
 
-                    Task.Delay(new TimeSpan(0, 0, 0, 30)).Wait();
+                   try { Task.Delay(new TimeSpan(0, 0, 0, 30),cts.Token).Wait(cts.Token);} catch { }
                 }
+
+                io_proxy.WriteLine($@"Exiting {nameof(svm_ldr.status_task)}.");
+
             });
 
             return status_task1;
@@ -182,7 +187,7 @@ namespace svm_fs
 
             job_id_filename = io_proxy.convert_path(job_id_filename);
 
-            if (io_proxy.is_file_available(job_id_filename))
+            if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(read_job_id)))
             {
                 job_id = io_proxy.ReadAllText(job_id_filename).Trim().Split().LastOrDefault();
             }
@@ -298,7 +303,7 @@ namespace svm_fs
             var pbs_script_filename = io_proxy.convert_path($@"{options.options_filename}.pbs");
             var pbs_finish_marker_filename = io_proxy.convert_path($@"{options.options_filename}.fin");
 
-            if (io_proxy.is_file_available(job_id_filename) || io_proxy.is_file_available(pbs_finish_marker_filename))
+            if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(run_job)) || io_proxy.is_file_available(pbs_finish_marker_filename, nameof(svm_ldr), nameof(run_job)))
             {
                 return default;
             }
@@ -392,9 +397,8 @@ namespace svm_fs
 
         private static void make_pbs_script(cmd_params options, bool rerunnable, string pbs_finish_marker_filename, string pbs_script_filename)
         {
-            //options.options_filename = io_proxy.convert_path(options.options_filename);
-
-
+            options.options_filename = io_proxy.convert_path(options.options_filename);
+            
             // 1. make pbs file to submit job
             var pbs_script_lines = new List<string>();
 

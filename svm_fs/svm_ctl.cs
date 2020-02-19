@@ -344,7 +344,7 @@ namespace svm_fs
                 var checkpoint_fn = Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"{nameof(currently_selected_group_indexes)}.txt");
                 var previous_tests_fn = Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"previous_tests.txt");
 
-                if (io_proxy.is_file_available(checkpoint_fn))
+                if (io_proxy.is_file_available(checkpoint_fn, nameof(svm_ctl), nameof(feature_selection)))
                 {
                     io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(feature_selection));
 
@@ -1023,7 +1023,7 @@ namespace svm_fs
                 ranks_fn = Path.Combine(iteration_folder, $@"ranks_cm_{iteration_index}.csv");
             }
 
-            if (!io_proxy.is_file_available(ranks_fn))
+            if (!io_proxy.is_file_available(ranks_fn, nameof(svm_ctl), nameof(get_cm_inputs)))
             {
                 var cms_header = $"{string.Join(",", cmd_params.csv_header)},{string.Join(",", performance_measure.confusion_matrix.csv_header)}";
                 var cms_csv = cm_inputs.SelectMany(a => a.cms.cm_list.Select(b => $"{string.Join(",", a.cmd_params.get_options().Select(c => c.value).ToList())},{b.ToString()}").ToList()).ToList();
@@ -1310,7 +1310,7 @@ namespace svm_fs
                 var item = merge_cm_inputs[i];
 
                 var fn = item.filenames.cm_file;
-                if (!io_proxy.is_file_available(fn))
+                if (!io_proxy.is_file_available(fn, nameof(svm_ctl), nameof(group_cv_part2)))
                 {
                     var cm_data = new List<string> {cms_header};
                     cm_data.AddRange(item.cms.cm_list.Select(a =>
@@ -1430,7 +1430,7 @@ namespace svm_fs
                 var key = t.Key;
                 var fn = key.merge_out_filename;
 
-                if (io_proxy.is_file_available(fn)) continue;
+                if (io_proxy.is_file_available(fn, nameof(svm_ctl), nameof(merge_post_results))) continue;
 
                 var list = t.ToList();
 
@@ -1553,7 +1553,7 @@ namespace svm_fs
                 var key = t.Key;
                 var fn = key;
 
-                if (io_proxy.is_file_available(fn)) continue;
+                if (io_proxy.is_file_available(fn, nameof(svm_ctl), nameof(merge_pre_results))) continue;
 
                 var list = t.ToList();
 
@@ -1701,7 +1701,7 @@ namespace svm_fs
             var use_cache = false;
             var cached = true;
 
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename))
+            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.options_filename, options_text);
                 io_proxy.WriteLine("Saved options: " + wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1712,7 +1712,7 @@ namespace svm_fs
                 io_proxy.WriteLine($"Using cached options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
             }
 
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_filename))
+            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.train_filename, job.training_text);
                 io_proxy.WriteLine($"Saved training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1725,7 +1725,7 @@ namespace svm_fs
 
             if (p.save_train_id)
             {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_id_filename))
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.train_id_filename, job.training_id_text);
                     io_proxy.WriteLine($"Saved training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1739,7 +1739,7 @@ namespace svm_fs
 
             if (p.save_train_meta)
             {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_meta_filename))
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.train_meta_filename, job.training_meta_text);
                     io_proxy.WriteLine($"Saved training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1751,7 +1751,7 @@ namespace svm_fs
                 }
             }
 
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_filename))
+            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.test_filename, job.testing_text);
                 io_proxy.WriteLine($"Saved testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1762,7 +1762,7 @@ namespace svm_fs
                 io_proxy.WriteLine($"Using cached testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
             }
 
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_labels_filename))
+            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_labels_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 var test_labels = job.testing_text.Select(a => a.Length > 0 ? a.Substring(0, a.IndexOf(' ', StringComparison.InvariantCulture) > -1 ? a.IndexOf(' ', StringComparison.InvariantCulture) : 0) : "").ToList();
                 io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels);
@@ -1776,7 +1776,7 @@ namespace svm_fs
 
             if (p.save_test_id)
             {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_id_filename))
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text);
                     io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1790,7 +1790,7 @@ namespace svm_fs
 
             if (p.save_test_meta)
             {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_meta_filename))
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text);
                     io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1818,7 +1818,7 @@ namespace svm_fs
             {
                 foreach (var f in wait_file_list)
                 {
-                    if (!io_proxy.is_file_available(f))
+                    if (!io_proxy.is_file_available(f, nameof(svm_ctl), nameof(do_outer_cv_job)))
                     {
                         cached = false;
                         break;
@@ -2038,7 +2038,7 @@ namespace svm_fs
             {
                 itr++;
 
-                var new_files_found = file_wait_list.Where(a => io_proxy.is_file_available(a)).ToList();
+                var new_files_found = file_wait_list.Where(a => io_proxy.is_file_available(a, nameof(svm_ctl), nameof(wait_for_results))).ToList();
 
                 if (new_files_found.Count > 0)
                 {

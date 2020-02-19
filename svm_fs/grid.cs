@@ -26,7 +26,7 @@ namespace svm_fs
 
             //*!string.IsNullOrWhiteSpace(cache_train_grid_csv) && io_proxy.Exists(cache_train_grid_csv) && new FileInfo(cache_train_grid_csv).Length > 0 && */
             
-            if (io_proxy.is_file_available(cache_train_grid_csv))
+            if (io_proxy.is_file_available(cache_train_grid_csv, nameof(grid), nameof(read_cache)))
             {
                 //var grid = new List<(double cost, double gamma, double epsilon, double coef0, double degree, double rate)>();
 

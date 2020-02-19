@@ -14,12 +14,12 @@ namespace svm_fs
             var use_cache = true;
             var cached = true;
 
-            if (!use_cache || !io_proxy.is_file_available(p.test_predict_cm_filename)) { cached = false; }
-            //if (!use_cache || !io_proxy.is_file_available(p.test_predict_filename)) { cached = false; }
-            //if (!use_cache || !io_proxy.is_file_available(p.test_filename)) { cached = false; }
-            //if (!use_cache || !io_proxy.is_file_available(p.train_model_filename)) { cached = false; }
-            //if (!use_cache || (p.save_test_meta && !io_proxy.is_file_available(p.test_meta_filename))) { cached = false; }
-            //if (!use_cache || (p.inner_cv_folds > 1 && !io_proxy.is_file_available(p.train_grid_filename))) { cached = false; }
+            if (!use_cache || !io_proxy.is_file_available(p.test_predict_cm_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+            //if (!use_cache || !io_proxy.is_file_available(p.test_predict_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+            //if (!use_cache || !io_proxy.is_file_available(p.test_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+            //if (!use_cache || !io_proxy.is_file_available(p.train_model_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+            //if (!use_cache || (p.save_test_meta && !io_proxy.is_file_available(p.test_meta_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+            //if (!use_cache || (p.inner_cv_folds > 1 && !io_proxy.is_file_available(p.train_grid_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
 
             if (cached)
             {

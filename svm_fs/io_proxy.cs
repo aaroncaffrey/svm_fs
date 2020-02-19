@@ -10,7 +10,7 @@ namespace svm_fs
 {
     internal static class io_proxy
     {
-        internal static bool is_file_available(string filename)
+        internal static bool is_file_available(string filename, string module_name = "", string function_name = "")
         {
             try
             {
@@ -29,12 +29,16 @@ namespace svm_fs
 
                 return true;
             }
-            catch (IOException)
+            catch (IOException e)
             {
+                io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(is_file_available));
+
                 return false;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(is_file_available));
+
                 return false;
             }
         }
@@ -108,7 +112,7 @@ namespace svm_fs
             // remove invalid chars
             //var invalid = $"?%*|¦<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
             const string valid = ":\\/.qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789_-+()[]";
-            path = string.Join("", path.Select(a => !valid.Any(b => a == b) ? '_' : a).ToList());
+            path = string.Join("", path.Select(a => valid.All(b => a != b) ? '_' : a).ToList());
 
             // make sure no part is more than 255 length
 
@@ -182,17 +186,17 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                io_proxy.WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
+                io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
                 return;
             }
         }
+
+        
 
         internal static void Copy(string source, string dest, bool overwrite = true, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             source = convert_path(source);
             dest = convert_path(dest);
-
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} )", nameof(io_proxy), nameof(Copy));
 
             var tries = 0;
 
@@ -200,6 +204,8 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} ) {tries}", nameof(io_proxy), nameof(Copy));
+
                     tries++;
 
                     CreateDirectory(dest);
@@ -210,7 +216,7 @@ namespace svm_fs
                 catch (Exception e)
                 {
                     
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Copy));
+                    WriteLine($@"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Copy));
 
 
                     if (tries >= max_tries) throw;
@@ -241,7 +247,7 @@ namespace svm_fs
         internal static string[] ReadAllLines(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllLines));
+            
 
             int tries = 0;
 
@@ -249,6 +255,8 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(ReadAllLines));
+
                     tries++;
 
                     var ret = File.ReadAllLines(filename);
@@ -258,7 +266,7 @@ namespace svm_fs
                 catch (Exception e)
                 {
                     
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllLines));
+                    WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllLines));
 
 
                     if (tries >= max_tries) throw;
@@ -273,7 +281,6 @@ namespace svm_fs
         internal static string ReadAllText(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(ReadAllText));
 
             int tries = 0;
 
@@ -281,6 +288,8 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(ReadAllText));
+
                     tries++;
 
                     var ret = File.ReadAllText(filename);
@@ -289,7 +298,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllText));
+                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -302,7 +311,6 @@ namespace svm_fs
         internal static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllLines));
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -312,6 +320,8 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(WriteAllLines));
+
                     tries++;
 
                     File.WriteAllLines(filename, lines);
@@ -319,7 +329,7 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllLines));
+                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -331,7 +341,7 @@ namespace svm_fs
         internal static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllLines));
+            
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -340,13 +350,15 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(AppendAllLines));
+
                     tries++;
                     File.AppendAllLines(filename, lines);
                     return;
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllLines));
+                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -358,7 +370,6 @@ namespace svm_fs
         internal static void AppendAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(AppendAllText));
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -367,13 +378,15 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(AppendAllText));
+
                     tries++;
                     File.AppendAllText(filename, text);
                     return;
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllText));
+                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -385,7 +398,6 @@ namespace svm_fs
         internal static void WriteAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(WriteAllText));
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -394,13 +406,15 @@ namespace svm_fs
             {
                 try
                 {
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(WriteAllText));
+
                     tries++;
                     File.WriteAllText(filename, text);
                     return;
                 }
                 catch (Exception e)
                 {
-                    WriteLine($@"""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllText));
+                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllText));
 
 
                     if (tries >= max_tries) throw;
