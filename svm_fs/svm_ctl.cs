@@ -614,7 +614,7 @@ namespace svm_fs
                     var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
                     group_tasks1.Clear();
 
-                    var wait_file_list = jobs_group_level_part1.SelectMany(a => a.wait_file_list).ToList();
+                    var wait_file_list = jobs_group_level_part1.SelectMany(a => a.wait_file_list).Distinct().ToList();
                     wait_for_results(wait_file_list);
 
                     io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
@@ -638,7 +638,12 @@ namespace svm_fs
                         {
                             var part1_result = jobs_group_level_part1[group_index];
 
-                            if (part1_result == default) return default;
+                            if (part1_result == default)
+                            {
+                                io_proxy.WriteLine($@"Warning: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
+
+                                return default;
+                            }
 
                             var part2_result = group_cv_part2(part1_result);
 
@@ -2082,7 +2087,7 @@ namespace svm_fs
 
                     io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
                 }
-                else if (itr >= 6)
+                else if (itr >= 4)
                 {
                     itr = 0;
 

@@ -178,7 +178,7 @@ namespace svm_fs
             // rename output files
         }
 
-        internal static void delete_temp_wkr_files(cmd_params p, bool delete_logs = true)
+        internal static void delete_temp_wkr_files(cmd_params p, bool delete_logs = false)
         {
             if (delete_logs)
             {
