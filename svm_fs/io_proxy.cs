@@ -165,6 +165,13 @@ namespace svm_fs
             }
         }
 
+        internal static bool is_file_empty(string filename, string module_name = "", string function_name = "")
+        {
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_empty));
+
+            return (!File.Exists(filename) || new FileInfo(filename).Length <= 0);
+        }
+
         internal static bool Exists(string filename, string module_name = "", string function_name = "")
         {
             filename = convert_path(filename);

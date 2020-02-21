@@ -64,8 +64,9 @@ namespace svm_fs
             var cts = new CancellationTokenSource();
             close_notifications(cts);
 
+
             //var x0 = new string[] { "f1", "f1_ppf", "f1_ppg" };
-            //var x1 = new string[] { "yes filter", "no filter" };
+            //var x1 = new string[] { "yes pre-filter", "no pre-filter" };
             //var x2 = new string[] { "yes inner-cv", "no inner-cv" };
             //var x3 = new string[] { "2d", "3d", "2d and 3d", "2d then 3d", "3d then 2d" };
             //var x4 = new string[] { "Interface", "Neighbourhood", "Protein", "Interface", "Interface Neighbourhood Protein", "Interface Neighbourhood", "Interface Protein", "Neighbourhood Protein"  };

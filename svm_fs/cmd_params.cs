@@ -36,7 +36,7 @@ namespace svm_fs
         internal common.libsvm_kernel_type svm_kernel = common.libsvm_kernel_type.rbf;
         internal common.libsvm_svm_type svm_type = common.libsvm_svm_type.c_svc;
         internal common.scale_function scale_function = common.scale_function.rescale;
-        internal const string svm_fs_home = "/home/k1040015/svm_fs/svm_fs";
+        internal const string svm_fs_home = "/mms1/data/scratch/k1040015/svm_fs";
         internal const string user_home = "/home/k1040015";
         internal double? grid_coef0_exp_begin = null;
         internal double? grid_coef0_exp_end = null;

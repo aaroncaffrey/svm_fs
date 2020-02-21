@@ -158,7 +158,7 @@ namespace svm_fs
                 cm.ext_duration_testing = sw_predict_dur.ToString(CultureInfo.InvariantCulture);
 
                 cm.calculate_ppf();
-
+                
                 //join outer-cv-cms together to create 1 cm - roc - pr - etc
             }
 
@@ -182,11 +182,16 @@ namespace svm_fs
         {
             if (delete_logs)
             {
-                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
+                if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
                 io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
-                
-                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+
+                var program_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename));
+                if (io_proxy.is_file_empty(program_wkr_stderr_filename)) io_proxy.Delete(program_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
                 io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+
+                //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+                //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
             }
 
             io_proxy.Delete(p.options_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
@@ -196,9 +201,9 @@ namespace svm_fs
             //io_proxy.Delete(p.test_labels_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
 
             if (p.save_test_id) io_proxy.Delete(p.test_id_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
-           if (p.save_test_meta) io_proxy.Delete(p.test_meta_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
-           if (p.save_train_id) io_proxy.Delete(p.train_id_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
-           if (p.save_train_meta) io_proxy.Delete(p.train_meta_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
+            if (p.save_test_meta) io_proxy.Delete(p.test_meta_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
+            if (p.save_train_id) io_proxy.Delete(p.train_id_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
+            if (p.save_train_meta) io_proxy.Delete(p.train_meta_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
             //io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
             //io_proxy.Delete(p.train_predict_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));

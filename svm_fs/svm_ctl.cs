@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -175,26 +176,40 @@ namespace svm_fs
 
                 if (incomplete_tasks.Count > 0)
                 {
-                    var completed_task_index = Task.WaitAny(incomplete_tasks.ToArray<Task>());
-
-                    if (completed_task_index > -1)
+                    try
                     {
-                        var incomplete = tasks.Count(a => !a.IsCompleted);
-                        var complete = tasks.Length - incomplete;
-                        var pct = ((double)complete / (double)tasks.Length) * 100;
+                        var completed_task_index = Task.WaitAny(incomplete_tasks.ToArray<Task>());
 
-                        var time_remaining = TimeSpan.FromTicks((long)(DateTime.Now.Subtract(start_time).Ticks * ((double)incomplete / (double)(complete == 0 ? 1 : complete))));
+                        if (completed_task_index > -1)
+                        {
+                            var incomplete = tasks.Count(a => !a.IsCompleted);
+                            var complete = tasks.Length - incomplete;
+                            var pct = ((double) complete / (double) tasks.Length) * 100;
 
-                        io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl), nameof(feature_selection));
-                        io_proxy.WriteLine($@"{module_name}.{function_name} -> {complete} / {tasks.Length} ( {pct:0.00} % ) [ {time_remaining:dd\:hh\:mm\:ss\.fff} ]", nameof(svm_ctl), nameof(wait_tasks));
-                        io_proxy.WriteLine($@"{module_name}.{function_name} -> Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
+                            var time_remaining = TimeSpan.FromTicks(
+                                (long) (DateTime.Now.Subtract(start_time).Ticks *
+                                        ((double) incomplete / (double) (complete == 0 ? 1 : complete))));
+
+                            io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl),
+                                nameof(feature_selection));
+                            io_proxy.WriteLine(
+                                $@"{module_name}.{function_name} -> {complete} / {tasks.Length} ( {pct:0.00} % ) [ {time_remaining:dd\:hh\:mm\:ss\.fff} ]",
+                                nameof(svm_ctl), nameof(wait_tasks));
+                            io_proxy.WriteLine(
+                                $@"{module_name}.{function_name} -> Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB",
+                                nameof(svm_ctl), nameof(feature_selection));
+                        }
+                    }
+                    catch (Exception)
+                    {
+
                     }
                 }
 
                 //GC.Collect();
             } while (tasks.Any(a => !a.IsCompleted));
 
-            Task.WaitAll(tasks.ToArray<Task>());
+            try{Task.WaitAll(tasks.ToArray<Task>());} catch (Exception) { }
         }
 
         internal static void feature_selection(cmd_params p)
@@ -1338,10 +1353,12 @@ namespace svm_fs
         {
             if (delete_logs)
             {
-                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
+                if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
                 io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
-                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                var program_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename));
+                if (io_proxy.is_file_empty(program_wkr_stderr_filename)) io_proxy.Delete(program_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
                 io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
                 //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));

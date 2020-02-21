@@ -65,7 +65,7 @@ namespace svm_fs
 
                     var job_ids = run_worker_jobs(job_submission_folder);
 
-                    try{Task.Delay(new TimeSpan(0, 0, 0, 10), ct).Wait(ct);} catch (Exception) { }
+                    try{Task.Delay(new TimeSpan(0, 0, 0, 15), ct).Wait(ct);} catch (Exception) { }
                 }
 
                 io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.worker_jobs_task)}.", nameof(svm_ldr), nameof(worker_jobs_task));
@@ -251,6 +251,8 @@ namespace svm_fs
                 var options_files = Directory.GetFiles(job_submission_folder, "*.options", SearchOption.AllDirectories).ToList();
 
                 options_files = options_files.Except(submitted_options_files).ToList();
+
+                //options_files = options_files.Where(a => io_proxy.is_file_available(a)).ToList();
 
                 var cmd_params_list = options_files.Select((options_file, i) =>
                 {
