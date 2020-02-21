@@ -283,13 +283,17 @@ namespace svm_fs
             io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
             io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
 
-            //groups = groups.Take(10).ToList();
+            var test_run = true;
+            if (test_run)
+            {
+                groups = groups.Take(25).ToList();
 
-            //group count -- total groups currently selected/testing
-            //feature count -- total features currently selected/testing
+                //group count -- total groups currently selected/testing
+                //feature count -- total features currently selected/testing
 
-            //io_proxy.WriteLine("", nameof(svm_ctl), nameof(interactive));
-            //io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(interactive));
+                io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
+            }
 
             var iteration_index = -1;
             var winning_iteration = 0;
