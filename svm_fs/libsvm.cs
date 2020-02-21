@@ -193,7 +193,11 @@ namespace svm_fs
                                 {
                                     try { Task.WaitAll(tasks.ToArray<Task>(), process_max_time.Value); } catch (Exception) { }
                                     //time_taken = DateTime.Now - process.StartTime;
+
+                                    if (process.HasExited) break;
+                                    
                                     cpu_time = process.TotalProcessorTime;
+
                                 } while (tasks.Any(a => !a.IsCompleted) && cpu_time < process_max_time.Value && !process.HasExited);
 
                                 if (tasks.Any(a => !a.IsCompleted) && !process.HasExited)

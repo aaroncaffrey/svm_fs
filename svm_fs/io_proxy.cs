@@ -136,6 +136,8 @@ namespace svm_fs
         }
 
         private static readonly object _console_lock = new object();
+        private static readonly object _log_lock = new object();
+        private static string log_file = null;
 
         internal static void WriteLine(string text = "", string module_name = "", string function_name = "", bool use_lock = false)
         {
@@ -147,16 +149,25 @@ namespace svm_fs
                 var thread_id = Thread.CurrentThread.ManagedThreadId;
                 var task_id = Task.CurrentId ?? 0;
 
+                var s = $@"{DateTime.Now:G} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}";
                 if (use_lock)
                 {
                     lock (_console_lock)
                     {
-                        Console.WriteLine($@"{DateTime.Now:G} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}");
+                        Console.WriteLine(s);
                     }
                 }
                 else
                 {
-                    Console.WriteLine($@"{DateTime.Now:G} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}");
+                    Console.WriteLine(s);
+                }
+
+                if (!string.IsNullOrEmpty(log_file))
+                {
+                    lock (_log_lock)
+                    {
+                        File.AppendAllLines(log_file, new string[] {s});
+                    }
                 }
             }
             catch (Exception)
