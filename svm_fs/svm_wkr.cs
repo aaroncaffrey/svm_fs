@@ -21,9 +21,10 @@ namespace svm_fs
             //if (!use_cache || (p.save_test_meta && !io_proxy.is_file_available(p.test_meta_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
             //if (!use_cache || (p.inner_cv_folds > 1 && !io_proxy.is_file_available(p.train_grid_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
 
-            if (cached)
+            if (use_cache && cached)
             {
-                delete_temp_wkr_files(p);
+                io_proxy.WriteLine($@"{nameof(svm_wkr)} Cache found. Exiting.");
+                //delete_temp_wkr_files(p);
                 return;
             }
 
@@ -173,11 +174,12 @@ namespace svm_fs
             }
             io_proxy.WriteAllLines(p.test_predict_cm_filename, cm_lines);
 
-            delete_temp_wkr_files(p);
+            //delete_temp_wkr_files(p);
             // report finished
             // rename output files
         }
 
+        /*
         internal static void delete_temp_wkr_files(cmd_params p, bool delete_logs = false)
         {
             if (delete_logs)
@@ -210,6 +212,7 @@ namespace svm_fs
             //io_proxy.Delete(p.train_grid_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
             //io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
             //io_proxy.Delete(p.test_predict_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files)); 
-        }
+        }*/
+
     }
 }
