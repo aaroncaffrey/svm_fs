@@ -640,7 +640,7 @@ namespace svm_fs
 
                             if (part1_result == default)
                             {
-                                io_proxy.WriteLine($@"Warning: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
+                                io_proxy.WriteLine($@"Error: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
 
                                 return default;
                             }

@@ -165,11 +165,12 @@ namespace svm_fs
                         if (process == null)
                         {
                             retry = true;
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                             continue;
                             //   return (cmd_line, null, null);
                         }
 
-                        io_proxy.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(train));
+                        io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
 
                         try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
                         try { process.PriorityClass = priority_class; } catch (Exception) { }
@@ -212,15 +213,17 @@ namespace svm_fs
                             }
                             catch (Exception e)
                             {
-                                io_proxy.WriteLine($"Process: {process.Id}. {e.ToString()}", nameof(libsvm), nameof(train));
+                                io_proxy.WriteLine($"Process {Path.GetFileName(start.FileName)}: {process.Id}. {e.ToString()}", nameof(libsvm), nameof(train));
                             }
                         }
                         
                         try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception) { }
                         
-
                         process.WaitForExit();
-                        io_proxy.WriteLine($"Exited process: {process.Id}", nameof(libsvm), nameof(train));
+
+                        io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
+
+                        var exit_code = process.ExitCode;
 
                         var stdout_result = "";
                         var stderr_result = "";
@@ -239,7 +242,16 @@ namespace svm_fs
                             io_proxy.AppendAllText(stderr_file, stderr_result);
                         }
 
-                        return (cmd_line, stdout_result, stderr_result);
+                        if (exit_code == 0)
+                        {
+                            return (cmd_line, stdout_result, stderr_result);
+                        }
+                        else
+                        {
+                            retry = true;
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                            continue;
+                        }
                     }
                 }
                 catch (Exception e)
@@ -317,11 +329,12 @@ namespace svm_fs
                         if (process == null)
                         {
                             retry = true;
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
                             continue;
                             //   return (cmd_line, null, null);
                         }
 
-                        io_proxy.WriteLine($"Spawned process: {process.Id}", nameof(libsvm), nameof(predict));
+                        io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
                         try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
                         try { process.PriorityClass = priority_class; } catch (Exception) { }
 
@@ -329,7 +342,9 @@ namespace svm_fs
                         var stderr = process.StandardError.ReadToEndAsync();
 
                         process.WaitForExit();
-                        io_proxy.WriteLine($"Exited process: {process.Id}", nameof(libsvm), nameof(predict));
+                        io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
+
+                        var exit_code = process.ExitCode;
 
                         var tasks = new List<Task>() { stdout, stderr };
 
@@ -352,7 +367,16 @@ namespace svm_fs
                             io_proxy.AppendAllText(stderr_file, stderr_result);
                         }
 
-                        return (cmd_line, stdout_result, stderr_result);
+                        if (exit_code == 0)
+                        {
+                            return (cmd_line, stdout_result, stderr_result);
+                        }
+                        else
+                        {
+                            retry = true;
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                            continue;
+                        }
                     }
                 }
                 catch (Exception e)

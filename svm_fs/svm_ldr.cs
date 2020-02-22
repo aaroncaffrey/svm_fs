@@ -15,10 +15,13 @@ namespace svm_fs
 
         internal static List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)> finish_marker_files = new List<(cmd cmd, string job_id_filename, string pbs_script_filename, string options_filename, string finish_maker_filename, bool was_available, int state)>();
 
-        internal static object finish_marker_files_lock = new object();
+        internal static readonly object finish_marker_files_lock = new object();
 
         internal static void fix_controller_name(cmd_params controller_options)
         {
+            io_proxy.WriteLine($@"Method: fix_controller_name(cmd_params controller_options = {controller_options.options_filename})", nameof(svm_ldr), nameof(fix_controller_name));
+
+
             if (string.IsNullOrWhiteSpace(controller_options.pbs_ctl_jobname))
             {
                 controller_options.pbs_ctl_jobname = $@"{nameof(svm_ctl)}_{controller_options.experiment_name}";
@@ -32,6 +35,8 @@ namespace svm_fs
 
         internal static Task controller_task(cmd_params controller_options, CancellationToken ct)
         {
+            io_proxy.WriteLine($@"Method: controller_task(cmd_params controller_options = {controller_options.options_filename}, CancellationToken ct = {ct})", nameof(svm_ldr), nameof(svm_ldr.controller_task));
+
 
             var controller_task = Task.Run(() =>
             {
@@ -55,6 +60,8 @@ namespace svm_fs
 
         internal static Task worker_jobs_task(string job_submission_folder, CancellationToken ct)
         {
+            io_proxy.WriteLine($@"Method: worker_jobs_task(string job_submission_folder = {job_submission_folder}, CancellationToken ct = {ct})", nameof(svm_ldr), nameof(worker_jobs_task));
+
             io_proxy.WriteLine($@"Monitoring '{job_submission_folder}' for new jobs to run...", nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
 
             var worker_jobs_task1 = Task.Run(() =>
@@ -75,6 +82,8 @@ namespace svm_fs
 
         internal static Task status_task(CancellationTokenSource cts)
         {
+            io_proxy.WriteLine($@"Method: status_task(CancellationTokenSource cts = {cts})", nameof(svm_ldr), nameof(status_task));
+
             var status_task1 = Task.Run(() =>
             {
                 while (!cts.IsCancellationRequested)
@@ -107,10 +116,6 @@ namespace svm_fs
                         {
                             foreach (var jc in jobs_completed)
                             {
-
-                                // todo: bug: task will try to delete these files more than once (i.e. at each call)
-                                //var pbs_options_filename = "";
-
                                 io_proxy.Delete(jc.job_id_filename, nameof(svm_ldr), nameof(status_task));
                                 io_proxy.Delete(jc.finish_maker_filename, nameof(svm_ldr), nameof(status_task));
                                 io_proxy.Delete(jc.pbs_script_filename, nameof(svm_ldr), nameof(status_task));
@@ -137,7 +142,7 @@ namespace svm_fs
                         }
                     }
 
-                   try { Task.Delay(new TimeSpan(0, 0, 0, 30),cts.Token).Wait(cts.Token);} catch { }
+                    try { Task.Delay(new TimeSpan(0, 0, 0, 30), cts.Token).Wait(cts.Token); } catch { }
                 }
 
                 io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.status_task)}.", nameof(svm_ldr), nameof(status_task));
@@ -149,6 +154,7 @@ namespace svm_fs
 
         internal static void start(cmd_params controller_options, CancellationTokenSource cts)
         {
+            io_proxy.WriteLine($@"Method: start(cmd_params controller_options = {controller_options.options_filename}, CancellationTokenSource cts = {cts})", nameof(svm_ldr), nameof(start));
 
             fix_controller_name(controller_options);
             var controller_task = svm_ldr.controller_task(controller_options, cts.Token);
@@ -178,6 +184,8 @@ namespace svm_fs
 
         internal static void write_job_id(cmd_params options, string job_id)
         {
+            io_proxy.WriteLine($@"Method: write_job_id(cmd_params options = {options.options_filename}, string job_id = {job_id})", nameof(svm_ldr), nameof(write_job_id));
+
             if (!string.IsNullOrWhiteSpace(job_id))
             {
                 var job_id_filename = $"{options.options_filename}.job_id";
@@ -190,6 +198,8 @@ namespace svm_fs
 
         internal static string read_job_id(string job_id_filename)
         {
+            io_proxy.WriteLine($@"Method: read_job_id(string job_id_filename = {job_id_filename})", nameof(svm_ldr), nameof(read_job_id));
+
             var job_id = "";
             //var job_id_filename = $"{options.options_filename}.job_id";
             //job_id_filename = io_proxy.convert_path(job_id_filename);
@@ -204,6 +214,9 @@ namespace svm_fs
 
         internal static bool check_job_exists(string job_id)
         {
+            io_proxy.WriteLine($@"Method: check_job_exists(string job_id = {job_id})", nameof(svm_ldr),
+                nameof(check_job_exists));
+
             if (string.IsNullOrWhiteSpace(job_id))
             {
                 return false;
@@ -219,26 +232,54 @@ namespace svm_fs
                 RedirectStandardInput = true,
             };
 
+            var tries = 0;
+            var max_tries = 1_000_000;
 
-            using (var process = Process.Start(psi))
+            while (tries < max_tries)
             {
-                if (process != null)
+                tries++;
+
+                try
                 {
-                    var stdout = process.StandardOutput.ReadToEnd();
-
-                    var stderr = process.StandardError.ReadToEnd();
-
-                    process.WaitForExit();
-
-                    var stdout_lines = stdout.Split(new char[] { '\r', '\n' });
-
-                    var state = stdout_lines.FirstOrDefault(a => a.StartsWith("State:", StringComparison.InvariantCulture));
-
-                    if (!string.IsNullOrWhiteSpace(state))
+                    using (var process = Process.Start(psi))
                     {
-                        return true;
+                        if (process != null)
+                        {
+                            var stdout = process.StandardOutput.ReadToEnd();
+
+                            var stderr = process.StandardError.ReadToEnd();
+
+                            process.WaitForExit();
+
+                            var exit_code = process.ExitCode;
+
+                            var stdout_lines = stdout?.Split(new char[] {'\r', '\n'});
+
+                            var state = stdout_lines?.FirstOrDefault(a => a.StartsWith("State:", StringComparison.InvariantCulture));
+
+                            if (exit_code == 0)
+                            {
+                                var job_exists = !string.IsNullOrWhiteSpace(state);
+
+                                return job_exists;
+                            }
+                            else
+                            {
+                                io_proxy.WriteLine($"Error: non zero exit code for process {Path.GetFileName(psi.FileName)}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
+                            }
+                        }
+                        else
+                        {
+                            io_proxy.WriteLine($"Error: process could not start {Path.GetFileName(psi.FileName)}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
+                        }
                     }
                 }
+                catch (Exception e)
+                {
+                    io_proxy.WriteLine($"Error: {e.ToString()}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
+                }
+
+                try { Task.Delay(new TimeSpan(0, 0, 15)).Wait(); } catch (Exception) { }
             }
 
             return false;
@@ -249,6 +290,9 @@ namespace svm_fs
 
         internal static List<string> run_worker_jobs(string job_submission_folder)
         {
+            io_proxy.WriteLine($@"Method: run_worker_jobs(string job_submission_folder = {job_submission_folder})", nameof(svm_ldr), nameof(run_worker_jobs));
+
+
             lock (submitted_options_files_lock)
             {
                 var options_files = Directory.GetFiles(job_submission_folder, "*.options", SearchOption.AllDirectories).ToList();
@@ -274,7 +318,6 @@ namespace svm_fs
 
                     var r = new cmd_params(fd);
 
-                    
                     return r;
 
                 }).ToList();
@@ -303,6 +346,8 @@ namespace svm_fs
 
         internal static Task<(string job_id, string job_id_filename, string pbs_script_filename, string pbs_finish_marker_filename)> run_job_async(cmd_params options, string job_id = null, bool rerunnable = true)
         {
+            io_proxy.WriteLine($@"Method: run_job_async(cmd_params options = {options.options_filename}, string job_id = {job_id}, bool rerunnable = {rerunnable})", nameof(svm_ldr), nameof(run_job_async));
+
             var task = Task.Run(() => { return run_job(options, job_id, rerunnable); });
 
             return task;
@@ -312,6 +357,8 @@ namespace svm_fs
 
         internal static (string job_id, string job_id_filename, string pbs_script_filename, string pbs_finish_marker_filename/*, string msub_stdout, string msub_stderr*/) run_job(cmd_params options, string job_id = null, bool rerunnable = true)
         {
+            io_proxy.WriteLine($@"Method: run_job(cmd_params options = {options.options_filename}, string job_id = {job_id}, bool rerunnable = {rerunnable})", nameof(svm_ldr), nameof(run_job));
+
             const string sub_cmd = "msub";
 
             var options_filename = io_proxy.convert_path($"{options.options_filename}");
@@ -369,8 +416,8 @@ namespace svm_fs
 
                 job_id = "";
 
-                var stdout = "";
-                var stderr = "";
+                //var stdout = "";
+                //var stderr = "";
 
                 var exit_code = (int?) null;
 
@@ -386,10 +433,13 @@ namespace svm_fs
                         {
                             if (process != null)
                             {
-                                stdout = process.StandardOutput.ReadToEnd();
-                                stderr = process.StandardError.ReadToEnd();
+                                var stdout = process.StandardOutput.ReadToEnd();
+                                var stderr = process.StandardError.ReadToEnd();
 
                                 process.WaitForExit();
+
+                                if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
+                                if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(run_job)));
 
                                 exit_code = process.ExitCode;
 
@@ -411,13 +461,17 @@ namespace svm_fs
                                     io_proxy.WriteLine($@"Error: non zero exit code. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )");
                                 }
                             }
+                            else
+                            {
+                                io_proxy.WriteLine($@"Error: process could not be launched. Tries: {tries}. ( {pbs_script_filename} )");
+                            }
                         }
 
                     }
                     catch (Exception e)
                     {
                         io_proxy.WriteLine(
-                            $@"( {options_filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
+                            $@"Error: ( {pbs_script_filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
                             nameof(svm_ldr), nameof(run_job));
                     }
 
@@ -450,8 +504,7 @@ namespace svm_fs
                     io_proxy.WriteLine($@"{options.cmd}: Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.", nameof(svm_ldr), nameof(run_job));
                 }
 
-                if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
-                if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(run_job)));
+                
             }
             else
             {
@@ -466,8 +519,10 @@ namespace svm_fs
 
         private static void make_pbs_script(cmd_params options, bool rerunnable, string pbs_finish_marker_filename, string pbs_script_filename)
         {
+            io_proxy.WriteLine($@"Method: make_pbs_script(cmd_params options = {options.options_filename}, bool rerunnable = {rerunnable}, string pbs_finish_marker_filename = {pbs_finish_marker_filename}, string pbs_script_filename = {pbs_script_filename})", nameof(svm_ldr), nameof(make_pbs_script));
+
             //options.options_filename = io_proxy.convert_path(options.options_filename);
-            
+
             // 1. make pbs file to submit job
             var pbs_script_lines = new List<string>();
 
@@ -519,9 +574,9 @@ namespace svm_fs
 
             //var pbs_script_filename = $@"~/svm_fs/pbs_job_{options.pbs_jobname}_{options.job_id}.pbs";
 
-            io_proxy.WriteLine(run_line, nameof(svm_ldr), nameof(make_pbs_script));
-
             io_proxy.WriteAllLines(pbs_script_filename, pbs_script_lines);
+
+            io_proxy.WriteLine(run_line, nameof(svm_ldr), nameof(make_pbs_script));
         }
     }
 }
