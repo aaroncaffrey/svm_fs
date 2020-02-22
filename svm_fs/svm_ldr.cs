@@ -188,12 +188,11 @@ namespace svm_fs
             }
         }
 
-        internal static string read_job_id(cmd_params options)
+        internal static string read_job_id(string job_id_filename)
         {
             var job_id = "";
-            var job_id_filename = $"{options.options_filename}.job_id";
-
-            job_id_filename = io_proxy.convert_path(job_id_filename);
+            //var job_id_filename = $"{options.options_filename}.job_id";
+            //job_id_filename = io_proxy.convert_path(job_id_filename);
 
             if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(read_job_id)))
             {
@@ -325,7 +324,7 @@ namespace svm_fs
 
             if (string.IsNullOrWhiteSpace(job_id))
             {
-                job_id = read_job_id(options);
+                job_id = read_job_id(job_id_filename);
             }
 
             var job_exists = check_job_exists(job_id);
@@ -369,18 +368,61 @@ namespace svm_fs
                 var stdout = "";
                 var stderr = "";
 
-                using (var process = Process.Start(psi))
+                var exit_code = (int?) null;
+
+                var tries = 0;
+                var max_tries = 1_000_000;
+                while (tries < max_tries)
                 {
-                    if (process != null)
+                    try
                     {
-                        stdout = process.StandardOutput.ReadToEnd();
-                        stderr = process.StandardError.ReadToEnd();
+                        tries++;
 
-                        job_id = stdout.Split().LastOrDefault(a => !string.IsNullOrWhiteSpace(a));
+                        using (var process = Process.Start(psi))
+                        {
+                            if (process != null)
+                            {
+                                stdout = process.StandardOutput.ReadToEnd();
+                                stderr = process.StandardError.ReadToEnd();
 
-                        process.WaitForExit();
+                                process.WaitForExit();
+
+                                exit_code = process.ExitCode;
+
+                                if (process.ExitCode == 0)
+                                {
+                                    job_id = stdout.Trim().Split().LastOrDefault() ?? "";
+
+                                    if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCulture))
+                                    {
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        io_proxy.WriteLine($@"Error: invalid job_id. Tries: {tries}. Exit code: {exit_code}. {pbs_script_filename}");
+                                    }
+                                }
+                                else
+                                {
+                                    io_proxy.WriteLine($@"Error: non zero exit code. Tries: {tries}. Exit code: {exit_code}. {pbs_script_filename}");
+                                }
+                            }
+                        }
+
                     }
+                    catch (Exception e)
+                    {
+                        io_proxy.WriteLine(
+                            $@"{options_filename} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
+                            nameof(svm_ldr), nameof(run_job));
+                    }
+
+                    io_proxy.WriteLine($@"Error: process could not start. Tries: {tries}. Exit code: {exit_code}. {pbs_script_filename}");
+
+                    Task.Delay(new TimeSpan(0, 0, 15)).Wait();
                 }
+
+                const string sub_cmd = "msub";
 
                 if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCulture))
                 {
@@ -390,11 +432,11 @@ namespace svm_fs
                     // 4. add to list of submitted jobs
                     //add_submitted_job(options);
 
-                    io_proxy.WriteLine($@"{options.cmd}: msub {pbs_script_filename} = {job_id}", nameof(svm_ldr), nameof(run_job));
+                    io_proxy.WriteLine($@"{options.cmd}: {sub_cmd} {pbs_script_filename} = {job_id}", nameof(svm_ldr), nameof(run_job));
 
                     lock (finish_marker_files_lock)
                     {
-                        if (!finish_marker_files.Any(a => a.finish_maker_filename == pbs_finish_marker_filename))
+                        if (!finish_marker_files.Any(a => string.Equals(a.finish_maker_filename, pbs_finish_marker_filename, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             finish_marker_files.Add((options.cmd, job_id_filename, pbs_script_filename, options_filename, pbs_finish_marker_filename, false, -1));
                         }
@@ -402,7 +444,7 @@ namespace svm_fs
                 }
                 else
                 {
-                    io_proxy.WriteLine($@"{options.cmd}: Error: msub {pbs_script_filename} FAILED", nameof(svm_ldr), nameof(run_job));
+                    io_proxy.WriteLine($@"{options.cmd}: Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.", nameof(svm_ldr), nameof(run_job));
                 }
 
                 if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
