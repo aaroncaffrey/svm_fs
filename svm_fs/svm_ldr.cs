@@ -394,9 +394,11 @@ namespace svm_fs
                 }
                 else
                 {
-                    if (!string.IsNullOrWhiteSpace(stdout)) io_proxy.WriteLine(stdout, nameof(svm_ldr), nameof(run_job));
-                    if (!string.IsNullOrWhiteSpace(stderr)) io_proxy.WriteLine(stderr, nameof(svm_ldr), nameof(run_job));
+                    io_proxy.WriteLine($@"{options.cmd}: Error: msub {pbs_script_filename} FAILED", nameof(svm_ldr), nameof(run_job));
                 }
+
+                if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
+                if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(run_job)));
             }
 
             return (job_id, job_id_filename, pbs_script_filename, pbs_finish_marker_filename/*, stdout, stderr*/);

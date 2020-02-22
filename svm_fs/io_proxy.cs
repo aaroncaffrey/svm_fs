@@ -22,10 +22,10 @@ namespace svm_fs
 
                 if (new FileInfo(filename).Length <= 0) return false;
 
-                using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-                {
+                //using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                //{
 
-                }
+                //}
 
                 return true;
             }
@@ -178,17 +178,22 @@ namespace svm_fs
 
         internal static bool is_file_empty(string filename, string module_name = "", string function_name = "")
         {
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_empty));
+            var file_empty = (!File.Exists(filename) || new FileInfo(filename).Length <= 0);
+            
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) = {file_empty}", nameof(io_proxy), nameof(is_file_empty));
 
-            return (!File.Exists(filename) || new FileInfo(filename).Length <= 0);
+            return file_empty;
         }
 
         internal static bool Exists(string filename, string module_name = "", string function_name = "")
         {
             filename = convert_path(filename);
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Exists));
 
-            return File.Exists(filename);
+            var exists = File.Exists(filename);
+            
+            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) = {exists}", nameof(io_proxy), nameof(Exists));
+
+            return exists;
         }
             
         internal static void Delete(string filename, string module_name = "", string function_name = "")

@@ -113,8 +113,8 @@ namespace svm_fs
             var sw_train_dur = sw_train.ElapsedMilliseconds;
 
             if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(train_result.stdout)) train_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
-            if (!string.IsNullOrWhiteSpace(train_result.stderr)) train_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(train_result.stdout)) train_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(train_result)}.{nameof(train_result.stdout)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(train_result.stderr)) train_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(train_result)}.{nameof(train_result.stderr)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
 
 
             // predict
@@ -134,8 +134,8 @@ namespace svm_fs
             var sw_predict_dur = sw_train.ElapsedMilliseconds;
 
             if (!string.IsNullOrWhiteSpace(predict_result.cmd_line)) io_proxy.WriteLine(predict_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) predict_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
-            if (!string.IsNullOrWhiteSpace(predict_result.stderr)) predict_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine(a, nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) predict_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(predict_result)}.{nameof(predict_result.stdout)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(predict_result.stderr)) predict_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(predict_result)}.{nameof(predict_result.stderr)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
 
 
             var prediction_file_data = performance_measure.load_prediction_file(p.test_filename, p.save_test_meta ? p.test_meta_filename : null, p.test_predict_filename, p.output_threshold_adjustment_performance);
