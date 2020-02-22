@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,10 +23,10 @@ namespace svm_fs
 
                 if (new FileInfo(filename).Length <= 0) return false;
 
-                //using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-                //{
+                using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                {
 
-                //}
+                }
 
                 return true;
             }
@@ -111,15 +112,15 @@ namespace svm_fs
 
             // remove invalid chars
             //var invalid = $"?%*|¦<>\"" + string.Join("", Enumerable.Range(0, 32).Select(a => (char)a).ToList()); // includes \0 \b \t \r \n, leaves /\\: as it is full paths input
-            const string valid = ":\\/.qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789_-+()[]";
-            path = string.Join("", path.Select(a => valid.All(b => a != b) ? '_' : a).ToList());
+            const string valid = ":\\/~.qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789_-+()[]";
+            path = string.Join("", path.Select(a => valid.Contains(a, StringComparison.InvariantCulture) ? a : '_').ToList());
 
             // make sure no part is more than 255 length
 
-            var path_split = path.Split(new char[] { '\\', '/' });
+            var path_split = path.Split(new char[] { '\\', '/' },StringSplitOptions.RemoveEmptyEntries);
             if (path_split.Any(a=> a.Length > 255))
             {
-                var end_slash = path.Last() == '\\' || path.Last() == '/' ? "" + path.Last() : "";
+                var end_slash = path.Last() == '\\' || path.Last() == '/' ? path.Last().ToString(CultureInfo.InvariantCulture) : "";
                 
                 for (var i = 0; i < path_split.Length; i++)
                 {
