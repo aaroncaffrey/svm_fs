@@ -329,7 +329,7 @@ namespace svm_fs
                         var stderr = process.StandardError.ReadToEndAsync();
 
                         process.WaitForExit();
-                        io_proxy.WriteLine("Exited process: " + process.Id, nameof(libsvm), nameof(predict));
+                        io_proxy.WriteLine($"Exited process: {process.Id}", nameof(libsvm), nameof(predict));
 
                         var tasks = new List<Task>() { stdout, stderr };
 
