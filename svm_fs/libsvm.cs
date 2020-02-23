@@ -330,7 +330,14 @@ namespace svm_fs
                         if (process == null)
                         {
                             retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+                            try
+                            {
+                                Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                            }
+                            catch (Exception e)
+                            {
+                                svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict));
+                            }
                             continue;
                             //   return (cmd_line, null, null);
                         }
