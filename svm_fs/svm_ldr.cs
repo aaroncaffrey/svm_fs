@@ -17,6 +17,11 @@ namespace svm_fs
 
         internal static readonly object finish_marker_files_lock = new object();
 
+        internal static void log_exception(Exception e, string msg, string module_name, string function_name)
+        {
+            io_proxy.WriteLine($@"Error: ""{msg}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", module_name, function_name);
+        }
+
         internal static void fix_controller_name(cmd_params controller_options)
         {
             io_proxy.WriteLine($@"Method: fix_controller_name(cmd_params controller_options = {controller_options.options_filename})", nameof(svm_ldr), nameof(fix_controller_name));
@@ -48,7 +53,14 @@ namespace svm_fs
 
                     controller_job_id = run_job_result.job_id;
 
-                    try{Task.Delay(new TimeSpan(0, 0, 1, 0),ct).Wait(ct);} catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 1, 0), ct).Wait(ct);
+                    }
+                    catch (Exception e)
+                    {
+                        log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.controller_task));
+                    }
                 }
 
                 io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.controller_task)}.", nameof(svm_ldr), nameof(svm_ldr.controller_task));
@@ -71,7 +83,14 @@ namespace svm_fs
 
                     var job_ids = run_worker_jobs(job_submission_folder);
 
-                    try{Task.Delay(new TimeSpan(0, 0, 0, 15), ct).Wait(ct);} catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15), ct).Wait(ct);
+                    }
+                    catch (Exception e)
+                    {
+                        log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
+                    }
                 }
 
                 io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.worker_jobs_task)}.", nameof(svm_ldr), nameof(worker_jobs_task));
@@ -94,18 +113,18 @@ namespace svm_fs
                         {
                             finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available ? a.was_available : io_proxy.is_file_available(a.finish_maker_filename, nameof(svm_ldr), nameof(status_task)), a.state)).ToList();
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
-
+                            log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.status_task));
                         }
 
                         try
                         {
                             finish_marker_files = finish_marker_files.Select(a => a.state == 0 ? a : (a.cmd, a.job_id_filename, a.pbs_script_filename, a.options_filename, a.finish_maker_filename, a.was_available, a.was_available && a.state != 0 ? int.Parse(io_proxy.ReadAllText(a.finish_maker_filename).Trim(), CultureInfo.InvariantCulture) : a.state)).ToList();
                         }
-                        catch (Exception )
+                        catch (Exception e)
                         {
-                            
+                            log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.status_task));
                         }
 
                         var jobs_completed = finish_marker_files.Where(a => a.state == 0).ToList();
@@ -142,7 +161,14 @@ namespace svm_fs
                         }
                     }
 
-                    try { Task.Delay(new TimeSpan(0, 0, 0, 30), cts.Token).Wait(cts.Token); } catch { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 30), cts.Token).Wait(cts.Token);
+                    }
+                    catch (Exception e)
+                    {
+                        log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.status_task));
+                    }
                 }
 
                 io_proxy.WriteLine($@"Exiting task {nameof(svm_ldr.status_task)}.", nameof(svm_ldr), nameof(status_task));
@@ -276,10 +302,17 @@ namespace svm_fs
                 }
                 catch (Exception e)
                 {
-                    io_proxy.WriteLine($"Error: {e.ToString()}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
+                    log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.check_job_exists));
                 }
 
-                try { Task.Delay(new TimeSpan(0, 0, 15)).Wait(); } catch (Exception) { }
+                try
+                {
+                    Task.Delay(new TimeSpan(0, 0, 15)).Wait();
+                }
+                catch (Exception e)
+                {
+                    log_exception(e, "",nameof(svm_ldr), nameof(svm_ldr.check_job_exists));
+                }
             }
 
             return false;
@@ -304,16 +337,17 @@ namespace svm_fs
                 var cmd_params_list = options_files.Select((options_file, i) =>
                 {
                     string[] fd = null;
-
+                    
                     try
                     {
                         fd = io_proxy.ReadAllLines(options_file, nameof(svm_ldr), nameof(run_worker_jobs));
                         
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-                        return null;
+                        log_exception(e,"", nameof(svm_ldr), nameof(svm_ldr.run_worker_jobs));
 
+                        return null;
                     }
 
                     var r = new cmd_params(fd);
@@ -337,9 +371,16 @@ namespace svm_fs
 
                 submitted.ForEach(a =>
                 {
-                    try { io_proxy.Delete(a, nameof(svm_ldr), nameof(run_worker_jobs)); } catch (Exception) { }
+                    try
+                    {
+                        io_proxy.Delete(a, nameof(svm_ldr), nameof(run_worker_jobs));
+                    }
+                    catch (Exception e)
+                    {
+                        log_exception(e,"", nameof(svm_ldr), nameof(svm_ldr.run_worker_jobs));
+                    }
                 });
-
+                
                 return job_ids;
             }
         }
@@ -385,34 +426,35 @@ namespace svm_fs
 
 
                 // 2. submit pbs script to scheduler
-                var psi = new ProcessStartInfo();
+                //var psi = new ProcessStartInfo();
 
                 //var use_pbs = Environment.OSVersion.Platform != PlatformID.Win32NT;
                 
-                var use_pbs = true;
+                //var use_pbs = true;
                 
-                if (use_pbs)
-                {
-                    psi = new ProcessStartInfo()
+                //if (use_pbs)
+                //{
+                    var psi = new ProcessStartInfo()
                     {
                         FileName = sub_cmd,
                         Arguments = $@"{pbs_script_filename}",
+                        UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
                         RedirectStandardInput = true,
                     };
-                }
-                else
-                {
-                    psi = new ProcessStartInfo()
-                    {
-                        FileName = io_proxy.convert_path(options.program_runtime),
-                        Arguments = $@"-j {io_proxy.convert_path(options.options_filename)}",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        RedirectStandardInput = true,
-                    };
-                }
+                //}
+                //else
+                //{
+                //    psi = new ProcessStartInfo()
+                //    {
+                //        FileName = io_proxy.convert_path(options.program_runtime),
+                //        Arguments = $@"-j {io_proxy.convert_path(options.options_filename)}",
+                //        RedirectStandardOutput = true,
+                //        RedirectStandardError = true,
+                //        RedirectStandardInput = true,
+                //    };
+                //}
 
                 job_id = "";
 
@@ -453,31 +495,36 @@ namespace svm_fs
                                     }
                                     else
                                     {
-                                        io_proxy.WriteLine($@"Error: invalid job_id. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )");
+                                        io_proxy.WriteLine($@"Error: invalid job_id. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
                                     }
                                 }
                                 else
                                 {
-                                    io_proxy.WriteLine($@"Error: non zero exit code. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )");
+                                    io_proxy.WriteLine($@"Error: non zero exit code. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
                                 }
                             }
                             else
                             {
-                                io_proxy.WriteLine($@"Error: process could not be launched. Tries: {tries}. ( {pbs_script_filename} )");
+                                io_proxy.WriteLine($@"Error: process could not be launched. Tries: {tries}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
                             }
                         }
 
                     }
                     catch (Exception e)
                     {
-                        io_proxy.WriteLine(
-                            $@"Error: ( {pbs_script_filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
-                            nameof(svm_ldr), nameof(run_job));
+                        log_exception(e, $"{nameof(pbs_script_filename)} = {pbs_script_filename}", nameof(svm_ldr), nameof(svm_ldr.run_job));
                     }
 
-                    io_proxy.WriteLine($@"Error: process could not start. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )");
+                    io_proxy.WriteLine($@"Error: process could not start. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
 
-                    Task.Delay(new TimeSpan(0, 0, 15)).Wait();
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 15)).Wait();
+                    }
+                    catch (Exception e)
+                    {
+                        log_exception(e, $"{nameof(pbs_script_filename)} = {pbs_script_filename}", nameof(svm_ldr), nameof(svm_ldr.run_job));
+                    }
                 }
 
 
@@ -489,7 +536,7 @@ namespace svm_fs
                     // 4. add to list of submitted jobs
                     //add_submitted_job(options);
 
-                    io_proxy.WriteLine($@"{options.cmd}: {sub_cmd} {pbs_script_filename} = {job_id}", nameof(svm_ldr), nameof(run_job));
+                    io_proxy.WriteLine($@"{options.cmd}: {sub_cmd} {pbs_script_filename}. {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(run_job));
 
                     lock (finish_marker_files_lock)
                     {
@@ -501,7 +548,7 @@ namespace svm_fs
                 }
                 else
                 {
-                    io_proxy.WriteLine($@"{options.cmd}: Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.", nameof(svm_ldr), nameof(run_job));
+                    io_proxy.WriteLine($@"{options.cmd}: Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.  {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(run_job));
                 }
 
                 
@@ -510,7 +557,7 @@ namespace svm_fs
             {
                 if (options.cmd == cmd.wkr)
                 {
-                    io_proxy.WriteLine($@"Error: job already exists ( {pbs_script_filename} )");
+                    io_proxy.WriteLine($@"Error: job already exists ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
                 }
             }
 
@@ -520,6 +567,11 @@ namespace svm_fs
         private static void make_pbs_script(cmd_params options, bool rerunnable, string pbs_finish_marker_filename, string pbs_script_filename)
         {
             io_proxy.WriteLine($@"Method: make_pbs_script(cmd_params options = {options.options_filename}, bool rerunnable = {rerunnable}, string pbs_finish_marker_filename = {pbs_finish_marker_filename}, string pbs_script_filename = {pbs_script_filename})", nameof(svm_ldr), nameof(make_pbs_script));
+
+            if (io_proxy.is_file_available(pbs_script_filename))
+            {
+                return;
+            }
 
             //options.options_filename = io_proxy.convert_path(options.options_filename);
 

@@ -200,16 +200,23 @@ namespace svm_fs
                                 nameof(svm_ctl), nameof(feature_selection));
                         }
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-
+                        svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(wait_tasks));
                     }
                 }
 
                 //GC.Collect();
             } while (tasks.Any(a => !a.IsCompleted));
 
-            try{Task.WaitAll(tasks.ToArray<Task>());} catch (Exception) { }
+            try
+            {
+                Task.WaitAll(tasks.ToArray<Task>());
+            }
+            catch (Exception e)
+            {
+                svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(wait_tasks));
+            }
         }
 
         internal static void feature_selection(cmd_params p)

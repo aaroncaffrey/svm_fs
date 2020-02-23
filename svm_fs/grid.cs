@@ -56,8 +56,9 @@ namespace svm_fs
                             rate: double.TryParse(line[k++], NumberStyles.Float, CultureInfo.InvariantCulture, out var p_rate) ? p_rate : 0d
                         );
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
+                        svm_ldr.log_exception(e, "", nameof(grid), nameof(read_cache));
                         return default;
                     }
                 }).ToList();

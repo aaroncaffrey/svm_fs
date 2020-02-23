@@ -22,7 +22,7 @@ namespace svm_fs
                 if (!io_proxy.Exists(filename, nameof(svm_ctl), nameof(is_file_available))) return false;
 
                 if (new FileInfo(filename).Length <= 0) return false;
-
+                
                 using (var fs = File.Open(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
                 {
 
@@ -32,13 +32,13 @@ namespace svm_fs
             }
             catch (IOException e)
             {
-                io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(is_file_available));
+                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_available));
 
                 return false;
             }
             catch (Exception e)
             {
-                io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(is_file_available));
+                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_available));
 
                 return false;
             }
@@ -171,9 +171,9 @@ namespace svm_fs
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception)// e)
             {
-
+                //svm_ldr.log_exception(e, "", nameof(io_proxy), nameof(is_file_available));
             }
         }
 
@@ -210,7 +210,8 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Delete));
+                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
+
                 return;
             }
         }
@@ -237,34 +238,51 @@ namespace svm_fs
 
                     return;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    
-                    WriteLine($@"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(Copy));
+
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {source}, {dest}, {overwrite} )", nameof(io_proxy), nameof(Copy));
 
 
                     if (tries >= max_tries) throw;
 
-                    try{Task.Delay(new TimeSpan(0, 0, 15)).Wait();}catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {source}, {dest}, {overwrite} )", nameof(io_proxy), nameof(Copy));
+
+                    }
                 }
             }
         }
 
         internal static void CreateDirectory(string filename, string module_name = "", string function_name = "")
         {
-            filename = convert_path(filename);
-
-            //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
-
-            var dir = Path.GetDirectoryName(filename);
-
-            if (!string.IsNullOrWhiteSpace(dir))
+            try
             {
-                Directory.CreateDirectory(dir);
+
+
+                filename = convert_path(filename);
+
+                //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
+
+                var dir = Path.GetDirectoryName(filename);
+
+                if (!string.IsNullOrWhiteSpace(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+                else
+                {
+                    //throw new Exception();
+                }
             }
-            else
+            catch (Exception e)
             {
-                //throw new Exception();
+                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
             }
         }
 
@@ -279,7 +297,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(ReadAllLines));
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
 
                     tries++;
 
@@ -287,15 +305,20 @@ namespace svm_fs
 
                     return ret;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    
-                    WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllLines));
-
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
 
                     if (tries >= max_tries) throw;
 
-                    try{Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
+                    }
                 }
             }
         }
@@ -312,7 +335,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(ReadAllText));
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
 
                     tries++;
 
@@ -320,13 +343,21 @@ namespace svm_fs
 
                     return ret;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(ReadAllText));
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
 
                     if (tries >= max_tries) throw;
 
-                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
+
+                    }
                 }
             }
         }
@@ -351,13 +382,20 @@ namespace svm_fs
                     File.WriteAllLines(filename, lines);
                     return;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllLines));
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllLines));
 
                     if (tries >= max_tries) throw;
 
-                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllLines));
+                    }
                 }
             }
         }
@@ -366,7 +404,6 @@ namespace svm_fs
         {
             filename = convert_path(filename);
             
-
             CreateDirectory(filename, module_name, function_name);
 
             var tries = 0;
@@ -374,19 +411,26 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(AppendAllLines));
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
 
                     tries++;
                     File.AppendAllLines(filename, lines);
                     return;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllLines));
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
 
                     if (tries >= max_tries) throw;
 
-                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
+                    }
                 }
             }
         }
@@ -402,19 +446,26 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(AppendAllText));
+                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
 
                     tries++;
                     File.AppendAllText(filename, text);
                     return;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(AppendAllText));
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
 
                     if (tries >= max_tries) throw;
 
-                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
+                    }
                 }
             }
         }
@@ -436,14 +487,22 @@ namespace svm_fs
                     File.WriteAllText(filename, text);
                     return;
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
-                    io_proxy.WriteLine($@"{module_name}.{function_name} -> ( {filename} ) {tries} -> ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", nameof(io_proxy), nameof(WriteAllText));
+
+                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllText));
 
 
                     if (tries >= max_tries) throw;
 
-                    try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                    try
+                    {
+                        Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
+                    }
+                    catch (Exception e2)
+                    {
+                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllText));
+                    }
                 }
             }
         }

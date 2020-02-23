@@ -165,15 +165,16 @@ namespace svm_fs
                         if (process == null)
                         {
                             retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
                             continue;
                             //   return (cmd_line, null, null);
                         }
 
                         io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
+                        
 
-                        try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
-                        try { process.PriorityClass = priority_class; } catch (Exception) { }
+                        try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                        try { process.PriorityClass = priority_class; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
 
                         var stdout = process.StandardOutput.ReadToEndAsync();
                         var stderr = process.StandardError.ReadToEndAsync();
@@ -192,7 +193,7 @@ namespace svm_fs
 
                                 do
                                 {
-                                    try { Task.WaitAll(tasks.ToArray<Task>(), process_max_time.Value); } catch (Exception) { }
+                                    try { Task.WaitAll(tasks.ToArray<Task>(), process_max_time.Value); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
                                     //time_taken = DateTime.Now - process.StartTime;
 
                                     if (process.HasExited) break;
@@ -213,11 +214,11 @@ namespace svm_fs
                             }
                             catch (Exception e)
                             {
-                                io_proxy.WriteLine($"Process {Path.GetFileName(start.FileName)}: {process.Id}. {e.ToString()}", nameof(libsvm), nameof(train));
+                                svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train));
                             }
                         }
                         
-                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception) { }
+                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
                         
                         process.WaitForExit();
 
@@ -228,8 +229,8 @@ namespace svm_fs
                         var stdout_result = "";
                         var stderr_result = "";
 
-                        try { stdout_result = stdout?.Result; } catch (Exception) { }
-                        try { stderr_result = stderr?.Result; } catch (Exception) { }
+                        try { stdout_result = stdout?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                        try { stderr_result = stderr?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
 
 
                         if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
@@ -249,17 +250,17 @@ namespace svm_fs
                         else
                         {
                             retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
                             continue;
                         }
                     }
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
                     retry = true;
 
-                    io_proxy.WriteLine(e.ToString(), nameof(libsvm), nameof(train));
-                    try{Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception) { }
+                    svm_ldr.log_exception(e1, "", nameof(svm_ctl), nameof(predict));
+                    try {Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception e2) { svm_ldr.log_exception(e2, "", nameof(svm_ctl), nameof(train)); }
                 }
             }
             while (retry && retry_index < 10_000);
@@ -329,14 +330,14 @@ namespace svm_fs
                         if (process == null)
                         {
                             retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
                             continue;
                             //   return (cmd_line, null, null);
                         }
 
                         io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
-                        try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception) { }
-                        try { process.PriorityClass = priority_class; } catch (Exception) { }
+                        try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+                        try { process.PriorityClass = priority_class; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
 
                         var stdout = process.StandardOutput.ReadToEndAsync();
                         var stderr = process.StandardError.ReadToEndAsync();
@@ -348,13 +349,13 @@ namespace svm_fs
 
                         var tasks = new List<Task>() { stdout, stderr };
 
-                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception) { }
+                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
 
                         var stdout_result = "";
                         var stderr_result = "";
 
-                        try { stdout_result = stdout?.Result; } catch (Exception) { }
-                        try { stderr_result = stderr?.Result; } catch (Exception) { }
+                        try { stdout_result = stdout?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+                        try { stderr_result = stderr?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
 
 
                         if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
@@ -374,16 +375,16 @@ namespace svm_fs
                         else
                         {
                             retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception) { }
+                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
                             continue;
                         }
                     }
                 }
-                catch (Exception e)
+                catch (Exception e1)
                 {
                     retry = true;
-                    io_proxy.WriteLine(e.ToString(), nameof(libsvm), nameof(predict));
-                    try{Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception) { }
+                    svm_ldr.log_exception(e1, "", nameof(svm_ctl), nameof(predict));
+                    try {Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception e2) { svm_ldr.log_exception(e2, "", nameof(svm_ctl), nameof(predict)); }
                 }
             }
             while (retry && retry_index < 10_000);
