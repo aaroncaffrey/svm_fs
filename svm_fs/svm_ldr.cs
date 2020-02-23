@@ -510,8 +510,14 @@ namespace svm_fs
 
                                     job_id = stdout.Trim().Split().LastOrDefault() ?? "";
 
+                                    File.AppendAllLines(debug_file, new List<string>() { $@"job_id = stdout.Trim().Split().LastOrDefault() ?? "";" });
+                                    File.AppendAllLines(debug_file, new List<string>() { $@"job_id = {stdout.Trim().Split().LastOrDefault()} ?? "";" });
+
+
                                     if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCultureIgnoreCase))
                                     {
+                                        File.AppendAllLines(debug_file, new List<string>() { $@"if (job_id.StartsWith($@""Moab."", StringComparison.InvariantCultureIgnoreCase))" });
+
                                         break;
                                     }
                                     else
