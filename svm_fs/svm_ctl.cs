@@ -621,7 +621,7 @@ namespace svm_fs
                     var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
                     group_tasks1.Clear();
 
-                    var wait_file_list = jobs_group_level_part1.SelectMany(a => a.wait_file_list).Distinct().ToList();
+                    var wait_file_list = jobs_group_level_part1.Where(a=> a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
                     wait_for_results(wait_file_list);
 
                     io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
@@ -962,7 +962,8 @@ namespace svm_fs
             var results1 = group_tasks1.Select(a => a.Result).ToList();
             group_tasks1.Clear();
             
-            var wait_file_list = results1.SelectMany(a => a.wait_file_list).ToList();
+            
+            var wait_file_list = results1.Where(a => a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
             wait_for_results(wait_file_list);
             
             for (var _i = 0; _i < results1.Count; _i++)

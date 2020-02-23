@@ -281,7 +281,7 @@ namespace svm_fs
                             var stderr_task = process.StandardError.ReadToEndAsync();
 
 
-                            var exited = process.WaitForExit((int)(new TimeSpan(0,1,0)).TotalMilliseconds);
+                            var exited = process.WaitForExit((int)(new TimeSpan(0,0,20)).TotalMilliseconds);
 
                             var killed = false;
                             if (!process.HasExited)
@@ -289,7 +289,7 @@ namespace svm_fs
                                 try
                                 {
                                     process.Kill(true);
-                                    var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 1, 0)).TotalMilliseconds);
+                                    var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 0, 20)).TotalMilliseconds);
                                 }
                                 catch (Exception e)
                                 {
@@ -299,7 +299,7 @@ namespace svm_fs
                                 killed = true;
                             }
 
-                            Task.WaitAll(new Task[] {stdout_task, stderr_task}, new TimeSpan(0,1,0));
+                            Task.WaitAll(new Task[] {stdout_task, stderr_task}, new TimeSpan(0,0,20));
 
                             var stdout = stdout_task.IsCompleted ? stdout_task.Result : "";
                             var stderr = stderr_task.IsCompleted ? stderr_task.Result : "";
@@ -519,7 +519,7 @@ namespace svm_fs
                                 var stderr_task = process.StandardError.ReadToEndAsync();
                                 //File.AppendAllLines(debug_file, new List<string>() { $@"var stderr = process.StandardError.ReadToEnd();" });
 
-                                var exited = process.WaitForExit((int)(new TimeSpan(0,1,0)).TotalMilliseconds);
+                                var exited = process.WaitForExit((int)(new TimeSpan(0,0,20)).TotalMilliseconds);
 
                                 var killed = false;
 
@@ -529,7 +529,7 @@ namespace svm_fs
                                     {
                                         process.Kill(true);
 
-                                        var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 1, 0)).TotalMilliseconds);
+                                        var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 0, 20)).TotalMilliseconds);
                                     }
                                     catch (Exception e)
                                     {
@@ -539,7 +539,7 @@ namespace svm_fs
                                     killed = true;
                                 }
 
-                                Task.WaitAll(new Task[] {stdout_task, stderr_task}, new TimeSpan(0, 1, 0));
+                                Task.WaitAll(new Task[] {stdout_task, stderr_task}, new TimeSpan(0, 0, 20));
 
                                 var stdout = stdout_task.IsCompleted ? stdout_task.Result : "";
                                 var stderr = stderr_task.IsCompleted ? stderr_task.Result : "";
