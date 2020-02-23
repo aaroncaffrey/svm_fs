@@ -404,6 +404,8 @@ namespace svm_fs
             var pbs_script_filename = io_proxy.convert_path($@"{options.options_filename}.pbs");
             var pbs_finish_marker_filename = io_proxy.convert_path($@"{options.options_filename}.fin");
 
+            var debug_file = io_proxy.convert_path($@"{options.options_filename}.debug");
+
             if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(run_job)) || io_proxy.is_file_available(pbs_finish_marker_filename, nameof(svm_ldr), nameof(run_job)))
             {
                 return default;
@@ -416,9 +418,13 @@ namespace svm_fs
 
             var job_exists = check_job_exists(job_id);
 
+            
+            var k = 0;
+
             if (!job_exists)
             {
 
+                File.AppendAllLines(debug_file, new List<string>(){$@"make_pbs_script(options, rerunnable, pbs_finish_marker_filename, pbs_script_filename);"});
                 make_pbs_script(options, rerunnable, pbs_finish_marker_filename, pbs_script_filename);
 
 
@@ -426,20 +432,19 @@ namespace svm_fs
                 //var psi = new ProcessStartInfo();
 
                 //var use_pbs = Environment.OSVersion.Platform != PlatformID.Win32NT;
-                
+
                 //var use_pbs = true;
-                
+
                 //if (use_pbs)
                 //{
-                    var psi = new ProcessStartInfo()
+
+                File.AppendAllLines(debug_file,
+                    new List<string>()
                     {
-                        FileName = sub_cmd,
-                        Arguments = $@"{pbs_script_filename}",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        RedirectStandardInput = true,
-                    };
+                        $@"var psi = new ProcessStartInfo() {{FileName = sub_cmd,Arguments = $@""{{pbs_script_filename}}"", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true,}};"
+                    });
+
+                var psi = new ProcessStartInfo() {FileName = sub_cmd, Arguments = $@"{pbs_script_filename}", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true,};
                 //}
                 //else
                 //{
@@ -453,29 +458,46 @@ namespace svm_fs
                 //    };
                 //}
 
+                
+
                 job_id = "";
-
-                //var stdout = "";
-                //var stderr = "";
-
+                File.AppendAllLines(debug_file, new List<string>() { $@"job_id = "";" });
+                
                 var exit_code = (int?) null;
+                File.AppendAllLines(debug_file, new List<string>() { $@"var exit_code = (int?) null;" });
 
                 var tries = 0;
+                File.AppendAllLines(debug_file, new List<string>() { $@"var tries = 0;" });
+
                 var max_tries = 1_000_000;
+                File.AppendAllLines(debug_file, new List<string>() {$@"var max_tries = 1_000_000;"});
+                
+
                 while (tries < max_tries)
                 {
+                    File.AppendAllLines(debug_file, new List<string>() { $@"while ({tries} < {max_tries})" });
+
                     try
                     {
                         tries++;
+                        File.AppendAllLines(debug_file, new List<string>() { $@"tries++;" });
 
                         using (var process = Process.Start(psi))
                         {
+                            File.AppendAllLines(debug_file, new List<string>() { $@"using (var process = Process.Start(psi))" });
+
                             if (process != null)
                             {
+                                File.AppendAllLines(debug_file, new List<string>() { $@"if (process != null)" });
+
                                 var stdout = process.StandardOutput.ReadToEnd();
+                                File.AppendAllLines(debug_file, new List<string>() { $@"var stdout = process.StandardOutput.ReadToEnd();" });
+
                                 var stderr = process.StandardError.ReadToEnd();
+                                File.AppendAllLines(debug_file, new List<string>() { $@"var stderr = process.StandardError.ReadToEnd();" });
 
                                 process.WaitForExit();
+                                File.AppendAllLines(debug_file, new List<string>() { $@"process.WaitForExit();" });
 
                                 if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
                                 if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(run_job)));
@@ -484,6 +506,8 @@ namespace svm_fs
 
                                 if (process.ExitCode == 0)
                                 {
+                                    File.AppendAllLines(debug_file, new List<string>() { $@"if (process.ExitCode == 0)" });
+
                                     job_id = stdout.Trim().Split().LastOrDefault() ?? "";
 
                                     if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCultureIgnoreCase))
