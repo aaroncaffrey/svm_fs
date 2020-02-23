@@ -46,6 +46,8 @@ namespace svm_fs
 
         internal static string convert_path(string path)//, bool temp_file = false)
         {
+            return path;
+            /*
             if (string.IsNullOrWhiteSpace(path))
             {
                 return path;
@@ -133,7 +135,7 @@ namespace svm_fs
                 path = end_slash.Length == 0 ? Path.Combine(path_split) : Path.Combine(path_split) + end_slash;
             }
 
-            return path;
+            return path;*/
         }
 
         private static readonly object _console_lock = new object();

@@ -1838,13 +1838,13 @@ namespace svm_fs
 
             var wait_file_list = new List<string>();
 
-            if (wkr_cmd_params.inner_cv_folds > 1)
-            {
-                wait_file_list.Add(wkr_cmd_params.train_grid_filename);
-            }
+            //if (wkr_cmd_params.inner_cv_folds > 1)
+            //{
+                //wait_file_list.Add(wkr_cmd_params.train_grid_filename);
+            //}
 
             //wait_file_list.Add(cmd_params.train_model_filename);
-            wait_file_list.Add(wkr_cmd_params.test_predict_filename);
+            //wait_file_list.Add(wkr_cmd_params.test_predict_filename);
             wait_file_list.Add(wkr_cmd_params.test_predict_cm_filename);
 
             if (cached)

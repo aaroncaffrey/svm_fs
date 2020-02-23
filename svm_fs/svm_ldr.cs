@@ -19,7 +19,14 @@ namespace svm_fs
 
         internal static void log_exception(Exception e, string msg, string module_name, string function_name)
         {
-            io_proxy.WriteLine($@"Error: ""{msg}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""", module_name, function_name);
+            do
+            {
+                io_proxy.WriteLine(
+                    $@"Error: ""{msg}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
+                    module_name, function_name);
+
+                e = e?.InnerException;
+            } while (e != null);
         }
 
         internal static void fix_controller_name(cmd_params controller_options)
@@ -208,14 +215,12 @@ namespace svm_fs
             svm_ctl.wait_tasks(tasks.ToArray<Task>(), nameof(svm_ldr), nameof(start));
         }
 
-        internal static void write_job_id(cmd_params options, string job_id)
+        internal static void write_job_id(string job_id_filename, string job_id)
         {
-            io_proxy.WriteLine($@"Method: write_job_id(cmd_params options = {options.options_filename}, string job_id = {job_id})", nameof(svm_ldr), nameof(write_job_id));
+            io_proxy.WriteLine($@"Method: write_job_id(string job_id_filename = {job_id_filename}, string job_id = {job_id})", nameof(svm_ldr), nameof(write_job_id));
 
             if (!string.IsNullOrWhiteSpace(job_id))
             {
-                var job_id_filename = $"{options.options_filename}.job_id";
-
                 job_id_filename = io_proxy.convert_path(job_id_filename);
 
                 io_proxy.WriteAllText(job_id_filename, job_id);
@@ -277,6 +282,9 @@ namespace svm_fs
 
                             process.WaitForExit();
 
+                            //if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
+                            if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(check_job_exists)));
+
                             var exit_code = process.ExitCode;
 
                             var stdout_lines = stdout?.Split(new char[] {'\r', '\n'});
@@ -294,11 +302,9 @@ namespace svm_fs
                                 io_proxy.WriteLine($"Error: non zero exit code for process {Path.GetFileName(psi.FileName)}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
                             }
                         }
-                        else
-                        {
-                            io_proxy.WriteLine($"Error: process could not start {Path.GetFileName(psi.FileName)}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
-                        }
                     }
+
+                    io_proxy.WriteLine($"Error: process could not start {Path.GetFileName(psi.FileName)}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
                 }
                 catch (Exception e)
                 {
@@ -328,37 +334,28 @@ namespace svm_fs
 
             lock (submitted_options_files_lock)
             {
-                var options_files = Directory.GetFiles(job_submission_folder, "*.options", SearchOption.AllDirectories).ToList();
-
-                options_files = options_files.Except(submitted_options_files).ToList();
+                var options_files = Directory.GetFiles(job_submission_folder, "*.options", SearchOption.AllDirectories).Except(submitted_options_files).ToList();
 
                 //options_files = options_files.Where(a => io_proxy.is_file_available(a)).ToList();
 
                 var cmd_params_list = options_files.Select((options_file, i) =>
                 {
-                    string[] fd = null;
+                    var fd = io_proxy.ReadAllLines(options_file, nameof(svm_ldr), nameof(run_worker_jobs));
                     
-                    try
+                    if (fd != null && fd.Length > 0)
                     {
-                        fd = io_proxy.ReadAllLines(options_file, nameof(svm_ldr), nameof(run_worker_jobs));
-                        
+                        var r = new cmd_params(fd);
+
+                        return r;
                     }
-                    catch (Exception e)
-                    {
-                        log_exception(e,"", nameof(svm_ldr), nameof(svm_ldr.run_worker_jobs));
-
-                        return null;
-                    }
-
-                    var r = new cmd_params(fd);
-
-                    return r;
-
+                    
+                    return null;
+                    
                 }).ToList();
 
                 
 
-                var job_id_tasks = cmd_params_list.Select((cmd_params, i) => cmd_params != null && cmd_params.cmd == cmd.wkr ? run_job_async(cmd_params) : null).ToList();
+                var job_id_tasks = cmd_params_list.Select((cmd_params, i) => (cmd_params != null && cmd_params.cmd == cmd.wkr) ? run_job_async(cmd_params) : null).ToList();
 
                 //Task.WaitAll(job_id_tasks.Where(a => a != null).ToArray<Task>());
                 svm_ctl.wait_tasks(job_id_tasks.Where(a => a != null).ToArray<Task>(), nameof(svm_ldr), nameof(run_worker_jobs));
@@ -369,7 +366,7 @@ namespace svm_fs
 
                 submitted_options_files.AddRange(submitted);
 
-                submitted.ForEach(a =>
+                foreach (var a in submitted)
                 {
                     try
                     {
@@ -379,8 +376,8 @@ namespace svm_fs
                     {
                         log_exception(e,"", nameof(svm_ldr), nameof(svm_ldr.run_worker_jobs));
                     }
-                });
-                
+                }
+
                 return job_ids;
             }
         }
@@ -531,7 +528,7 @@ namespace svm_fs
                 if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCultureIgnoreCase))
                 {
                     // 3. save job id
-                    write_job_id(options, job_id);
+                    write_job_id(job_id_filename, job_id);
 
                     // 4. add to list of submitted jobs
                     //add_submitted_job(options);
