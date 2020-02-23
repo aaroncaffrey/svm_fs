@@ -2065,17 +2065,17 @@ namespace svm_fs
             var sw1 = new Stopwatch();
             sw1.Start();
 
-            var itr = 0;
+          // var itr = 0;
 
             while (true)
             {
-                itr++;
+               // itr++;
 
                 var new_files_found = file_wait_list.Where(a => io_proxy.is_file_available(a, nameof(svm_ctl), nameof(wait_for_results))).ToList();
 
                 if (new_files_found.Count > 0)
                 {
-                    itr = 0;
+                   // itr = 0;
 
                     io_proxy.WriteLine("New files found: ", nameof(svm_ctl), nameof(wait_for_results));
                     for (var j = 0; j < new_files_found.Count; j++)
@@ -2090,19 +2090,19 @@ namespace svm_fs
                     file_wait_list = file_wait_list.Except(new_files_found).ToList();
                     total_found += new_files_found.Count;
 
+                    //var pct = ((double)total_found / (double)total_files) * (double)100;
+
+                    //io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
+                }
+                //else if (itr >= 4)
+                //{
+                    //itr = 0;
+
                     var pct = ((double)total_found / (double)total_files) * (double)100;
 
                     io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
-                }
-                else if (itr >= 4)
-                {
-                    itr = 0;
 
-                    var pct = ((double)total_found / (double)total_files) * (double)100;
-
-                    io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
-
-                }
+                //}
 
                 if (file_wait_list.Count == 0)
                 {

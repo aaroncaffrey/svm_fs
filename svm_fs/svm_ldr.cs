@@ -276,26 +276,53 @@ namespace svm_fs
                     {
                         if (process != null)
                         {
-                            var stdout = process.StandardOutput.ReadToEnd();
+                            var stdout_task = process.StandardOutput.ReadToEndAsync();
 
-                            var stderr = process.StandardError.ReadToEnd();
+                            var stderr_task = process.StandardError.ReadToEndAsync();
 
-                            process.WaitForExit();
+
+                            var exited = process.WaitForExit((int)(new TimeSpan(0,1,0)).TotalMilliseconds);
+
+                            var killed = false;
+                            if (!process.HasExited)
+                            {
+                                try
+                                {
+                                    process.Kill(true);
+                                    var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 1, 0)).TotalMilliseconds);
+                                }
+                                catch (Exception e)
+                                {
+                                    log_exception(e, "", nameof(svm_ldr), nameof(check_job_exists));
+                                }
+
+                                killed = true;
+                            }
+
+                            Task.WaitAll(new Task[] {stdout_task, stderr_task}, new TimeSpan(0,1,0));
+
+                            var stdout = stdout_task.IsCompleted ? stdout_task.Result : "";
+                            var stderr = stderr_task.IsCompleted ? stderr_task.Result : "";
 
                             //if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
                             if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(check_job_exists)));
 
-                            var exit_code = process.ExitCode;
+                            var exit_code = process.HasExited ? (int?)process.ExitCode : null;
 
                             var stdout_lines = stdout?.Split(new char[] {'\r', '\n'});
 
                             var state = stdout_lines?.FirstOrDefault(a => a.StartsWith("State:", StringComparison.InvariantCulture));
 
-                            if (exit_code == 0)
+                            if (exit_code == 0 && !string.IsNullOrWhiteSpace(stdout))
                             {
                                 var job_exists = !string.IsNullOrWhiteSpace(state);
 
                                 return job_exists;
+                            }
+                            else if (killed)
+                            {
+                                io_proxy.WriteLine($"Error: Killed. Process did not respond. {Path.GetFileName(psi.FileName)}. Stdout: {stdout.Length}. Stderr: {stderr.Length}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
+
                             }
                             else
                             {
@@ -404,7 +431,7 @@ namespace svm_fs
             var pbs_script_filename = io_proxy.convert_path($@"{options.options_filename}.pbs");
             var pbs_finish_marker_filename = io_proxy.convert_path($@"{options.options_filename}.fin");
 
-            var debug_file = io_proxy.convert_path($@"{options.options_filename}.debug");
+            //var debug_file = io_proxy.convert_path($@"{options.options_filename}.debug");
 
             if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(run_job)) || io_proxy.is_file_available(pbs_finish_marker_filename, nameof(svm_ldr), nameof(run_job)))
             {
@@ -419,12 +446,12 @@ namespace svm_fs
             var job_exists = check_job_exists(job_id);
 
             
-            var k = 0;
+            //var k = 0;
 
             if (!job_exists)
             {
 
-                File.AppendAllLines(debug_file, new List<string>(){$@"make_pbs_script(options, rerunnable, pbs_finish_marker_filename, pbs_script_filename);"});
+                //File.AppendAllLines(debug_file, new List<string>(){$@"make_pbs_script(options, rerunnable, pbs_finish_marker_filename, pbs_script_filename);"});
                 make_pbs_script(options, rerunnable, pbs_finish_marker_filename, pbs_script_filename);
 
 
@@ -438,11 +465,7 @@ namespace svm_fs
                 //if (use_pbs)
                 //{
 
-                File.AppendAllLines(debug_file,
-                    new List<string>()
-                    {
-                        $@"var psi = new ProcessStartInfo() {{FileName = sub_cmd,Arguments = $@""{{pbs_script_filename}}"", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true,}};"
-                    });
+                //File.AppendAllLines(debug_file, new List<string>() {$@"var psi = new ProcessStartInfo() {{FileName = sub_cmd,Arguments = $@""{{pbs_script_filename}}"", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true,}};"});
 
                 var psi = new ProcessStartInfo() {FileName = sub_cmd, Arguments = $@"{pbs_script_filename}", UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true,};
                 //}
@@ -461,62 +484,85 @@ namespace svm_fs
                 
 
                 job_id = "";
-                File.AppendAllLines(debug_file, new List<string>() { $@"job_id = "";" });
+                //File.AppendAllLines(debug_file, new List<string>() { $@"job_id = "";" });
                 
                 var exit_code = (int?) null;
-                File.AppendAllLines(debug_file, new List<string>() { $@"var exit_code = (int?) null;" });
+                //File.AppendAllLines(debug_file, new List<string>() { $@"var exit_code = (int?) null;" });
 
                 var tries = 0;
-                File.AppendAllLines(debug_file, new List<string>() { $@"var tries = 0;" });
+                //File.AppendAllLines(debug_file, new List<string>() { $@"var tries = 0;" });
 
                 var max_tries = 1_000_000;
-                File.AppendAllLines(debug_file, new List<string>() {$@"var max_tries = 1_000_000;"});
+                //File.AppendAllLines(debug_file, new List<string>() {$@"var max_tries = 1_000_000;"});
                 
 
                 while (tries < max_tries)
                 {
-                    File.AppendAllLines(debug_file, new List<string>() { $@"while ({tries} < {max_tries})" });
+                    //File.AppendAllLines(debug_file, new List<string>() { $@"while ({tries} < {max_tries})" });
 
                     try
                     {
                         tries++;
-                        File.AppendAllLines(debug_file, new List<string>() { $@"tries++;" });
+                        //File.AppendAllLines(debug_file, new List<string>() { $@"tries++;" });
 
                         using (var process = Process.Start(psi))
                         {
-                            File.AppendAllLines(debug_file, new List<string>() { $@"using (var process = Process.Start(psi))" });
+                            //File.AppendAllLines(debug_file, new List<string>() { $@"using (var process = Process.Start(psi))" });
 
                             if (process != null)
                             {
-                                File.AppendAllLines(debug_file, new List<string>() { $@"if (process != null)" });
+                                //File.AppendAllLines(debug_file, new List<string>() { $@"if (process != null)" });
 
-                                var stdout = process.StandardOutput.ReadToEnd();
-                                File.AppendAllLines(debug_file, new List<string>() { $@"var stdout = process.StandardOutput.ReadToEnd();" });
+                                var stdout_task = process.StandardOutput.ReadToEndAsync();
+                                //File.AppendAllLines(debug_file, new List<string>() { $@"var stdout = process.StandardOutput.ReadToEnd();" });
 
-                                var stderr = process.StandardError.ReadToEnd();
-                                File.AppendAllLines(debug_file, new List<string>() { $@"var stderr = process.StandardError.ReadToEnd();" });
+                                var stderr_task = process.StandardError.ReadToEndAsync();
+                                //File.AppendAllLines(debug_file, new List<string>() { $@"var stderr = process.StandardError.ReadToEnd();" });
 
-                                process.WaitForExit();
-                                File.AppendAllLines(debug_file, new List<string>() { $@"process.WaitForExit();" });
+                                var exited = process.WaitForExit((int)(new TimeSpan(0,1,0)).TotalMilliseconds);
+
+                                var killed = false;
+
+                                if (!process.HasExited)
+                                {
+                                    try
+                                    {
+                                        process.Kill(true);
+
+                                        var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 1, 0)).TotalMilliseconds);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        log_exception(e, "", nameof(svm_ldr), nameof(run_job));
+                                    }
+
+                                    killed = true;
+                                }
+
+                                Task.WaitAll(new Task[] {stdout_task, stderr_task}, new TimeSpan(0, 1, 0));
+
+                                var stdout = stdout_task.IsCompleted ? stdout_task.Result : "";
+                                var stderr = stderr_task.IsCompleted ? stderr_task.Result : "";
+
+                                //File.AppendAllLines(debug_file, new List<string>() { $@"process.WaitForExit();" });
 
                                 if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
                                 if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(run_job)));
 
-                                exit_code = process.ExitCode;
+                                exit_code = process.HasExited? (int?) process.ExitCode : null;
 
-                                if (process.ExitCode == 0)
+                                if (process.ExitCode == 0 && !string.IsNullOrWhiteSpace(stdout))
                                 {
-                                    File.AppendAllLines(debug_file, new List<string>() { $@"if (process.ExitCode == 0)" });
+                                    //File.AppendAllLines(debug_file, new List<string>() { $@"if (process.ExitCode == 0)" });
 
                                     job_id = stdout.Trim().Split().LastOrDefault() ?? "";
 
-                                    File.AppendAllLines(debug_file, new List<string>() { $@"job_id = stdout.Trim().Split().LastOrDefault() ?? "";" });
-                                    File.AppendAllLines(debug_file, new List<string>() { $@"job_id = {stdout.Trim().Split().LastOrDefault()} ?? "";" });
-
+                                    //File.AppendAllLines(debug_file, new List<string>() { $@"job_id = stdout.Trim().Split().LastOrDefault() ?? "";" });
+                                    //File.AppendAllLines(debug_file, new List<string>() { $@"job_id = {stdout.Trim().Split().LastOrDefault()} ?? "";" });
 
                                     if (job_id.StartsWith($@"Moab.", StringComparison.InvariantCultureIgnoreCase))
                                     {
-                                        File.AppendAllLines(debug_file, new List<string>() { $@"if (job_id.StartsWith($@""Moab."", StringComparison.InvariantCultureIgnoreCase))" });
+                                        //File.AppendAllLines(debug_file, new List<string>() { $@"if (job_id.StartsWith($@""Moab."", StringComparison.InvariantCultureIgnoreCase))" });
 
                                         break;
                                     }
@@ -525,9 +571,13 @@ namespace svm_fs
                                         io_proxy.WriteLine($@"Error: invalid job_id. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
                                     }
                                 }
+                                else if (killed)
+                                {
+                                    io_proxy.WriteLine($@"Error: Killed. Process did not respond. Tries: {tries}. Exit code: {exit_code}. Stdout: {stdout.Length}. Stderr: {stderr.Length}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
+                                }
                                 else
                                 {
-                                    io_proxy.WriteLine($@"Error: non zero exit code. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
+                                    io_proxy.WriteLine($@"Error: non zero exit code / no stdout. Tries: {tries}. Exit code: {exit_code}. ( {pbs_script_filename} )", nameof(svm_ldr), nameof(run_job));
                                 }
                             }
                             else
