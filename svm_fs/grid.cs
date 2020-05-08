@@ -22,7 +22,7 @@ namespace svm_fs
                 common.libsvm_kernel_type kernel, 
                 int randomisation_cv_folds, int randomisation_cv_index, int outer_cv_folds, int outer_cv_index, int inner_cv_folds, bool probability_estimates, bool shrinking_heuristics, (double? cost, double? gamma, double? epsilon, double? coef0, double? degree) point, double rate)>();
 
-            cache_train_grid_csv = io_proxy.convert_path(cache_train_grid_csv);
+            //cache_train_grid_csv = /*io_proxy.convert_path*/(cache_train_grid_csv);
 
             //*!string.IsNullOrWhiteSpace(cache_train_grid_csv) && io_proxy.Exists(cache_train_grid_csv) && new FileInfo(cache_train_grid_csv).Length > 0 && */
             
@@ -58,7 +58,7 @@ namespace svm_fs
                     }
                     catch (Exception e)
                     {
-                        svm_ldr.log_exception(e, "", nameof(grid), nameof(read_cache));
+                        io_proxy.log_exception(e, "", nameof(grid), nameof(read_cache));
                         return default;
                     }
                 }).ToList();
@@ -82,7 +82,7 @@ namespace svm_fs
                 a.point.degree?.ToString("G17", CultureInfo.InvariantCulture), 
                 a.rate.ToString("G17", CultureInfo.InvariantCulture) })).ToList());
 
-            io_proxy.WriteAllLines(io_proxy.convert_path(cache_file), lines);
+            io_proxy.WriteAllLines(/*io_proxy.convert_path*/(cache_file), lines);
         }
 
 

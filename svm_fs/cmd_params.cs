@@ -9,16 +9,26 @@ namespace svm_fs
     internal enum cmd
     {
         none,
+        ldr,
         ctl,
         wkr
     }
 
     internal class cmd_params
     {
+        //internal static string env_jobid = $@"${{JOBID}}${{PBS_JOBID}}${{MOAB_JOBID}}";
+        //internal static string env_jobname = $@"${{JOBNAME}}${{PBS_JOBNAME}}${{MOAB_JOBNAME}}";
+        //internal static string env_arrayindex = $@"${{PBS_ARRAYID}}${{MOAB_JOBARRAYINDEX}}";
+
         //internal bool probability_estimates = true;
         //internal bool shrinking_heuristics = true;
         //internal List<(int class_id, string class_name)> class_training_sizes = null;
         //internal string pbs_jobid_filename;
+
+        internal const string svm_fs_home = "/mmfs1/data/scratch/k1040015/svm_fs";
+        internal const string user_home = "/home/k1040015";
+
+
         internal bool forward;
         internal bool group_features = true;
         internal bool libsvm_grid_probability_estimates = true;
@@ -36,8 +46,7 @@ namespace svm_fs
         internal common.libsvm_kernel_type svm_kernel = common.libsvm_kernel_type.rbf;
         internal common.libsvm_svm_type svm_type = common.libsvm_svm_type.c_svc;
         internal common.scale_function scale_function = common.scale_function.rescale;
-        internal const string svm_fs_home = "/mmfs1/data/scratch/k1040015/svm_fs";
-        internal const string user_home = "/home/k1040015";
+        
         internal double? grid_coef0_exp_begin = null;
         internal double? grid_coef0_exp_end = null;
         internal double? grid_coef0_exp_step = null;
@@ -67,10 +76,7 @@ namespace svm_fs
         internal int old_group_count = 0;
         internal int outer_cv_folds = 10;
         internal int outer_cv_index = -1;
-        internal int pbs_ctl_nodes = 1;
-        internal int pbs_ctl_ppn = 64;
-        internal int pbs_wkr_nodes = 1;
-        internal int pbs_wkr_ppn = 16;
+  
         internal int positive_class_id = +1;
         internal int randomisation_cv_folds = 1;
         internal int randomisation_cv_index = -1;
@@ -91,30 +97,9 @@ namespace svm_fs
         internal string libsvm_train_runtime = $@"{user_home}/libsvm/svm-train";
         internal string member;
         internal string options_filename = null;
-        internal string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        internal string pbs_ctl_jobname;
-        internal string pbs_ctl_mail_addr; // 
-        internal string pbs_ctl_mail_opt = "n"; // abe|n
-        internal string pbs_ctl_mem = "192GB";
-        internal string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}.pbs.stderr";
-        internal string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}.pbs.stdout";
-        internal string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        internal string pbs_ctl_walltime = "240:00:00";
-        internal string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        internal string pbs_wkr_jobname;
-        internal string pbs_wkr_mail_addr; // 
-        internal string pbs_wkr_mail_opt = "n"; // abe|n
-        internal string pbs_wkr_mem = null;
-        internal string pbs_wkr_stderr_filename = $@"{nameof(svm_wkr)}.pbs.stderr";
-        internal string pbs_wkr_stdout_filename = $@"{nameof(svm_wkr)}.pbs.stdout";
-        internal string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        internal string pbs_wkr_walltime = "1:00:00";
+
         internal string perspective;
-        internal string program_ctl_stderr_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr";
-        internal string program_ctl_stdout_filename = $@"{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout";
-        internal string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-        internal string program_wkr_stderr_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr";
-        internal string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout";
+       
         internal string results_root_folder = $@"{svm_fs_home}/results/";
         internal string source;
         internal string test_filename;
@@ -133,44 +118,44 @@ namespace svm_fs
         internal TimeSpan libsvm_grid_max_time = new TimeSpan(0, 0, 10, 0);
         internal TimeSpan libsvm_train_max_time = new TimeSpan(0, 1, 0, 0);
 
-        internal void convert_paths()
+        internal void make_dirs()
         {
-            this.options_filename = io_proxy.convert_path(this.options_filename);
-            this.pbs_ctl_stderr_filename = io_proxy.convert_path(this.pbs_ctl_stderr_filename);
-            this.pbs_ctl_stdout_filename = io_proxy.convert_path(this.pbs_ctl_stdout_filename);
-            this.pbs_wkr_stderr_filename = io_proxy.convert_path(this.pbs_wkr_stderr_filename);
-            this.pbs_wkr_stdout_filename = io_proxy.convert_path(this.pbs_wkr_stdout_filename);
+            //this.options_filename = /*io_proxy.convert_path*/(this.options_filename);
+            //this.pbs_ctl_stderr_filename = /*io_proxy.convert_path*/(this.pbs_ctl_stderr_filename);
+            //this.pbs_ctl_stdout_filename = /*io_proxy.convert_path*/(this.pbs_ctl_stdout_filename);
+            //this.pbs_wkr_stderr_filename = /*io_proxy.convert_path*/(this.pbs_wkr_stderr_filename);
+            //this.pbs_wkr_stdout_filename = /*io_proxy.convert_path*/(this.pbs_wkr_stdout_filename);
 
-            this.program_ctl_stderr_filename = io_proxy.convert_path(this.program_ctl_stderr_filename);
-            this.program_ctl_stdout_filename = io_proxy.convert_path(this.program_ctl_stdout_filename);
-            this.program_wkr_stderr_filename = io_proxy.convert_path(this.program_wkr_stderr_filename);
-            this.program_wkr_stdout_filename = io_proxy.convert_path(this.program_wkr_stdout_filename);
+            //this.program_ctl_stderr_filename = /*io_proxy.convert_path*/(this.program_ctl_stderr_filename);
+            //this.program_ctl_stdout_filename = /*io_proxy.convert_path*/(this.program_ctl_stdout_filename);
+            //this.program_wkr_stderr_filename = /*io_proxy.convert_path*/(this.program_wkr_stderr_filename);
+            //this.program_wkr_stdout_filename = /*io_proxy.convert_path*/(this.program_wkr_stdout_filename);
 
-            this.test_filename = io_proxy.convert_path(this.test_filename);
-            this.test_labels_filename = io_proxy.convert_path(this.test_labels_filename);
-            this.test_id_filename = io_proxy.convert_path(this.test_id_filename);
-            this.test_meta_filename = io_proxy.convert_path(this.test_meta_filename);
-            this.test_predict_cm_filename = io_proxy.convert_path(this.test_predict_cm_filename);
-            this.test_predict_filename = io_proxy.convert_path(this.test_predict_filename);
-            this.train_filename = io_proxy.convert_path(this.train_filename);
-            this.train_grid_filename = io_proxy.convert_path(this.train_grid_filename);
-            this.train_id_filename = io_proxy.convert_path(this.train_id_filename);
-            this.train_meta_filename = io_proxy.convert_path(this.train_meta_filename);
-            this.train_model_filename = io_proxy.convert_path(this.train_model_filename);
-            this.train_predict_cm_filename = io_proxy.convert_path(this.train_predict_cm_filename);
-            this.train_predict_filename = io_proxy.convert_path(this.train_predict_filename);
+            //this.test_filename = /*io_proxy.convert_path*/(this.test_filename);
+            //this.test_labels_filename = /*io_proxy.convert_path*/(this.test_labels_filename);
+            //this.test_id_filename = /*io_proxy.convert_path*/(this.test_id_filename);
+            //this.test_meta_filename = /*io_proxy.convert_path*/(this.test_meta_filename);
+            //this.test_predict_cm_filename = /*io_proxy.convert_path*/(this.test_predict_cm_filename);
+            //this.test_predict_filename = /*io_proxy.convert_path*/(this.test_predict_filename);
+            //this.train_filename = /*io_proxy.convert_path*/(this.train_filename);
+            //this.train_grid_filename = /*io_proxy.convert_path*/(this.train_grid_filename);
+            //this.train_id_filename = /*io_proxy.convert_path*/(this.train_id_filename);
+            //this.train_meta_filename = /*io_proxy.convert_path*/(this.train_meta_filename);
+            //this.train_model_filename = /*io_proxy.convert_path*/(this.train_model_filename);
+            //this.train_predict_cm_filename = /*io_proxy.convert_path*/(this.train_predict_cm_filename);
+            //this.train_predict_filename = /*io_proxy.convert_path*/(this.train_predict_filename);
 
             var files = new List<string>()
             {
                 this.options_filename          ,
-                this.pbs_ctl_stderr_filename       ,
-                this.pbs_ctl_stdout_filename       ,
-                this.pbs_wkr_stderr_filename       ,
-                this.pbs_wkr_stdout_filename       ,
-                this.program_ctl_stderr_filename       ,
-                this.program_ctl_stdout_filename       ,
-                this.program_wkr_stderr_filename       ,
-                this.program_wkr_stdout_filename       ,
+                //this.pbs_ctl_stderr_filename       ,
+                //this.pbs_ctl_stdout_filename       ,
+                //this.pbs_wkr_stderr_filename       ,
+                //this.pbs_wkr_stdout_filename       ,
+                //this.program_ctl_stderr_filename       ,
+                //this.program_ctl_stdout_filename       ,
+                //this.program_wkr_stderr_filename       ,
+                //this.program_wkr_stdout_filename       ,
                 this.test_filename             ,
                 this.test_labels_filename             ,
                 this.test_id_filename          ,
@@ -192,10 +177,7 @@ namespace svm_fs
             {
                 try
                 {
-                    
-                    
-                        io_proxy.CreateDirectory(a);
-                    
+                    io_proxy.CreateDirectory(a);
                 }
                 catch (Exception)
                 {
@@ -205,7 +187,7 @@ namespace svm_fs
 
         internal cmd_params()
         {
-            convert_paths();
+            /*convert_path*/make_dirs();
         }
 
         internal cmd_params(List<cmd_params> p)
@@ -270,35 +252,35 @@ namespace svm_fs
             if (p.Select(a => a.outer_cv_folds).Distinct().Count() == 1) this.outer_cv_folds = p.FirstOrDefault().outer_cv_folds;
             if (p.Select(a => a.outer_cv_index).Distinct().Count() == 1) this.outer_cv_index = p.FirstOrDefault().outer_cv_index;
             if (p.Select(a => a.output_threshold_adjustment_performance).Distinct().Count() == 1) this.output_threshold_adjustment_performance = p.FirstOrDefault().output_threshold_adjustment_performance;
-            if (p.Select(a => a.pbs_ctl_execution_directory).Distinct().Count() == 1) this.pbs_ctl_execution_directory = p.FirstOrDefault().pbs_ctl_execution_directory;
-            if (p.Select(a => a.pbs_ctl_jobname).Distinct().Count() == 1) this.pbs_ctl_jobname = p.FirstOrDefault().pbs_ctl_jobname;
-            if (p.Select(a => a.pbs_ctl_mail_addr).Distinct().Count() == 1) this.pbs_ctl_mail_addr = p.FirstOrDefault().pbs_ctl_mail_addr;
-            if (p.Select(a => a.pbs_ctl_mail_opt).Distinct().Count() == 1) this.pbs_ctl_mail_opt = p.FirstOrDefault().pbs_ctl_mail_opt;
-            if (p.Select(a => a.pbs_ctl_mem).Distinct().Count() == 1) this.pbs_ctl_mem = p.FirstOrDefault().pbs_ctl_mem;
-            if (p.Select(a => a.pbs_ctl_nodes).Distinct().Count() == 1) this.pbs_ctl_nodes = p.FirstOrDefault().pbs_ctl_nodes;
-            if (p.Select(a => a.pbs_ctl_ppn).Distinct().Count() == 1) this.pbs_ctl_ppn = p.FirstOrDefault().pbs_ctl_ppn;
-            if (p.Select(a => a.pbs_ctl_stderr_filename).Distinct().Count() == 1) this.pbs_ctl_stderr_filename = p.FirstOrDefault().pbs_ctl_stderr_filename;
-            if (p.Select(a => a.pbs_ctl_stdout_filename).Distinct().Count() == 1) this.pbs_ctl_stdout_filename = p.FirstOrDefault().pbs_ctl_stdout_filename;
-            if (p.Select(a => a.pbs_ctl_submission_directory).Distinct().Count() == 1) this.pbs_ctl_submission_directory = p.FirstOrDefault().pbs_ctl_submission_directory;
-            if (p.Select(a => a.pbs_ctl_walltime).Distinct().Count() == 1) this.pbs_ctl_walltime = p.FirstOrDefault().pbs_ctl_walltime;
-            if (p.Select(a => a.pbs_wkr_execution_directory).Distinct().Count() == 1) this.pbs_wkr_execution_directory = p.FirstOrDefault().pbs_wkr_execution_directory;
-            if (p.Select(a => a.pbs_wkr_jobname).Distinct().Count() == 1) this.pbs_wkr_jobname = p.FirstOrDefault().pbs_wkr_jobname;
-            if (p.Select(a => a.pbs_wkr_mail_addr).Distinct().Count() == 1) this.pbs_wkr_mail_addr = p.FirstOrDefault().pbs_wkr_mail_addr;
-            if (p.Select(a => a.pbs_wkr_mail_opt).Distinct().Count() == 1) this.pbs_wkr_mail_opt = p.FirstOrDefault().pbs_wkr_mail_opt;
-            if (p.Select(a => a.pbs_wkr_mem).Distinct().Count() == 1) this.pbs_wkr_mem = p.FirstOrDefault().pbs_wkr_mem;
-            if (p.Select(a => a.pbs_wkr_nodes).Distinct().Count() == 1) this.pbs_wkr_nodes = p.FirstOrDefault().pbs_wkr_nodes;
-            if (p.Select(a => a.pbs_wkr_ppn).Distinct().Count() == 1) this.pbs_wkr_ppn = p.FirstOrDefault().pbs_wkr_ppn;
-            if (p.Select(a => a.pbs_wkr_stderr_filename).Distinct().Count() == 1) this.pbs_wkr_stderr_filename = p.FirstOrDefault().pbs_wkr_stderr_filename;
-            if (p.Select(a => a.pbs_wkr_stdout_filename).Distinct().Count() == 1) this.pbs_wkr_stdout_filename = p.FirstOrDefault().pbs_wkr_stdout_filename;
-            if (p.Select(a => a.pbs_wkr_submission_directory).Distinct().Count() == 1) this.pbs_wkr_submission_directory = p.FirstOrDefault().pbs_wkr_submission_directory;
-            if (p.Select(a => a.pbs_wkr_walltime).Distinct().Count() == 1) this.pbs_wkr_walltime = p.FirstOrDefault().pbs_wkr_walltime;
+            //if (p.Select(a => a.pbs_ctl_execution_directory).Distinct().Count() == 1) this.pbs_ctl_execution_directory = p.FirstOrDefault().pbs_ctl_execution_directory;
+            //if (p.Select(a => a.pbs_ctl_jobname).Distinct().Count() == 1) this.pbs_ctl_jobname = p.FirstOrDefault().pbs_ctl_jobname;
+            //if (p.Select(a => a.pbs_ctl_mail_addr).Distinct().Count() == 1) this.pbs_ctl_mail_addr = p.FirstOrDefault().pbs_ctl_mail_addr;
+            //if (p.Select(a => a.pbs_ctl_mail_opt).Distinct().Count() == 1) this.pbs_ctl_mail_opt = p.FirstOrDefault().pbs_ctl_mail_opt;
+            //if (p.Select(a => a.pbs_ctl_mem).Distinct().Count() == 1) this.pbs_ctl_mem = p.FirstOrDefault().pbs_ctl_mem;
+            //if (p.Select(a => a.pbs_ctl_nodes).Distinct().Count() == 1) this.pbs_ctl_nodes = p.FirstOrDefault().pbs_ctl_nodes;
+            //if (p.Select(a => a.pbs_ctl_ppn).Distinct().Count() == 1) this.pbs_ctl_ppn = p.FirstOrDefault().pbs_ctl_ppn;
+            //if (p.Select(a => a.pbs_ctl_stderr_filename).Distinct().Count() == 1) this.pbs_ctl_stderr_filename = p.FirstOrDefault().pbs_ctl_stderr_filename;
+            //if (p.Select(a => a.pbs_ctl_stdout_filename).Distinct().Count() == 1) this.pbs_ctl_stdout_filename = p.FirstOrDefault().pbs_ctl_stdout_filename;
+            //if (p.Select(a => a.pbs_ctl_submission_directory).Distinct().Count() == 1) this.pbs_ctl_submission_directory = p.FirstOrDefault().pbs_ctl_submission_directory;
+            //if (p.Select(a => a.pbs_ctl_walltime).Distinct().Count() == 1) this.pbs_ctl_walltime = p.FirstOrDefault().pbs_ctl_walltime;
+            //if (p.Select(a => a.pbs_wkr_execution_directory).Distinct().Count() == 1) this.pbs_wkr_execution_directory = p.FirstOrDefault().pbs_wkr_execution_directory;
+            //if (p.Select(a => a.pbs_wkr_jobname).Distinct().Count() == 1) this.pbs_wkr_jobname = p.FirstOrDefault().pbs_wkr_jobname;
+            //if (p.Select(a => a.pbs_wkr_mail_addr).Distinct().Count() == 1) this.pbs_wkr_mail_addr = p.FirstOrDefault().pbs_wkr_mail_addr;
+            //if (p.Select(a => a.pbs_wkr_mail_opt).Distinct().Count() == 1) this.pbs_wkr_mail_opt = p.FirstOrDefault().pbs_wkr_mail_opt;
+            //if (p.Select(a => a.pbs_wkr_mem).Distinct().Count() == 1) this.pbs_wkr_mem = p.FirstOrDefault().pbs_wkr_mem;
+            //if (p.Select(a => a.pbs_wkr_nodes).Distinct().Count() == 1) this.pbs_wkr_nodes = p.FirstOrDefault().pbs_wkr_nodes;
+            //if (p.Select(a => a.pbs_wkr_ppn).Distinct().Count() == 1) this.pbs_wkr_ppn = p.FirstOrDefault().pbs_wkr_ppn;
+            //if (p.Select(a => a.pbs_wkr_stderr_filename).Distinct().Count() == 1) this.pbs_wkr_stderr_filename = p.FirstOrDefault().pbs_wkr_stderr_filename;
+            //if (p.Select(a => a.pbs_wkr_stdout_filename).Distinct().Count() == 1) this.pbs_wkr_stdout_filename = p.FirstOrDefault().pbs_wkr_stdout_filename;
+            //if (p.Select(a => a.pbs_wkr_submission_directory).Distinct().Count() == 1) this.pbs_wkr_submission_directory = p.FirstOrDefault().pbs_wkr_submission_directory;
+            //if (p.Select(a => a.pbs_wkr_walltime).Distinct().Count() == 1) this.pbs_wkr_walltime = p.FirstOrDefault().pbs_wkr_walltime;
             if (p.Select(a => a.perspective).Distinct().Count() == 1) this.perspective = p.FirstOrDefault().perspective;
             if (p.Select(a => a.positive_class_id).Distinct().Count() == 1) this.positive_class_id = p.FirstOrDefault().positive_class_id;
-            if (p.Select(a => a.program_ctl_stderr_filename).Distinct().Count() == 1) this.program_ctl_stderr_filename = p.FirstOrDefault().program_ctl_stderr_filename;
-            if (p.Select(a => a.program_ctl_stdout_filename).Distinct().Count() == 1) this.program_ctl_stdout_filename = p.FirstOrDefault().program_ctl_stdout_filename;
-            if (p.Select(a => a.program_runtime).Distinct().Count() == 1) this.program_runtime = p.FirstOrDefault().program_runtime;
-            if (p.Select(a => a.program_wkr_stderr_filename).Distinct().Count() == 1) this.program_wkr_stderr_filename = p.FirstOrDefault().program_wkr_stderr_filename;
-            if (p.Select(a => a.program_wkr_stdout_filename).Distinct().Count() == 1) this.program_wkr_stdout_filename = p.FirstOrDefault().program_wkr_stdout_filename;
+            //if (p.Select(a => a.program_ctl_stderr_filename).Distinct().Count() == 1) this.program_ctl_stderr_filename = p.FirstOrDefault().program_ctl_stderr_filename;
+            //if (p.Select(a => a.program_ctl_stdout_filename).Distinct().Count() == 1) this.program_ctl_stdout_filename = p.FirstOrDefault().program_ctl_stdout_filename;
+            //if (p.Select(a => a.program_runtime).Distinct().Count() == 1) this.program_runtime = p.FirstOrDefault().program_runtime;
+            //if (p.Select(a => a.program_wkr_stderr_filename).Distinct().Count() == 1) this.program_wkr_stderr_filename = p.FirstOrDefault().program_wkr_stderr_filename;
+            //if (p.Select(a => a.program_wkr_stdout_filename).Distinct().Count() == 1) this.program_wkr_stdout_filename = p.FirstOrDefault().program_wkr_stdout_filename;
             if (p.Select(a => a.randomisation_cv_folds).Distinct().Count() == 1) this.randomisation_cv_folds = p.FirstOrDefault().randomisation_cv_folds;
             if (p.Select(a => a.randomisation_cv_index).Distinct().Count() == 1) this.randomisation_cv_index = p.FirstOrDefault().randomisation_cv_index;
             if (p.Select(a => a.results_root_folder).Distinct().Count() == 1) this.results_root_folder = p.FirstOrDefault().results_root_folder;
@@ -325,7 +307,7 @@ namespace svm_fs
             if (p.Select(a => a.train_predict_filename).Distinct().Count() == 1) this.train_predict_filename = p.FirstOrDefault().train_predict_filename;
 
 
-            convert_paths();
+            /*convert_path*/make_dirs();
         }
 
         internal cmd_params(cmd_params p)
@@ -390,35 +372,35 @@ namespace svm_fs
             this.outer_cv_folds = p.outer_cv_folds;
             this.outer_cv_index = p.outer_cv_index;
             this.output_threshold_adjustment_performance = p.output_threshold_adjustment_performance;
-            this.pbs_ctl_execution_directory = p.pbs_ctl_execution_directory;
-            this.pbs_ctl_jobname = p.pbs_ctl_jobname;
-            this.pbs_ctl_mail_addr = p.pbs_ctl_mail_addr;
-            this.pbs_ctl_mail_opt = p.pbs_ctl_mail_opt;
-            this.pbs_ctl_mem = p.pbs_ctl_mem;
-            this.pbs_ctl_nodes = p.pbs_ctl_nodes;
-            this.pbs_ctl_ppn = p.pbs_ctl_ppn;
-            this.pbs_ctl_stderr_filename = p.pbs_ctl_stderr_filename;
-            this.pbs_ctl_stdout_filename = p.pbs_ctl_stdout_filename;
-            this.pbs_ctl_submission_directory = p.pbs_ctl_submission_directory;
-            this.pbs_ctl_walltime = p.pbs_ctl_walltime;
-            this.pbs_wkr_execution_directory = p.pbs_wkr_execution_directory;
-            this.pbs_wkr_jobname = p.pbs_wkr_jobname;
-            this.pbs_wkr_mail_addr = p.pbs_wkr_mail_addr;
-            this.pbs_wkr_mail_opt = p.pbs_wkr_mail_opt;
-            this.pbs_wkr_mem = p.pbs_wkr_mem;
-            this.pbs_wkr_nodes = p.pbs_wkr_nodes;
-            this.pbs_wkr_ppn = p.pbs_wkr_ppn;
-            this.pbs_wkr_stderr_filename = p.pbs_wkr_stderr_filename;
-            this.pbs_wkr_stdout_filename = p.pbs_wkr_stdout_filename;
-            this.pbs_wkr_submission_directory = p.pbs_wkr_submission_directory;
-            this.pbs_wkr_walltime = p.pbs_wkr_walltime;
+            //this.pbs_ctl_execution_directory = p.pbs_ctl_execution_directory;
+            //this.pbs_ctl_jobname = p.pbs_ctl_jobname;
+            //this.pbs_ctl_mail_addr = p.pbs_ctl_mail_addr;
+            //this.pbs_ctl_mail_opt = p.pbs_ctl_mail_opt;
+            //this.pbs_ctl_mem = p.pbs_ctl_mem;
+            //this.pbs_ctl_nodes = p.pbs_ctl_nodes;
+            //this.pbs_ctl_ppn = p.pbs_ctl_ppn;
+            //this.pbs_ctl_stderr_filename = p.pbs_ctl_stderr_filename;
+            //this.pbs_ctl_stdout_filename = p.pbs_ctl_stdout_filename;
+            //this.pbs_ctl_submission_directory = p.pbs_ctl_submission_directory;
+            //this.pbs_ctl_walltime = p.pbs_ctl_walltime;
+            //this.pbs_wkr_execution_directory = p.pbs_wkr_execution_directory;
+            //this.pbs_wkr_jobname = p.pbs_wkr_jobname;
+            //this.pbs_wkr_mail_addr = p.pbs_wkr_mail_addr;
+            //this.pbs_wkr_mail_opt = p.pbs_wkr_mail_opt;
+            //this.pbs_wkr_mem = p.pbs_wkr_mem;
+            //this.pbs_wkr_nodes = p.pbs_wkr_nodes;
+            //this.pbs_wkr_ppn = p.pbs_wkr_ppn;
+            //this.pbs_wkr_stderr_filename = p.pbs_wkr_stderr_filename;
+            //this.pbs_wkr_stdout_filename = p.pbs_wkr_stdout_filename;
+            //this.pbs_wkr_submission_directory = p.pbs_wkr_submission_directory;
+            //this.pbs_wkr_walltime = p.pbs_wkr_walltime;
             this.perspective = p.perspective;
             this.positive_class_id = p.positive_class_id;
-            this.program_ctl_stderr_filename = p.program_ctl_stderr_filename;
-            this.program_ctl_stdout_filename = p.program_ctl_stdout_filename;
-            this.program_runtime = p.program_runtime;
-            this.program_wkr_stderr_filename = p.program_wkr_stderr_filename;
-            this.program_wkr_stdout_filename = p.program_wkr_stdout_filename;
+            //this.program_ctl_stderr_filename = p.program_ctl_stderr_filename;
+            //this.program_ctl_stdout_filename = p.program_ctl_stdout_filename;
+            //this.program_runtime = p.program_runtime;
+            //this.program_wkr_stderr_filename = p.program_wkr_stderr_filename;
+            //this.program_wkr_stdout_filename = p.program_wkr_stdout_filename;
             this.randomisation_cv_folds = p.randomisation_cv_folds;
             this.randomisation_cv_index = p.randomisation_cv_index;
             this.results_root_folder = p.results_root_folder;
@@ -445,10 +427,10 @@ namespace svm_fs
             this.train_predict_filename = p.train_predict_filename;
 
 
-            convert_paths();
+            /*convert_path*/make_dirs();
         }
 
-        internal cmd_params(string params_filename) : this(io_proxy.ReadAllLines(io_proxy.convert_path(params_filename), nameof(cmd_params), nameof(cmd_params)))
+        internal cmd_params(string params_filename) : this(io_proxy.ReadAllLines(/*io_proxy.convert_path*/(params_filename), nameof(cmd_params), nameof(cmd_params)))
         {
 
         }
@@ -546,35 +528,35 @@ namespace svm_fs
             if (args2.Any(a => a.key == nameof(outer_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) outer_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(outer_cv_folds)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(outer_cv_index) && !string.IsNullOrWhiteSpace(a.value))) outer_cv_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(outer_cv_index)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(output_threshold_adjustment_performance) && !string.IsNullOrWhiteSpace(a.value))) output_threshold_adjustment_performance = bool.Parse(args2.FirstOrDefault(a => a.key == nameof(output_threshold_adjustment_performance)).value);
-            if (args2.Any(a => a.key == nameof(pbs_ctl_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_execution_directory)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_jobname)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_addr)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_opt)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mem)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_nodes)).value, CultureInfo.InvariantCulture);
-            if (args2.Any(a => a.key == nameof(pbs_ctl_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_ppn)).value, CultureInfo.InvariantCulture);
-            if (args2.Any(a => a.key == nameof(pbs_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stderr_filename)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stdout_filename)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_submission_directory)).value;
-            if (args2.Any(a => a.key == nameof(pbs_ctl_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_walltime)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_execution_directory)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_jobname)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_addr)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_opt)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mem)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_nodes)).value, CultureInfo.InvariantCulture);
-            if (args2.Any(a => a.key == nameof(pbs_wkr_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_ppn)).value, CultureInfo.InvariantCulture);
-            if (args2.Any(a => a.key == nameof(pbs_wkr_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stderr_filename)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stdout_filename)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_submission_directory)).value;
-            if (args2.Any(a => a.key == nameof(pbs_wkr_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_walltime)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_execution_directory)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_jobname)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_addr)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mail_opt)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_mem)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_nodes)).value, CultureInfo.InvariantCulture);
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_ppn)).value, CultureInfo.InvariantCulture);
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stderr_filename)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_stdout_filename)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_submission_directory)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_ctl_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_ctl_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_ctl_walltime)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_execution_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_execution_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_execution_directory)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_jobname) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_jobname = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_jobname)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_mail_addr) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_addr = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_addr)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_mail_opt) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mail_opt = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mail_opt)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_mem) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_mem = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_mem)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_nodes) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_nodes = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_nodes)).value, CultureInfo.InvariantCulture);
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_ppn) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_ppn = int.Parse(args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_ppn)).value, CultureInfo.InvariantCulture);
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stderr_filename)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_stdout_filename)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_submission_directory) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_submission_directory = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_submission_directory)).value;
+            //if (args2.Any(a => a.key == nameof(pbs_wkr_walltime) && !string.IsNullOrWhiteSpace(a.value))) pbs_wkr_walltime = args2.FirstOrDefault(a => a.key == nameof(pbs_wkr_walltime)).value;
             if (args2.Any(a => a.key == nameof(perspective) && !string.IsNullOrWhiteSpace(a.value))) perspective = args2.FirstOrDefault(a => a.key == nameof(perspective)).value;
             if (args2.Any(a => a.key == nameof(positive_class_id) && !string.IsNullOrWhiteSpace(a.value))) positive_class_id = int.Parse(args2.FirstOrDefault(a => a.key == nameof(positive_class_id)).value, CultureInfo.InvariantCulture);
-            if (args2.Any(a => a.key == nameof(program_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) program_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(program_ctl_stderr_filename)).value;
-            if (args2.Any(a => a.key == nameof(program_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) program_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(program_ctl_stdout_filename)).value;
-            if (args2.Any(a => a.key == nameof(program_runtime) && !string.IsNullOrWhiteSpace(a.value))) program_runtime = args2.FirstOrDefault(a => a.key == nameof(program_runtime)).value;
-            if (args2.Any(a => a.key == nameof(program_wkr_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) program_wkr_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(program_wkr_stderr_filename)).value;
-            if (args2.Any(a => a.key == nameof(program_wkr_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) program_wkr_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(program_wkr_stdout_filename)).value;
+            //if (args2.Any(a => a.key == nameof(program_ctl_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) program_ctl_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(program_ctl_stderr_filename)).value;
+            //if (args2.Any(a => a.key == nameof(program_ctl_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) program_ctl_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(program_ctl_stdout_filename)).value;
+            //if (args2.Any(a => a.key == nameof(program_runtime) && !string.IsNullOrWhiteSpace(a.value))) program_runtime = args2.FirstOrDefault(a => a.key == nameof(program_runtime)).value;
+            //if (args2.Any(a => a.key == nameof(program_wkr_stderr_filename) && !string.IsNullOrWhiteSpace(a.value))) program_wkr_stderr_filename = args2.FirstOrDefault(a => a.key == nameof(program_wkr_stderr_filename)).value;
+            //if (args2.Any(a => a.key == nameof(program_wkr_stdout_filename) && !string.IsNullOrWhiteSpace(a.value))) program_wkr_stdout_filename = args2.FirstOrDefault(a => a.key == nameof(program_wkr_stdout_filename)).value;
             if (args2.Any(a => a.key == nameof(randomisation_cv_folds) && !string.IsNullOrWhiteSpace(a.value))) randomisation_cv_folds = int.Parse(args2.FirstOrDefault(a => a.key == nameof(randomisation_cv_folds)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(randomisation_cv_index) && !string.IsNullOrWhiteSpace(a.value))) randomisation_cv_index = int.Parse(args2.FirstOrDefault(a => a.key == nameof(randomisation_cv_index)).value, CultureInfo.InvariantCulture);
             if (args2.Any(a => a.key == nameof(results_root_folder) && !string.IsNullOrWhiteSpace(a.value))) results_root_folder = args2.FirstOrDefault(a => a.key == nameof(results_root_folder)).value;
@@ -612,12 +594,12 @@ namespace svm_fs
                 throw new ArgumentNullException(nameof(experiment_name));
             }
 
-            convert_paths();
+            /*convert_path*/make_dirs();
         }
 
-        internal string[] get_options_ini_text()
+        internal string[] get_options_ini_text(bool skip_defaults)
         {
-            var x = get_options();
+            var x = get_options(skip_defaults);
 
             var result = x.Select(a => $@"{a.key}={a.value}").ToArray();
 
@@ -687,35 +669,35 @@ nameof(options_filename),
 nameof(outer_cv_folds),
 nameof(outer_cv_index),
 nameof(output_threshold_adjustment_performance),
-nameof(pbs_ctl_execution_directory),
-nameof(pbs_ctl_jobname),
-nameof(pbs_ctl_mail_addr),
-nameof(pbs_ctl_mail_opt),
-nameof(pbs_ctl_mem),
-nameof(pbs_ctl_nodes),
-nameof(pbs_ctl_ppn),
-nameof(pbs_ctl_stderr_filename),
-nameof(pbs_ctl_stdout_filename),
-nameof(pbs_ctl_submission_directory),
-nameof(pbs_ctl_walltime),
-nameof(pbs_wkr_execution_directory),
-nameof(pbs_wkr_jobname),
-nameof(pbs_wkr_mail_addr),
-nameof(pbs_wkr_mail_opt),
-nameof(pbs_wkr_mem),
-nameof(pbs_wkr_nodes),
-nameof(pbs_wkr_ppn),
-nameof(pbs_wkr_stderr_filename),
-nameof(pbs_wkr_stdout_filename),
-nameof(pbs_wkr_submission_directory),
-nameof(pbs_wkr_walltime),
+//nameof(pbs_ctl_execution_directory),
+//nameof(pbs_ctl_jobname),
+//nameof(pbs_ctl_mail_addr),
+//nameof(pbs_ctl_mail_opt),
+//nameof(pbs_ctl_mem),
+//nameof(pbs_ctl_nodes),
+//nameof(pbs_ctl_ppn),
+//nameof(pbs_ctl_stderr_filename),
+//nameof(pbs_ctl_stdout_filename),
+//nameof(pbs_ctl_submission_directory),
+//nameof(pbs_ctl_walltime),
+//nameof(pbs_wkr_execution_directory),
+//nameof(pbs_wkr_jobname),
+//nameof(pbs_wkr_mail_addr),
+//nameof(pbs_wkr_mail_opt),
+//nameof(pbs_wkr_mem),
+//nameof(pbs_wkr_nodes),
+//nameof(pbs_wkr_ppn),
+//nameof(pbs_wkr_stderr_filename),
+//nameof(pbs_wkr_stdout_filename),
+//nameof(pbs_wkr_submission_directory),
+//nameof(pbs_wkr_walltime),
 nameof(perspective),
 nameof(positive_class_id),
-nameof(program_ctl_stderr_filename),
-nameof(program_ctl_stdout_filename),
-nameof(program_runtime),
-nameof(program_wkr_stderr_filename),
-nameof(program_wkr_stdout_filename),
+//nameof(program_ctl_stderr_filename),
+//nameof(program_ctl_stdout_filename),
+//nameof(program_runtime),
+//nameof(program_wkr_stderr_filename),
+//nameof(program_wkr_stdout_filename),
 nameof(randomisation_cv_folds),
 nameof(randomisation_cv_index),
 nameof(results_root_folder),
@@ -745,126 +727,95 @@ nameof(train_predict_filename),
 
 
 
-        internal List<(string key, string value)> get_options()
+        internal List<(string key, string value)> get_options(bool skip_defaults = false)
         {
-            var result = new List<(string key, string value)>()
-            {
-(nameof(alphabet), alphabet),
-(nameof(category), category),
-(nameof(class_names), string.Join(';', class_names == null ? new List<string>() : class_names?.Select(a => $"{a.class_id}:{a.class_name}").ToList())),
-(nameof(class_sizes), string.Join(';', class_sizes == null ? new List<string>() : class_sizes?.Select(a => $"{a.class_id}:{a.class_size}").ToList())),
-(nameof(class_testing_sizes), string.Join(';', class_testing_sizes == null ? new List<string>() : class_testing_sizes?.Select(a => $"{a.class_id}:{a.class_testing_size}").ToList())),
-(nameof(class_training_sizes), string.Join(';', class_training_sizes == null ? new List<string>() : class_training_sizes?.Select(a => $"{a.class_id}:{a.class_training_size}").ToList())),
-(nameof(class_weights), string.Join(';', class_weights == null ? new List<string>() : class_weights?.Select(a => $"{a.class_id}:{a.class_weight}").ToList())),
-(nameof(cmd), cmd.ToString()),
-(nameof(dataset_dir), dataset_dir),
-(nameof(dimension), dimension),
-(nameof(experiment_name), experiment_name),
-(nameof(feature_id), feature_id.ToString(CultureInfo.InvariantCulture)),
-(nameof(feature_selection_classes), string.Join(";", feature_selection_classes == null ? new List<int>() : feature_selection_classes)),
-(nameof(feature_selection_metrics), string.Join(";", feature_selection_metrics == null ? new List<string>() : feature_selection_metrics)),
-(nameof(forward), forward.ToString(CultureInfo.InvariantCulture)),
-(nameof(grid_coef0_exp_begin), grid_coef0_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_coef0_exp_end), grid_coef0_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_coef0_exp_step), grid_coef0_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_cost_exp_begin), grid_cost_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_cost_exp_end), grid_cost_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_cost_exp_step), grid_cost_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_degree_exp_begin), grid_degree_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_degree_exp_end), grid_degree_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_degree_exp_step), grid_degree_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_epsilon_exp_begin), grid_epsilon_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_epsilon_exp_end), grid_epsilon_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_epsilon_exp_step), grid_epsilon_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_gamma_exp_begin), grid_gamma_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_gamma_exp_end), grid_gamma_exp_end?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(grid_gamma_exp_step), grid_gamma_exp_step?.ToString("G17",CultureInfo.InvariantCulture)),
-(nameof(group), group),
-(nameof(group_features), group_features.ToString(CultureInfo.InvariantCulture)),
-(nameof(group_index), group_index.ToString(CultureInfo.InvariantCulture)),
-(nameof(inner_cv_folds), inner_cv_folds.ToString(CultureInfo.InvariantCulture)),
-(nameof(iteration), iteration.ToString(CultureInfo.InvariantCulture)),
-(nameof(job_id), job_id.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_grid_max_time), libsvm_grid_max_time.ToString()),
-(nameof(libsvm_grid_memory_limit_mb), libsvm_grid_memory_limit_mb.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_grid_probability_estimates), libsvm_grid_probability_estimates.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_grid_quiet_mode), libsvm_grid_quiet_mode.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_grid_shrinking_heuristics), libsvm_grid_shrinking_heuristics.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_predict_runtime), libsvm_predict_runtime),
-(nameof(libsvm_train_max_time), libsvm_train_max_time.ToString()),
-(nameof(libsvm_train_memory_limit_mb), libsvm_train_memory_limit_mb.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_train_probability_estimates), libsvm_train_probability_estimates.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_train_quiet_mode), libsvm_train_quiet_mode.ToString(CultureInfo.InvariantCulture)),
-(nameof(libsvm_train_runtime), libsvm_train_runtime),
-(nameof(libsvm_train_shrinking_heuristics), libsvm_train_shrinking_heuristics.ToString(CultureInfo.InvariantCulture)),
-(nameof(member), member),
-(nameof(negative_class_id), negative_class_id.ToString(CultureInfo.InvariantCulture)),
-(nameof(new_feature_count), new_feature_count.ToString(CultureInfo.InvariantCulture)),
-(nameof(new_group_count), new_group_count.ToString(CultureInfo.InvariantCulture)),
-(nameof(old_feature_count), old_feature_count.ToString(CultureInfo.InvariantCulture)),
-(nameof(old_group_count), old_group_count.ToString(CultureInfo.InvariantCulture)),
-(nameof(options_filename), options_filename),
-(nameof(outer_cv_folds), outer_cv_folds.ToString(CultureInfo.InvariantCulture)),
-(nameof(outer_cv_index), outer_cv_index.ToString(CultureInfo.InvariantCulture)),
-(nameof(output_threshold_adjustment_performance), output_threshold_adjustment_performance.ToString(CultureInfo.InvariantCulture)),
-(nameof(pbs_ctl_execution_directory),      pbs_ctl_execution_directory  ),
-(nameof(pbs_ctl_jobname),      pbs_ctl_jobname  ),
-(nameof(pbs_ctl_mail_addr),     pbs_ctl_mail_addr   ),
-(nameof(pbs_ctl_mail_opt),     pbs_ctl_mail_opt   ),
-(nameof(pbs_ctl_mem),          pbs_ctl_mem   ),
-(nameof(pbs_ctl_nodes),        pbs_ctl_nodes.ToString(CultureInfo.InvariantCulture)   ),
-(nameof(pbs_ctl_ppn),          pbs_ctl_ppn.ToString(CultureInfo.InvariantCulture)   ),
-(nameof(pbs_ctl_stderr_filename),          pbs_ctl_stderr_filename   ),
-(nameof(pbs_ctl_stdout_filename),          pbs_ctl_stdout_filename  ),
-(nameof(pbs_ctl_submission_directory),     pbs_ctl_submission_directory   ),
-(nameof(pbs_ctl_walltime),     pbs_ctl_walltime   ),
-(nameof(pbs_wkr_execution_directory),      pbs_wkr_execution_directory  ),
-(nameof(pbs_wkr_jobname),      pbs_wkr_jobname  ),
-(nameof(pbs_wkr_mail_addr),     pbs_wkr_mail_addr   ),
-(nameof(pbs_wkr_mail_opt),     pbs_wkr_mail_opt   ),
-(nameof(pbs_wkr_mem),          pbs_wkr_mem   ),
-(nameof(pbs_wkr_nodes),        pbs_wkr_nodes.ToString(CultureInfo.InvariantCulture)   ),
-(nameof(pbs_wkr_ppn),          pbs_wkr_ppn.ToString(CultureInfo.InvariantCulture)   ),
-(nameof(pbs_wkr_stderr_filename),          pbs_wkr_stderr_filename   ),
-(nameof(pbs_wkr_stdout_filename),          pbs_wkr_stdout_filename  ),
-(nameof(pbs_wkr_submission_directory),     pbs_wkr_submission_directory   ),
-(nameof(pbs_wkr_walltime),     pbs_wkr_walltime   ),
-(nameof(perspective), perspective),
-(nameof(positive_class_id), positive_class_id.ToString(CultureInfo.InvariantCulture)),
-(nameof(program_ctl_stderr_filename),          program_ctl_stderr_filename   ),
-(nameof(program_ctl_stdout_filename),          program_ctl_stdout_filename  ),
-(nameof(program_runtime), program_runtime),
-(nameof(program_wkr_stderr_filename),          program_wkr_stderr_filename   ),
-(nameof(program_wkr_stdout_filename),          program_wkr_stdout_filename  ),
-(nameof(randomisation_cv_folds), randomisation_cv_folds.ToString(CultureInfo.InvariantCulture)),
-(nameof(randomisation_cv_index), randomisation_cv_index.ToString(CultureInfo.InvariantCulture)),
-(nameof(results_root_folder), results_root_folder),
-(nameof(save_test_id), save_test_id.ToString(CultureInfo.InvariantCulture)),
-(nameof(save_test_meta), save_test_meta.ToString(CultureInfo.InvariantCulture)),
-(nameof(save_train_id), save_train_id.ToString(CultureInfo.InvariantCulture)),
-(nameof(save_train_meta), save_train_meta.ToString(CultureInfo.InvariantCulture)),
-(nameof(scale_function), scale_function.ToString()),
-(nameof(source), source),
-(nameof(svm_kernel), svm_kernel.ToString()),
-(nameof(svm_type), svm_type.ToString()),
-(nameof(test_filename), test_filename),
-(nameof(test_labels_filename), test_labels_filename),
-(nameof(test_id_filename), test_id_filename),
-(nameof(test_meta_filename), test_meta_filename),
-(nameof(test_predict_cm_filename), test_predict_cm_filename),
-(nameof(test_predict_filename), test_predict_filename),
-(nameof(train_filename), train_filename),
-(nameof(train_grid_filename), train_grid_filename),
-(nameof(train_id_filename), train_id_filename),
-(nameof(train_meta_filename), train_meta_filename),
-(nameof(train_model_filename), train_model_filename),
-(nameof(train_predict_cm_filename), train_predict_cm_filename),
-(nameof(train_predict_filename), train_predict_filename),
-//(nameof(probability_estimates), probability_estimates.ToString()),
-//(nameof(shrinking_heuristics), shrinking_heuristics.ToString()),
+            var defaults = !skip_defaults ? null : new cmd_params();
 
-
-            };
+            var result = new List<(string key, string value)>();
+            if (!skip_defaults || defaults.alphabet != this.alphabet) result.Add((nameof(alphabet), alphabet));
+            if (!skip_defaults || defaults.category != this.category) result.Add((nameof(category), category));
+            if (!skip_defaults || !defaults.class_names.SequenceEqual(this.class_names)) result.Add((nameof(class_names), string.Join(';', class_names == null ? new List<string>() : class_names?.Select(a => $"{a.class_id}:{a.class_name}").ToList())));
+            if (!skip_defaults || !defaults.class_sizes.SequenceEqual(this.class_sizes)) result.Add((nameof(class_sizes), string.Join(';', class_sizes == null ? new List<string>() : class_sizes?.Select(a => $"{a.class_id}:{a.class_size}").ToList())));
+            if (!skip_defaults || !defaults.class_testing_sizes.SequenceEqual(this.class_testing_sizes)) result.Add((nameof(class_testing_sizes), string.Join(';', class_testing_sizes == null ? new List<string>() : class_testing_sizes?.Select(a => $"{a.class_id}:{a.class_testing_size}").ToList())));
+            if (!skip_defaults || !defaults.class_training_sizes.SequenceEqual(this.class_training_sizes)) result.Add((nameof(class_training_sizes), string.Join(';', class_training_sizes == null ? new List<string>() : class_training_sizes?.Select(a => $"{a.class_id}:{a.class_training_size}").ToList())));
+            if (!skip_defaults || !defaults.class_weights.SequenceEqual(this.class_weights)) result.Add((nameof(class_weights), string.Join(';', class_weights == null ? new List<string>() : class_weights?.Select(a => $"{a.class_id}:{a.class_weight}").ToList())));
+            if (!skip_defaults || defaults.cmd != this.cmd) result.Add((nameof(cmd), cmd.ToString()));
+            if (!skip_defaults || defaults.dataset_dir != this.dataset_dir) result.Add((nameof(dataset_dir), dataset_dir));
+            if (!skip_defaults || defaults.dimension != this.dimension) result.Add((nameof(dimension), dimension));
+            if (!skip_defaults || defaults.experiment_name != this.experiment_name) result.Add((nameof(experiment_name), experiment_name));
+            if (!skip_defaults || defaults.feature_id != this.feature_id) result.Add((nameof(feature_id), feature_id.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || !defaults.feature_selection_classes.SequenceEqual(this.feature_selection_classes)) result.Add((nameof(feature_selection_classes), string.Join(";", feature_selection_classes == null ? new List<int>() : feature_selection_classes)));
+            if (!skip_defaults || !defaults.feature_selection_metrics.SequenceEqual(this.feature_selection_metrics)) result.Add((nameof(feature_selection_metrics), string.Join(";", feature_selection_metrics == null ? new List<string>() : feature_selection_metrics)));
+            if (!skip_defaults || defaults.forward != this.forward) result.Add((nameof(forward), forward.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_coef0_exp_begin != this.grid_coef0_exp_begin) result.Add((nameof(grid_coef0_exp_begin), grid_coef0_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_coef0_exp_end != this.grid_coef0_exp_end) result.Add((nameof(grid_coef0_exp_end), grid_coef0_exp_end?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_coef0_exp_step != this.grid_coef0_exp_step) result.Add((nameof(grid_coef0_exp_step), grid_coef0_exp_step?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_cost_exp_begin != this.grid_cost_exp_begin) result.Add((nameof(grid_cost_exp_begin), grid_cost_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_cost_exp_end != this.grid_cost_exp_end) result.Add((nameof(grid_cost_exp_end), grid_cost_exp_end?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_cost_exp_step != this.grid_cost_exp_step) result.Add((nameof(grid_cost_exp_step), grid_cost_exp_step?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_degree_exp_begin != this.grid_degree_exp_begin) result.Add((nameof(grid_degree_exp_begin), grid_degree_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_degree_exp_end != this.grid_degree_exp_end) result.Add((nameof(grid_degree_exp_end), grid_degree_exp_end?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_degree_exp_step != this.grid_degree_exp_step) result.Add((nameof(grid_degree_exp_step), grid_degree_exp_step?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_epsilon_exp_begin != this.grid_epsilon_exp_begin) result.Add((nameof(grid_epsilon_exp_begin), grid_epsilon_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_epsilon_exp_end != this.grid_epsilon_exp_end) result.Add((nameof(grid_epsilon_exp_end), grid_epsilon_exp_end?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_epsilon_exp_step != this.grid_epsilon_exp_step) result.Add((nameof(grid_epsilon_exp_step), grid_epsilon_exp_step?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_gamma_exp_begin != this.grid_gamma_exp_begin) result.Add((nameof(grid_gamma_exp_begin), grid_gamma_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_gamma_exp_end != this.grid_gamma_exp_end) result.Add((nameof(grid_gamma_exp_end), grid_gamma_exp_end?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.grid_gamma_exp_step != this.grid_gamma_exp_step) result.Add((nameof(grid_gamma_exp_step), grid_gamma_exp_step?.ToString("G17",CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.@group != this.@group) result.Add((nameof(@group), @group));
+            if (!skip_defaults || defaults.group_features != this.group_features) result.Add((nameof(group_features), group_features.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.group_index != this.group_index) result.Add((nameof(group_index), group_index.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.inner_cv_folds != this.inner_cv_folds) result.Add((nameof(inner_cv_folds), inner_cv_folds.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.iteration != this.iteration) result.Add((nameof(iteration), iteration.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.job_id != this.job_id) result.Add((nameof(job_id), job_id.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_grid_max_time != this.libsvm_grid_max_time) result.Add((nameof(libsvm_grid_max_time), libsvm_grid_max_time.ToString()));
+            if (!skip_defaults || defaults.libsvm_grid_memory_limit_mb != this.libsvm_grid_memory_limit_mb) result.Add((nameof(libsvm_grid_memory_limit_mb), libsvm_grid_memory_limit_mb.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_grid_probability_estimates != this.libsvm_grid_probability_estimates) result.Add((nameof(libsvm_grid_probability_estimates), libsvm_grid_probability_estimates.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_grid_quiet_mode != this.libsvm_grid_quiet_mode) result.Add((nameof(libsvm_grid_quiet_mode), libsvm_grid_quiet_mode.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_grid_shrinking_heuristics != this.libsvm_grid_shrinking_heuristics) result.Add((nameof(libsvm_grid_shrinking_heuristics), libsvm_grid_shrinking_heuristics.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_predict_runtime != this.libsvm_predict_runtime) result.Add((nameof(libsvm_predict_runtime), libsvm_predict_runtime));
+            if (!skip_defaults || defaults.libsvm_train_max_time != this.libsvm_train_max_time) result.Add((nameof(libsvm_train_max_time), libsvm_train_max_time.ToString()));
+            if (!skip_defaults || defaults.libsvm_train_memory_limit_mb != this.libsvm_train_memory_limit_mb) result.Add((nameof(libsvm_train_memory_limit_mb), libsvm_train_memory_limit_mb.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_train_probability_estimates != this.libsvm_train_probability_estimates) result.Add((nameof(libsvm_train_probability_estimates), libsvm_train_probability_estimates.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_train_quiet_mode != this.libsvm_train_quiet_mode) result.Add((nameof(libsvm_train_quiet_mode), libsvm_train_quiet_mode.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.libsvm_train_runtime != this.libsvm_train_runtime) result.Add((nameof(libsvm_train_runtime), libsvm_train_runtime));
+            if (!skip_defaults || defaults.libsvm_train_shrinking_heuristics != this.libsvm_train_shrinking_heuristics) result.Add((nameof(libsvm_train_shrinking_heuristics), libsvm_train_shrinking_heuristics.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.member != this.member) result.Add((nameof(member), member));
+            if (!skip_defaults || defaults.negative_class_id != this.negative_class_id) result.Add((nameof(negative_class_id), negative_class_id.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.new_feature_count != this.new_feature_count) result.Add((nameof(new_feature_count), new_feature_count.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.new_group_count != this.new_group_count) result.Add((nameof(new_group_count), new_group_count.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.old_feature_count != this.old_feature_count) result.Add((nameof(old_feature_count), old_feature_count.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.old_group_count != this.old_group_count) result.Add((nameof(old_group_count), old_group_count.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.options_filename != this.options_filename) result.Add((nameof(options_filename), options_filename));
+            if (!skip_defaults || defaults.outer_cv_folds != this.outer_cv_folds) result.Add((nameof(outer_cv_folds), outer_cv_folds.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.outer_cv_index != this.outer_cv_index) result.Add((nameof(outer_cv_index), outer_cv_index.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.output_threshold_adjustment_performance != this.output_threshold_adjustment_performance) result.Add((nameof(output_threshold_adjustment_performance), output_threshold_adjustment_performance.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.perspective != this.perspective) result.Add((nameof(perspective), perspective));
+            if (!skip_defaults || defaults.positive_class_id != this.positive_class_id) result.Add((nameof(positive_class_id), positive_class_id.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.randomisation_cv_folds != this.randomisation_cv_folds) result.Add((nameof(randomisation_cv_folds), randomisation_cv_folds.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.randomisation_cv_index != this.randomisation_cv_index) result.Add((nameof(randomisation_cv_index), randomisation_cv_index.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.results_root_folder != this.results_root_folder) result.Add((nameof(results_root_folder), results_root_folder));
+            if (!skip_defaults || defaults.save_test_id != this.save_test_id) result.Add((nameof(save_test_id), save_test_id.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.save_test_meta != this.save_test_meta) result.Add((nameof(save_test_meta), save_test_meta.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.save_train_id != this.save_train_id) result.Add((nameof(save_train_id), save_train_id.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.save_train_meta != this.save_train_meta) result.Add((nameof(save_train_meta), save_train_meta.ToString(CultureInfo.InvariantCulture)));
+            if (!skip_defaults || defaults.scale_function != this.scale_function) result.Add((nameof(scale_function), scale_function.ToString()));
+            if (!skip_defaults || defaults.source != this.source) result.Add((nameof(source), source));
+            if (!skip_defaults || defaults.svm_kernel != this.svm_kernel) result.Add((nameof(svm_kernel), svm_kernel.ToString()));
+            if (!skip_defaults || defaults.svm_type != this.svm_type) result.Add((nameof(svm_type), svm_type.ToString()));
+            if (!skip_defaults || defaults.test_filename != this.test_filename) result.Add((nameof(test_filename), test_filename));
+            if (!skip_defaults || defaults.test_labels_filename != this.test_labels_filename) result.Add((nameof(test_labels_filename), test_labels_filename));
+            if (!skip_defaults || defaults.test_id_filename != this.test_id_filename) result.Add((nameof(test_id_filename), test_id_filename));
+            if (!skip_defaults || defaults.test_meta_filename != this.test_meta_filename) result.Add((nameof(test_meta_filename), test_meta_filename));
+            if (!skip_defaults || defaults.test_predict_cm_filename != this.test_predict_cm_filename) result.Add((nameof(test_predict_cm_filename), test_predict_cm_filename));
+            if (!skip_defaults || defaults.test_predict_filename != this.test_predict_filename) result.Add((nameof(test_predict_filename), test_predict_filename));
+            if (!skip_defaults || defaults.train_filename != this.train_filename) result.Add((nameof(train_filename), train_filename));
+            if (!skip_defaults || defaults.train_grid_filename != this.train_grid_filename) result.Add((nameof(train_grid_filename), train_grid_filename));
+            if (!skip_defaults || defaults.train_id_filename != this.train_id_filename) result.Add((nameof(train_id_filename), train_id_filename));
+            if (!skip_defaults || defaults.train_meta_filename != this.train_meta_filename) result.Add((nameof(train_meta_filename), train_meta_filename));
+            if (!skip_defaults || defaults.train_model_filename != this.train_model_filename) result.Add((nameof(train_model_filename), train_model_filename));
+            if (!skip_defaults || defaults.train_predict_cm_filename != this.train_predict_cm_filename) result.Add((nameof(train_predict_cm_filename), train_predict_cm_filename));
+            if (!skip_defaults || defaults.train_predict_filename != this.train_predict_filename) result.Add((nameof(train_predict_filename), train_predict_filename));
 
             //return string.Join(" ", list.Select(a => $"-{a.key} {a.value}").ToList());
 

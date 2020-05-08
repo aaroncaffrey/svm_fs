@@ -202,7 +202,7 @@ namespace svm_fs
                     }
                     catch (Exception e)
                     {
-                        svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(wait_tasks));
+                        io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(wait_tasks));
                     }
                 }
 
@@ -215,7 +215,7 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(wait_tasks));
+                io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(wait_tasks));
             }
         }
 
@@ -330,8 +330,8 @@ namespace svm_fs
             var limit_iteration_not_better_than_last = 5;
             var limit_iteration_not_better_than_all = 10;
 
-            var root_folder = io_proxy.convert_path(p.results_root_folder);
-            var summary_fn = io_proxy.convert_path(Path.Combine(root_folder, "summary.csv"));
+            var root_folder = /*io_proxy.convert_path*/(p.results_root_folder);
+            var summary_fn = /*io_proxy.convert_path*/(Path.Combine(root_folder, "summary.csv"));
 
             var summary_lines = new List<string>();
 
@@ -796,7 +796,7 @@ namespace svm_fs
 
                     io_proxy.WriteAllLines(checkpoint_fn, checkpoint_data.Select(a => $"{a.key}={a.value}").ToList());
 
-                    //var summary_fn = io_proxy.convert_path(Path.Combine(iteration_folder, "summary.csv"));
+                    //var summary_fn = /*io_proxy.convert_path*/(Path.Combine(iteration_folder, "summary.csv"));
 
 
 
@@ -963,6 +963,11 @@ namespace svm_fs
             group_tasks1.Clear();
             
             
+            var wkr_parameters_list = results1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
+            //var wkr_parameters_list2 = results1.SelectMany(a => a.rets.Select(b=>b.cmd_params.options_filename).ToList()).ToList();
+            io_proxy.WriteAllLines($@"job_list_{iteration_index}.txt", wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
+
+
             var wait_file_list = results1.Where(a => a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
             wait_for_results(wait_file_list);
             
@@ -1002,7 +1007,7 @@ namespace svm_fs
             // get ranks by kernel/scaling
 
 
-            var iteration_folder1 = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+            var iteration_folder1 = /*io_proxy.convert_path*/(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
             var cm_inputs1 = get_cm_inputs(p, results2, groups, iteration_folder1, iteration_index);
 
@@ -1281,11 +1286,14 @@ namespace svm_fs
             merge_pre_results(pre_tm);
 
             // submit jobs to scheduler
+
+            
+
             //var wkr_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
             var wkr_cmd_params_list = rets.Select(a => a.cmd_params).ToList();
 
 
-            //var iteration_folder = io_proxy.convert_path(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+            //var iteration_folder = /*io_proxy.convert_path*/(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
 
             // wait for results
             //var wait_file_list = jobs_randomisation_level.SelectMany(a => a.SelectMany(b => b.wait_file_list).ToList()).ToList();
@@ -1370,13 +1378,13 @@ namespace svm_fs
         {
             if (delete_logs)
             {
-                var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
-                if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
-                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                //var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
+                //if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
-                var program_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename));
-                if (io_proxy.is_file_empty(program_wkr_stderr_filename)) io_proxy.Delete(program_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
-                io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                //var program_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename));
+                //if (io_proxy.is_file_empty(program_wkr_stderr_filename)) io_proxy.Delete(program_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
+                //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
                 //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
                 //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
@@ -1667,18 +1675,18 @@ namespace svm_fs
             // /home/k1040015/itr_0/grp_0/svm_0_kl_0_sl_0/rnd_0_cv_0/itr_0_grp_0_rnd_0_cv_0_svm_0_kl_0_sl_0
             var filename = $@"itr_{job.iteration_index}_grp_{job.group_index}_svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}_rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}";//"_job_{job.job_id}";
 
-            var pbs_jobname = $@"{nameof(svm_wkr)}_{job.job_id}";
-            var pbs_walltime = new TimeSpan(0, 30, 0);
+            //var pbs_jobname = $@"{nameof(svm_wkr)}_{job.job_id}";
+            //var pbs_walltime = new TimeSpan(0, 30, 0);
 
             var wkr_cmd_params = new cmd_params(p)
             {
                 cmd = cmd.wkr,
-                pbs_wkr_jobname = pbs_jobname,
-                pbs_wkr_walltime = $@"{pbs_walltime:hh\:mm\:ss}",
-                pbs_wkr_stdout_filename = $"{filename}.pbs.stdout",
-                pbs_wkr_stderr_filename = $"{filename}.pbs.stderr",
-                program_wkr_stdout_filename = $"{filename}.{nameof(svm_fs)}.stdout",
-                program_wkr_stderr_filename = $"{filename}.{nameof(svm_fs)}.stderr",
+                //pbs_wkr_jobname = pbs_jobname,
+                //pbs_wkr_walltime = $@"{pbs_walltime:hh\:mm\:ss}",
+                //pbs_wkr_stdout_filename = $"{filename}.%J_%I.pbs.stdout",
+                //pbs_wkr_stderr_filename = $"{filename}.%J_%I.pbs.stderr",
+                //program_wkr_stdout_filename = $"{filename}.{cmd_params.env_jobid}_{cmd_params.env_jobname}_{cmd_params.env_arrayindex}.stdout",
+                //program_wkr_stderr_filename = $"{filename}.{cmd_params.env_jobid}_{cmd_params.env_jobname}_{cmd_params.env_arrayindex}.stderr",
                 job_id = job.job_id,
                 feature_id =
                     @group.columns != null && @group.columns.Count == 1 && @group.list != null && @group.list.Count > 0
@@ -1722,15 +1730,15 @@ namespace svm_fs
                 test_predict_filename = Path.Combine(job_output_folder, $"{filename}.test_predict.libsvm")
             };
 
-            if (wkr_cmd_params.inner_cv_folds <= 1)
-            {
-                wkr_cmd_params.pbs_wkr_nodes = 1;
-                wkr_cmd_params.pbs_wkr_ppn = 2;
-            }
+            //if (wkr_cmd_params.inner_cv_folds <= 1)
+            //{
+            //    wkr_cmd_params.pbs_wkr_nodes = 1;
+            //    wkr_cmd_params.pbs_wkr_ppn = 2;
+            //}
 
-            wkr_cmd_params.convert_paths();
+            wkr_cmd_params./*convert_path*/make_dirs();
 
-            var options_text = wkr_cmd_params.get_options_ini_text();
+            var options_text = wkr_cmd_params.get_options_ini_text(skip_defaults: true);
 
             var use_cache = false;
             var cached = true;
@@ -1738,7 +1746,7 @@ namespace svm_fs
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.options_filename, options_text);
-                io_proxy.WriteLine("Saved options: " + wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job));
+                io_proxy.WriteLine($"Saved wkr parameter options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 cached = false;
             }
             else
@@ -1866,14 +1874,17 @@ namespace svm_fs
 
             var merge_cmd_params = new cmd_params(wkr_cmd_params)
             {
-                pbs_ctl_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.pbs.stdout"),
-                pbs_ctl_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.pbs.stderr"),
-                pbs_wkr_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.pbs.stdout"),
-                pbs_wkr_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.pbs.stderr"),
-                program_ctl_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout"),
-                program_ctl_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr"),
-                program_wkr_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout"),
-                program_wkr_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr"),
+                // stdout and stderr not currently actually merged.
+                
+                //pbs_ctl_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.pbs.stdout"),
+                //pbs_ctl_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.pbs.stderr"),
+                //pbs_wkr_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.pbs.stdout"),
+                //pbs_wkr_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.pbs.stderr"),
+
+                //program_ctl_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.{nameof(svm_fs)}.stdout"),
+                //program_ctl_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.{nameof(svm_fs)}.stderr"),
+                //program_wkr_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.{nameof(svm_fs)}.stdout"),
+                //program_wkr_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.{nameof(svm_fs)}.stderr"),
 
                 train_filename = Path.Combine(merge_output_folder, $"{merge_filename}.train.libsvm"),
                 train_id_filename = Path.Combine(merge_output_folder, $"{merge_filename}.train_id.csv"),
@@ -1888,7 +1899,7 @@ namespace svm_fs
                 test_predict_filename = Path.Combine(merge_output_folder, $"{merge_filename}.test_predict.libsvm"),
             };
 
-            merge_cmd_params.convert_paths();
+            merge_cmd_params./*convert_path*/make_dirs();
 
             var to_merge = new List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)>();
 
@@ -1923,8 +1934,8 @@ namespace svm_fs
         {
             var sub_dir = "";
 
-            if (cmd_params.cmd == cmd.ctl) { sub_dir = cmd_params.pbs_ctl_submission_directory; }
-            else if (cmd_params.cmd == cmd.wkr) { sub_dir = cmd_params.pbs_wkr_submission_directory; }
+            if (cmd_params.cmd == cmd.ctl) { sub_dir = pbs_params.pbs_ctl_submission_directory; }
+            else if (cmd_params.cmd == cmd.wkr) { sub_dir = pbs_params.pbs_wkr_submission_directory; }
 
             var source = cmd_params.options_filename;
             var dest = Path.Combine(Path.GetDirectoryName(sub_dir), Path.GetFileName(cmd_params.options_filename));

@@ -34,11 +34,11 @@ namespace svm_fs
             int memory_limit_mb = 1024
             )
         {
-            libsvm_train_exe_file = io_proxy.convert_path(libsvm_train_exe_file);
-            train_file = io_proxy.convert_path(train_file);
-            model_out_file = io_proxy.convert_path(model_out_file);
-            stdout_file = io_proxy.convert_path(stdout_file);
-            stderr_file = io_proxy.convert_path(stderr_file);
+            //libsvm_train_exe_file = /*io_proxy.convert_path*/(libsvm_train_exe_file);
+            //train_file = /*io_proxy.convert_path*/(train_file);
+            //model_out_file = /*io_proxy.convert_path*/(model_out_file);
+            //stdout_file = /*io_proxy.convert_path*/(stdout_file);
+            //stderr_file = /*io_proxy.convert_path*/(stderr_file);
 
             //var quiet_mode = true;
             //var memory_limit_mb = 1024;
@@ -160,107 +160,106 @@ namespace svm_fs
 
                 try
                 {
-                    using (var process = Process.Start(start))
+                    using var process = Process.Start(start);
+
+                    if (process == null)
                     {
-                        if (process == null)
-                        {
-                            retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
-                            continue;
-                            //   return (cmd_line, null, null);
-                        }
+                        retry = true;
+                        try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                        continue;
+                        //   return (cmd_line, null, null);
+                    }
 
-                        io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
+                    io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
                         
 
-                        try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
-                        try { process.PriorityClass = priority_class; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                    try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                    try { process.PriorityClass = priority_class; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
 
-                        var stdout = process.StandardOutput.ReadToEndAsync();
-                        var stderr = process.StandardError.ReadToEndAsync();
+                    var stdout = process.StandardOutput.ReadToEndAsync();
+                    var stderr = process.StandardError.ReadToEndAsync();
 
-                        var tasks = new List<Task>() { stdout, stderr };
+                    var tasks = new List<Task>() { stdout, stderr };
 
 
 
-                        if (!process.HasExited && process_max_time != null && process_max_time.Value.Ticks > 0)
-                        {
-                            //var time_taken = DateTime.Now - process.StartTime;
+                    if (!process.HasExited && process_max_time != null && process_max_time.Value.Ticks > 0)
+                    {
+                        //var time_taken = DateTime.Now - process.StartTime;
 
-                            try
-                            { 
-                                var cpu_time = process.TotalProcessorTime;
+                        try
+                        { 
+                            var cpu_time = process.TotalProcessorTime;
 
-                                do
-                                {
-                                    try { Task.WaitAll(tasks.ToArray<Task>(), process_max_time.Value); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
-                                    //time_taken = DateTime.Now - process.StartTime;
-
-                                    if (process.HasExited) break;
-                                    
-                                    cpu_time = process.TotalProcessorTime;
-
-                                } while (tasks.Any(a => !a.IsCompleted) && cpu_time < process_max_time.Value && !process.HasExited);
-
-                                if (tasks.Any(a => !a.IsCompleted) && !process.HasExited)
-                                {
-                                    try { process.CancelOutputRead(); } catch (Exception) { } finally { }
-                                    try { process.CancelErrorRead(); } catch (Exception) { } finally { }
-                                    try { process.CloseMainWindow(); } catch (Exception) { } finally { }
-                                    try { process.Close(); } catch (Exception) { } finally { }
-                                    try { process.Kill(); } catch (Exception) { } finally { }
-                                    try { process.Dispose(); } catch (Exception) { } finally { }
-                                }
-                            }
-                            catch (Exception e)
+                            do
                             {
-                                svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train));
+                                try { Task.WaitAll(tasks.ToArray<Task>(), process_max_time.Value); } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                                //time_taken = DateTime.Now - process.StartTime;
+
+                                if (process.HasExited) break;
+                                    
+                                cpu_time = process.TotalProcessorTime;
+
+                            } while (tasks.Any(a => !a.IsCompleted) && cpu_time < process_max_time.Value && !process.HasExited);
+
+                            if (tasks.Any(a => !a.IsCompleted) && !process.HasExited)
+                            {
+                                try { process.CancelOutputRead(); } catch (Exception) { } finally { }
+                                try { process.CancelErrorRead(); } catch (Exception) { } finally { }
+                                try { process.CloseMainWindow(); } catch (Exception) { } finally { }
+                                try { process.Close(); } catch (Exception) { } finally { }
+                                try { process.Kill(); } catch (Exception) { } finally { }
+                                try { process.Dispose(); } catch (Exception) { } finally { }
                             }
                         }
+                        catch (Exception e)
+                        {
+                            io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train));
+                        }
+                    }
                         
-                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                    try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
                         
-                        process.WaitForExit();
+                    process.WaitForExit();
 
-                        io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
+                    io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
 
-                        var exit_code = process.ExitCode;
+                    var exit_code = process.ExitCode;
 
-                        var stdout_result = "";
-                        var stderr_result = "";
+                    var stdout_result = "";
+                    var stderr_result = "";
 
-                        try { stdout_result = stdout?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
-                        try { stderr_result = stderr?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                    try { stdout_result = stdout?.Result; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                    try { stderr_result = stderr?.Result; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
 
 
-                        if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
-                        {
-                            io_proxy.AppendAllText(stdout_file, stdout_result);
-                        }
+                    if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
+                    {
+                        io_proxy.AppendAllText(stdout_file, stdout_result);
+                    }
 
-                        if (!string.IsNullOrWhiteSpace(stderr_file) && !string.IsNullOrWhiteSpace(stderr_result))
-                        {
-                            io_proxy.AppendAllText(stderr_file, stderr_result);
-                        }
+                    if (!string.IsNullOrWhiteSpace(stderr_file) && !string.IsNullOrWhiteSpace(stderr_result))
+                    {
+                        io_proxy.AppendAllText(stderr_file, stderr_result);
+                    }
 
-                        if (exit_code == 0)
-                        {
-                            return (cmd_line, stdout_result, stderr_result);
-                        }
-                        else
-                        {
-                            retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
-                            continue;
-                        }
+                    if (exit_code == 0)
+                    {
+                        return (cmd_line, stdout_result, stderr_result);
+                    }
+                    else
+                    {
+                        retry = true;
+                        try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
+                        continue;
                     }
                 }
                 catch (Exception e1)
                 {
                     retry = true;
 
-                    svm_ldr.log_exception(e1, "", nameof(svm_ctl), nameof(predict));
-                    try {Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception e2) { svm_ldr.log_exception(e2, "", nameof(svm_ctl), nameof(train)); }
+                    io_proxy.log_exception(e1, "", nameof(svm_ctl), nameof(predict));
+                    try {Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception e2) { io_proxy.log_exception(e2, "", nameof(svm_ctl), nameof(train)); }
                 }
             }
             while (retry && retry_index < 10_000);
@@ -270,12 +269,12 @@ namespace svm_fs
 
         internal static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null)
         {
-            libsvm_predict_exe_file = io_proxy.convert_path(libsvm_predict_exe_file);
-            test_file = io_proxy.convert_path(test_file);
-            model_file = io_proxy.convert_path(model_file);
-            predictions_out_file = io_proxy.convert_path(predictions_out_file);
-            stdout_file = io_proxy.convert_path(stdout_file);
-            stderr_file = io_proxy.convert_path(stderr_file);
+            //libsvm_predict_exe_file = /*io_proxy.convert_path*/(libsvm_predict_exe_file);
+            //test_file = /*io_proxy.convert_path*/(test_file);
+            //model_file = /*io_proxy.convert_path*/(model_file);
+            //predictions_out_file = /*io_proxy.convert_path*/(predictions_out_file);
+            //stdout_file = /*io_proxy.convert_path*/(stdout_file);
+            //stderr_file = /*io_proxy.convert_path*/(stderr_file);
 
             var libsvm_params = new List<string>();
 
@@ -325,73 +324,72 @@ namespace svm_fs
 
                 try
                 {
-                    using (var process = Process.Start(start))
+                    using var process = Process.Start(start);
+
+                    if (process == null)
                     {
-                        if (process == null)
+                        retry = true;
+                        try
                         {
-                            retry = true;
-                            try
-                            {
-                                Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
-                            }
-                            catch (Exception e)
-                            {
-                                svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict));
-                            }
-                            continue;
-                            //   return (cmd_line, null, null);
+                            Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();
                         }
-
-                        io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
-                        try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
-                        try { process.PriorityClass = priority_class; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
-
-                        var stdout = process.StandardOutput.ReadToEndAsync();
-                        var stderr = process.StandardError.ReadToEndAsync();
-
-                        process.WaitForExit();
-                        io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
-
-                        var exit_code = process.ExitCode;
-
-                        var tasks = new List<Task>() { stdout, stderr };
-
-                        try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
-
-                        var stdout_result = "";
-                        var stderr_result = "";
-
-                        try { stdout_result = stdout?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
-                        try { stderr_result = stderr?.Result; } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
-
-
-                        if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
+                        catch (Exception e)
                         {
-                            io_proxy.AppendAllText(stdout_file, stdout_result);
+                            io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict));
                         }
+                        continue;
+                        //   return (cmd_line, null, null);
+                    }
 
-                        if (!string.IsNullOrWhiteSpace(stderr_file) && !string.IsNullOrWhiteSpace(stderr_result))
-                        {
-                            io_proxy.AppendAllText(stderr_file, stderr_result);
-                        }
+                    io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
+                    try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+                    try { process.PriorityClass = priority_class; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
 
-                        if (exit_code == 0)
-                        {
-                            return (cmd_line, stdout_result, stderr_result);
-                        }
-                        else
-                        {
-                            retry = true;
-                            try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { svm_ldr.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
-                            continue;
-                        }
+                    var stdout = process.StandardOutput.ReadToEndAsync();
+                    var stderr = process.StandardError.ReadToEndAsync();
+
+                    process.WaitForExit();
+                    io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
+
+                    var exit_code = process.ExitCode;
+
+                    var tasks = new List<Task>() { stdout, stderr };
+
+                    try { Task.WaitAll(tasks.ToArray<Task>()); } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+
+                    var stdout_result = "";
+                    var stderr_result = "";
+
+                    try { stdout_result = stdout?.Result; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+                    try { stderr_result = stderr?.Result; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+
+
+                    if (!string.IsNullOrWhiteSpace(stdout_file) && !string.IsNullOrWhiteSpace(stdout_result))
+                    {
+                        io_proxy.AppendAllText(stdout_file, stdout_result);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(stderr_file) && !string.IsNullOrWhiteSpace(stderr_result))
+                    {
+                        io_proxy.AppendAllText(stderr_file, stderr_result);
+                    }
+
+                    if (exit_code == 0)
+                    {
+                        return (cmd_line, stdout_result, stderr_result);
+                    }
+                    else
+                    {
+                        retry = true;
+                        try { Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait(); } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
+                        continue;
                     }
                 }
                 catch (Exception e1)
                 {
                     retry = true;
-                    svm_ldr.log_exception(e1, "", nameof(svm_ctl), nameof(predict));
-                    try {Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception e2) { svm_ldr.log_exception(e2, "", nameof(svm_ctl), nameof(predict)); }
+                    io_proxy.log_exception(e1, "", nameof(svm_ctl), nameof(predict));
+                    try {Task.Delay(new TimeSpan(0, 0, 0, 15)).Wait();} catch (Exception e2) { io_proxy.log_exception(e2, "", nameof(svm_ctl), nameof(predict)); }
                 }
             }
             while (retry && retry_index < 10_000);

@@ -56,14 +56,27 @@ namespace svm_fs
             };
         }
 
-        internal static void Main(string[] args)
+        public static void check_x64()
+        {
+            bool is64Bit = IntPtr.Size == 8;
+            if (!is64Bit)
+            {
+                throw new Exception("Must run in 64bit mode");
+            }
+        }
+     
+        public static void set_gc_mode()
         {
             //GCSettings.LatencyMode = GCLatencyMode.Batch;
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+        }
 
+        internal static void Main(string[] args)
+        {
             var cts = new CancellationTokenSource();
             close_notifications(cts);
-
+            check_x64();
+            set_gc_mode();
 
             //var x0 = new string[] { "f1", "f1_ppf", "f1_ppg" };
             //var x1 = new string[] { "yes pre-filter", "no pre-filter" };
@@ -71,16 +84,16 @@ namespace svm_fs
             //var x3 = new string[] { "2d", "3d", "2d and 3d", "2d then 3d", "3d then 2d" };
             //var x4 = new string[] { "Interface", "Neighbourhood", "Protein", "Interface", "Interface Neighbourhood Protein", "Interface Neighbourhood", "Interface Protein", "Neighbourhood Protein"  };
 
-           
-            var required_default = false;
 
-            var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
+            //var required_default = false;
+
+            //var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
 
             //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
             //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
 
 
-            var tp = new cmd_params();
+            //var tp = new cmd_params();
 
             //var dataset = dataset_loader.read_binary_dataset($@"e:\input\", "2i", tp.negative_class_id, tp.positive_class_id, tp.class_names, use_parallel: true, perform_integrity_checks: true, fix_double: false, required_default: required_default, required_matches: required_matches, fix_dataset: true);
             //return;
@@ -88,110 +101,101 @@ namespace svm_fs
             //var cms = performance_measure.confusion_matrix.load(@"C:\Temp\svm_fs\results\iteration_0\group_Normal.1.aa_oaac.subsequence_1d.aa_unsplit_oaac_Normal_dist_normal._._\iteration_0_group_2.test_predict_cm_all.csv", 68);
             //return;
 
-            bool is64Bit = IntPtr.Size == 8;
-            if (!is64Bit)
+
+
+            //var sw_program = new Stopwatch();
+            //sw_program.Start();
+
+
+
+            var cm_arg_index = args.ToList().FindIndex(a => a == "-cm");
+            var ji_arg_index = args.ToList().FindIndex(a => a == "-ji");
+            var jn_arg_index = args.ToList().FindIndex(a => a == "-jn");
+            var ai_arg_index = args.ToList().FindIndex(a => a == "-ai");
+            var ac_arg_index = args.ToList().FindIndex(a => a == "-ac");
+            var in_arg_index = args.ToList().FindIndex(a => a == "-in");
+            var of_arg_index = args.ToList().FindIndex(a => a == "-of");
+
+            var pbs_job_index = "";
+            var pbs_job_name = "";
+            var pbs_job_array_index = "";
+            var pbs_job_array_count = "";
+            var input_file = "";
+            //var options_filename = "";
+            var options_filename_list = new List<string>();
+            var cmd = svm_fs.cmd.none;
+
+            if (cm_arg_index > -1 && args.Length - 1 >= cm_arg_index + 1) cmd = (svm_fs.cmd) Enum.Parse(typeof(svm_fs.cmd), args[cm_arg_index + 1]);
+            if (ji_arg_index > -1 && args.Length - 1 >= ji_arg_index + 1) pbs_job_index = args[ji_arg_index + 1];
+            if (jn_arg_index > -1 && args.Length - 1 >= jn_arg_index + 1) pbs_job_name = args[jn_arg_index + 1];
+            if (ai_arg_index > -1 && args.Length - 1 >= ai_arg_index + 1) pbs_job_array_index = args[ai_arg_index + 1];
+            if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1) pbs_job_array_count = args[ac_arg_index + 1];
+            if (in_arg_index > -1 && args.Length - 1 >= in_arg_index + 1) input_file = args[in_arg_index + 1];
+            if (of_arg_index > -1 && args.Length - 1 >= of_arg_index + 1) options_filename_list.Add( /*io_proxy.convert_path*/(args[of_arg_index + 1]));
+
+            //io_proxy.WriteLine($@"pbs_job_index = ""{pbs_job_index}"", pbs_job_name = ""{pbs_job_name}"", pbs_job_array_index = ""{pbs_job_array_index}"", pbs_job_array_count = ""{pbs_job_array_count}"", input_file = ""{input_file}"", options_filename_list = ""{string.Join("; ", options_filename_list)}""");
+
+            var array_count = 1;
+
+            if (!string.IsNullOrWhiteSpace(pbs_job_array_count))
             {
-                throw new Exception("Must run in 64bit mode");
+                array_count = int.Parse(pbs_job_array_count);
             }
 
-            var sw_program = new Stopwatch();
-            sw_program.Start();
-
-
-            var options = new cmd_params();
-            //options.options_filename = Path.Combine(options.pbs_submission_directory, $@"");
-
-           
-
-            //AppDomain.ProcessExit = AppDomainOnProcessExit;
-            var bootstrap = true;
-
-            if (args.Length > 0 && args[0].Length > 0)
+            if (cmd == cmd.ldr)
             {
-                var options_index = 0;
-
-                if (args[0] == "-d")
-                {
-                    // print default settings and exit
-
-                    var ot = options.get_options_ini_text().ToList();
-
-                    ot.ForEach(a => io_proxy.WriteLine(a));
-
-                    return;
-                }
-
-                if (args[0] == "-j")
-                {
-                    // run job
-
-                    bootstrap = false;
-                    options_index = 1;
-                }
-
-                var options_filename = args[options_index];
-                options_filename = io_proxy.convert_path(options_filename);
-
-                if (io_proxy.is_file_available(options_filename, nameof(program), nameof(Main)))
-                {
-                    var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
-                    options = new cmd_params(file_data);
-                    options.options_filename = options_filename;
-                }
-                else
-                {
-                    io_proxy.WriteLine($@"File not available: {options_filename}", nameof(program), nameof(Main));
-                    return;
-                }
-            }
-            
-
-            if (options.cmd == cmd.none)
-            {
-                var test_params = new cmd_params(options)
-                {
-                    experiment_name = "program_test",
-                    options_filename = io_proxy.convert_path(Path.Combine(options.pbs_ctl_submission_directory, $@"{nameof(svm_ctl)}.options")),
-                    cmd = cmd.ctl,
-                }.get_options_ini_text();
-
-                options = new cmd_params(test_params);
-
-                io_proxy.WriteAllLines(options.options_filename, options.get_options_ini_text());
+                svm_ldr.start_ldr(cts);
             }
 
-            if (bootstrap)
+            else if (cmd == cmd.ctl)
             {
-                if (options.cmd == cmd.ctl)
+                var options = new cmd_params();
+
+                if (options_filename_list.Count == 1)
                 {
-                    svm_ldr.start(options, cts);
+                    options = new cmd_params(io_proxy.ReadAllLines(options_filename_list.First()));
                 }
-                else
+
+                svm_ctl.feature_selection(options);
+            }
+
+            else if (cmd == cmd.wkr)
+            {
+                if (!string.IsNullOrWhiteSpace(input_file))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(options.cmd));
+                    var file_data = io_proxy.ReadAllLines(input_file, nameof(program), nameof(Main));
+
+                    var array_index = int.Parse(pbs_job_array_index);
+
+                    for (var i = 0; i < array_count; i++)
+                    {
+                        if (file_data.Length - 1 >= array_index + i)
+                        {
+                            options_filename_list.Add( /*io_proxy.convert_path*/(file_data[array_index + i]));
+                        }
+                    }
+
+                    options_filename_list = options_filename_list.Distinct().ToList();
+                }
+
+                foreach (var options_filename in options_filename_list)
+                {
+                    var options = new cmd_params();
+
+                    if (!string.IsNullOrWhiteSpace(options_filename))
+                    {
+                        var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
+
+                        options = new cmd_params(file_data);
+
+                        svm_wkr.inner_cross_validation(options);
+                    }
                 }
             }
-            else
-            {
-                switch (options.cmd)
-                {
-                    case cmd.ctl:
-                        svm_ctl.feature_selection(options);
-                        break;
-
-                    case cmd.wkr:
-                        svm_wkr.cross_validation(options);
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(options.cmd));
-                }
-            }
-            
-            sw_program.Stop();
-            
-            io_proxy.WriteLine($@"Exiting {(bootstrap?"bootstrap":"job")}: {options.cmd}. Elapsed: {sw_program.Elapsed.ToString()}", nameof(program), nameof(Main));
         }
 
     }
 }
+
+  
+

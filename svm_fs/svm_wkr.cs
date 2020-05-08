@@ -9,25 +9,33 @@ namespace svm_fs
 {
     internal static class svm_wkr
     {
-        internal static void cross_validation(cmd_params p)
+        internal static void inner_cross_validation(cmd_params p, bool use_cache = true)
         {
-            var use_cache = true;
-            var cached = true;
-
-            if (!use_cache || !io_proxy.is_file_available(p.test_predict_cm_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
-            //if (!use_cache || !io_proxy.is_file_available(p.test_predict_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
-            //if (!use_cache || !io_proxy.is_file_available(p.test_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
-            //if (!use_cache || !io_proxy.is_file_available(p.train_model_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
-            //if (!use_cache || (p.save_test_meta && !io_proxy.is_file_available(p.test_meta_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
-            //if (!use_cache || (p.inner_cv_folds > 1 && !io_proxy.is_file_available(p.train_grid_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
-
-            if (use_cache && cached)
+            if (use_cache)
             {
-                io_proxy.WriteLine($@"{nameof(svm_wkr)} Cache found. Exiting.");
-                //delete_temp_wkr_files(p);
-                return;
-            }
+                var cached = true;
 
+                var exists_test_predict_cm_filename = io_proxy.is_file_available(p.test_predict_cm_filename,
+                    nameof(svm_wkr), nameof(inner_cross_validation));
+
+               //if (!use_cache || !io_proxy.is_file_available(p.test_predict_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+                //if (!use_cache || !io_proxy.is_file_available(p.test_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+                //if (!use_cache || !io_proxy.is_file_available(p.train_model_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+                //if (!use_cache || (p.save_test_meta && !io_proxy.is_file_available(p.test_meta_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+                //if (!use_cache || (p.inner_cv_folds > 1 && !io_proxy.is_file_available(p.train_grid_filename, nameof(svm_wkr), nameof(cross_validation))) { cached = false; }
+
+                if (!exists_test_predict_cm_filename)
+                {
+                    cached = false;
+                }
+
+                if (cached)
+                {
+                    io_proxy.WriteLine($@"{nameof(svm_wkr)} Cache found. Exiting.");
+                    //delete_temp_wkr_files(p);
+                    return;
+                }
+            }
 
             var train_stdout_filename = "";
             var train_stderr_filename = "";
@@ -112,9 +120,9 @@ namespace svm_fs
             sw_train.Stop();
             var sw_train_dur = sw_train.ElapsedMilliseconds;
 
-            if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(train_result.stdout)) train_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(train_result)}.{nameof(train_result.stdout)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
-            if (!string.IsNullOrWhiteSpace(train_result.stderr)) train_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(train_result)}.{nameof(train_result.stderr)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(inner_cross_validation));
+            if (!string.IsNullOrWhiteSpace(train_result.stdout)) train_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(train_result)}.{nameof(train_result.stdout)}: {a}", nameof(svm_wkr), nameof(inner_cross_validation)));
+            if (!string.IsNullOrWhiteSpace(train_result.stderr)) train_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(train_result)}.{nameof(train_result.stderr)}: {a}", nameof(svm_wkr), nameof(inner_cross_validation)));
 
 
             // predict
@@ -133,9 +141,9 @@ namespace svm_fs
             sw_predict.Stop();
             var sw_predict_dur = sw_train.ElapsedMilliseconds;
 
-            if (!string.IsNullOrWhiteSpace(predict_result.cmd_line)) io_proxy.WriteLine(predict_result.cmd_line, nameof(svm_wkr), nameof(cross_validation));
-            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) predict_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(predict_result)}.{nameof(predict_result.stdout)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
-            if (!string.IsNullOrWhiteSpace(predict_result.stderr)) predict_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(predict_result)}.{nameof(predict_result.stderr)}: {a}", nameof(svm_wkr), nameof(cross_validation)));
+            if (!string.IsNullOrWhiteSpace(predict_result.cmd_line)) io_proxy.WriteLine(predict_result.cmd_line, nameof(svm_wkr), nameof(inner_cross_validation));
+            if (!string.IsNullOrWhiteSpace(predict_result.stdout)) predict_result.stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(predict_result)}.{nameof(predict_result.stdout)}: {a}", nameof(svm_wkr), nameof(inner_cross_validation)));
+            if (!string.IsNullOrWhiteSpace(predict_result.stderr)) predict_result.stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(predict_result)}.{nameof(predict_result.stderr)}: {a}", nameof(svm_wkr), nameof(inner_cross_validation)));
 
 
             var prediction_file_data = performance_measure.load_prediction_file(p.test_filename, p.save_test_meta ? p.test_meta_filename : null, p.test_predict_filename, p.output_threshold_adjustment_performance);

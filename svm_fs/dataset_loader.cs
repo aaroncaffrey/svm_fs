@@ -99,26 +99,26 @@ namespace svm_fs
             var table_member = new List<string>();
             var table_perspective = new List<string>();
 
-            dataset_folder = io_proxy.convert_path(dataset_folder);
+            //dataset_folder = /*io_proxy.convert_path*/(dataset_folder);
 
             // formatting to always show sign :+#;-#;+0
 
             var dataset_csv_files = new List<string>()
             {
-                io_proxy.convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                io_proxy.convert_path(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                /*io_proxy.convert_path*/(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                /*io_proxy.convert_path*/(Path.Combine(dataset_folder, $@"f_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_header_csv_files = new List<string>()
             {
-                io_proxy.convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                io_proxy.convert_path(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                /*io_proxy.convert_path*/(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                /*io_proxy.convert_path*/(Path.Combine(dataset_folder, $@"h_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
             var dataset_comment_csv_files = new List<string>
             {
-                io_proxy.convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
-                io_proxy.convert_path(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
+                /*io_proxy.convert_path*/(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==positive_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == positive_class_id).class_name}).csv")),
+                /*io_proxy.convert_path*/(Path.Combine(dataset_folder, $@"c_{file_tag}_({class_names.First(a=>a.class_id==negative_class_id).class_id:+#;-#;+0})_({class_names.First(a => a.class_id == negative_class_id).class_name}).csv")),
             };
 
 

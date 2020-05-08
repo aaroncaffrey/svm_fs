@@ -11,13 +11,25 @@ namespace svm_fs
 {
     internal static class io_proxy
     {
+        internal static void log_exception(Exception e, string msg, string module_name, string function_name)
+        {
+            do
+            {
+                io_proxy.WriteLine(
+                    $@"Error: ""{msg}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
+                    module_name, function_name);
+
+                e = e?.InnerException;
+            } while (e != null);
+        }
+
         internal static bool is_file_available(string filename, string module_name = "", string function_name = "")
         {
             try
             {
-                filename = io_proxy.convert_path(filename);
+                //filename = /*io_proxy.convert_path*/(filename);
 
-                if (string.IsNullOrWhiteSpace(filename)) return false;
+                if (String.IsNullOrWhiteSpace(filename)) return false;
 
                 if (!io_proxy.Exists(filename, nameof(svm_ctl), nameof(is_file_available))) return false;
 
@@ -32,21 +44,21 @@ namespace svm_fs
             }
             catch (IOException e)
             {
-                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_available));
+                log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_available));
 
                 return false;
             }
             catch (Exception e)
             {
-                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_available));
+                log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(is_file_available));
 
                 return false;
             }
         }
 
-        internal static string convert_path(string path)//, bool temp_file = false)
-        {
-            return path;
+        //internal static string convert_path(string path)//, bool temp_file = false)
+        //{
+          //  return path;
             /*
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -136,7 +148,7 @@ namespace svm_fs
             }
 
             return path;*/
-        }
+        //}
 
         private static readonly object _console_lock = new object();
         private static readonly object _log_lock = new object();
@@ -165,7 +177,7 @@ namespace svm_fs
                     Console.WriteLine(s);
                 }
 
-                if (!string.IsNullOrEmpty(log_file))
+                if (!String.IsNullOrEmpty(log_file))
                 {
                     lock (_log_lock)
                     {
@@ -190,7 +202,7 @@ namespace svm_fs
 
         internal static bool Exists(string filename, string module_name = "", string function_name = "")
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
 
             var exists = File.Exists(filename);
             
@@ -201,7 +213,7 @@ namespace svm_fs
             
         internal static void Delete(string filename, string module_name = "", string function_name = "")
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
 
             io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
 
@@ -212,7 +224,7 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
+                log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
 
                 return;
             }
@@ -222,8 +234,8 @@ namespace svm_fs
 
         internal static void Copy(string source, string dest, bool overwrite = true, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            source = convert_path(source);
-            dest = convert_path(dest);
+            //source = /*convert_path*/(source);
+            //dest = /*convert_path*/(dest);
 
             var tries = 0;
 
@@ -243,7 +255,7 @@ namespace svm_fs
                 catch (Exception e1)
                 {
 
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {source}, {dest}, {overwrite} )", nameof(io_proxy), nameof(Copy));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {source}, {dest}, {overwrite} )", nameof(io_proxy), nameof(Copy));
 
 
                     if (tries >= max_tries) throw;
@@ -254,7 +266,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {source}, {dest}, {overwrite} )", nameof(io_proxy), nameof(Copy));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {source}, {dest}, {overwrite} )", nameof(io_proxy), nameof(Copy));
 
                     }
                 }
@@ -267,13 +279,13 @@ namespace svm_fs
             {
 
 
-                filename = convert_path(filename);
+                //filename = /*convert_path*/(filename);
 
                 //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
 
                 var dir = Path.GetDirectoryName(filename);
 
-                if (!string.IsNullOrWhiteSpace(dir))
+                if (!String.IsNullOrWhiteSpace(dir))
                 {
                     Directory.CreateDirectory(dir);
                 }
@@ -284,13 +296,13 @@ namespace svm_fs
             }
             catch (Exception e)
             {
-                svm_ldr.log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
+                log_exception(e, $@"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(CreateDirectory));
             }
         }
 
         internal static string[] ReadAllLines(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
             
 
             int tries = 0;
@@ -309,7 +321,7 @@ namespace svm_fs
                 }
                 catch (Exception e1)
                 {
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -319,7 +331,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
                     }
                 }
             }
@@ -329,7 +341,7 @@ namespace svm_fs
 
         internal static string ReadAllText(string filename, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
 
             int tries = 0;
 
@@ -347,7 +359,7 @@ namespace svm_fs
                 }
                 catch (Exception e1)
                 {
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -357,7 +369,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
 
                     }
                 }
@@ -367,7 +379,7 @@ namespace svm_fs
 
         internal static void WriteAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -386,7 +398,7 @@ namespace svm_fs
                 }
                 catch (Exception e1)
                 {
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllLines));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -396,7 +408,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllLines));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllLines));
                     }
                 }
             }
@@ -404,7 +416,7 @@ namespace svm_fs
 
         internal static void AppendAllLines(string filename, IEnumerable<string> lines, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
             
             CreateDirectory(filename, module_name, function_name);
 
@@ -421,7 +433,7 @@ namespace svm_fs
                 }
                 catch (Exception e1)
                 {
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
 
                     if (tries >= max_tries) throw;
 
@@ -431,7 +443,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
                     }
                 }
             }
@@ -439,7 +451,7 @@ namespace svm_fs
 
         internal static void AppendAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -456,7 +468,7 @@ namespace svm_fs
                 }
                 catch (Exception e1)
                 {
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
 
                     if (tries >= max_tries) throw;
 
@@ -466,7 +478,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
                     }
                 }
             }
@@ -474,7 +486,7 @@ namespace svm_fs
 
         internal static void WriteAllText(string filename, string text, string module_name = "", string function_name = "", int max_tries = 1_000_000)
         {
-            filename = convert_path(filename);
+            //filename = /*convert_path*/(filename);
 
             CreateDirectory(filename, module_name, function_name);
 
@@ -492,7 +504,7 @@ namespace svm_fs
                 catch (Exception e1)
                 {
 
-                    svm_ldr.log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllText));
+                    log_exception(e1, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllText));
 
 
                     if (tries >= max_tries) throw;
@@ -503,7 +515,7 @@ namespace svm_fs
                     }
                     catch (Exception e2)
                     {
-                        svm_ldr.log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllText));
+                        log_exception(e2, $@"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(WriteAllText));
                     }
                 }
             }
