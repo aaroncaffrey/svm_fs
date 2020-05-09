@@ -750,7 +750,7 @@ namespace svm_fs
                     stderr_file = /*io_proxy.convert_path*/(pbs_params.program_ctl_stderr_filename);
 
                     run_line =
-                        $@"{pbs_params.program_runtime} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {pbs_params.env_arrayincr} -of {input_file}";
+                        $@"{pbs_params.program_runtime} -cm {cmd.ctl} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {pbs_params.env_arrayincr} -of {input_file}";
                 }
                 else if (cmd == cmd.wkr)
                 {
@@ -788,7 +788,7 @@ namespace svm_fs
                     stderr_file = pbs_params.program_wkr_stderr_filename;
 
                     run_line =
-                        $@"{pbs_params.program_runtime} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {pbs_params.env_arrayincr} -in {input_file}";
+                        $@"{pbs_params.program_runtime} -cm {cmd.wkr} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {pbs_params.env_arrayincr} -in {input_file}";
 
                 }
 
