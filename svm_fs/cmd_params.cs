@@ -731,21 +731,27 @@ nameof(train_predict_filename),
         {
             var defaults = !skip_defaults ? null : new cmd_params();
 
+            // add to results list only if not the default value
+
+            // list null+null = skip
+            // list null+notnull = add
+            // list notnull+notnull = compare
+
             var result = new List<(string key, string value)>();
             if (!skip_defaults || defaults.alphabet != this.alphabet) result.Add((nameof(alphabet), alphabet));
             if (!skip_defaults || defaults.category != this.category) result.Add((nameof(category), category));
-            if (!skip_defaults || !defaults.class_names.SequenceEqual(this.class_names)) result.Add((nameof(class_names), string.Join(';', class_names == null ? new List<string>() : class_names?.Select(a => $"{a.class_id}:{a.class_name}").ToList())));
-            if (!skip_defaults || !defaults.class_sizes.SequenceEqual(this.class_sizes)) result.Add((nameof(class_sizes), string.Join(';', class_sizes == null ? new List<string>() : class_sizes?.Select(a => $"{a.class_id}:{a.class_size}").ToList())));
-            if (!skip_defaults || !defaults.class_testing_sizes.SequenceEqual(this.class_testing_sizes)) result.Add((nameof(class_testing_sizes), string.Join(';', class_testing_sizes == null ? new List<string>() : class_testing_sizes?.Select(a => $"{a.class_id}:{a.class_testing_size}").ToList())));
-            if (!skip_defaults || !defaults.class_training_sizes.SequenceEqual(this.class_training_sizes)) result.Add((nameof(class_training_sizes), string.Join(';', class_training_sizes == null ? new List<string>() : class_training_sizes?.Select(a => $"{a.class_id}:{a.class_training_size}").ToList())));
-            if (!skip_defaults || !defaults.class_weights.SequenceEqual(this.class_weights)) result.Add((nameof(class_weights), string.Join(';', class_weights == null ? new List<string>() : class_weights?.Select(a => $"{a.class_id}:{a.class_weight}").ToList())));
+            if (!skip_defaults || ((defaults.class_names == null) ^ (this.class_names == null)) || (defaults.class_names != null && this.class_names != null && !defaults.class_names.SequenceEqual(this.class_names))) result.Add((nameof(class_names), string.Join(';', class_names == null ? new List<string>() : class_names?.Select(a => $"{a.class_id}:{a.class_name}").ToList())));
+            if (!skip_defaults || ((defaults.class_sizes == null) ^ (this.class_sizes == null)) || (defaults.class_sizes != null && this.class_sizes != null && !defaults.class_sizes.SequenceEqual(this.class_sizes))) result.Add((nameof(class_sizes), string.Join(';', class_sizes == null ? new List<string>() : class_sizes?.Select(a => $"{a.class_id}:{a.class_size}").ToList())));
+            if (!skip_defaults || ((defaults.class_testing_sizes == null) ^ (this.class_testing_sizes == null)) || (defaults.class_testing_sizes != null && this.class_testing_sizes != null && !defaults.class_testing_sizes.SequenceEqual(this.class_testing_sizes))) result.Add((nameof(class_testing_sizes), string.Join(';', class_testing_sizes == null ? new List<string>() : class_testing_sizes?.Select(a => $"{a.class_id}:{a.class_testing_size}").ToList())));
+            if (!skip_defaults || ((defaults.class_training_sizes == null) ^ (this.class_training_sizes == null)) || (defaults.class_training_sizes != null && this.class_training_sizes != null && !defaults.class_training_sizes.SequenceEqual(this.class_training_sizes))) result.Add((nameof(class_training_sizes), string.Join(';', class_training_sizes == null ? new List<string>() : class_training_sizes?.Select(a => $"{a.class_id}:{a.class_training_size}").ToList())));
+            if (!skip_defaults || ((defaults.class_weights == null) ^ (this.class_weights == null)) || (defaults.class_weights != null && this.class_weights != null && !defaults.class_weights.SequenceEqual(this.class_weights))) result.Add((nameof(class_weights), string.Join(';', class_weights == null ? new List<string>() : class_weights?.Select(a => $"{a.class_id}:{a.class_weight}").ToList())));
             if (!skip_defaults || defaults.cmd != this.cmd) result.Add((nameof(cmd), cmd.ToString()));
             if (!skip_defaults || defaults.dataset_dir != this.dataset_dir) result.Add((nameof(dataset_dir), dataset_dir));
             if (!skip_defaults || defaults.dimension != this.dimension) result.Add((nameof(dimension), dimension));
             if (!skip_defaults || defaults.experiment_name != this.experiment_name) result.Add((nameof(experiment_name), experiment_name));
             if (!skip_defaults || defaults.feature_id != this.feature_id) result.Add((nameof(feature_id), feature_id.ToString(CultureInfo.InvariantCulture)));
-            if (!skip_defaults || !defaults.feature_selection_classes.SequenceEqual(this.feature_selection_classes)) result.Add((nameof(feature_selection_classes), string.Join(";", feature_selection_classes == null ? new List<int>() : feature_selection_classes)));
-            if (!skip_defaults || !defaults.feature_selection_metrics.SequenceEqual(this.feature_selection_metrics)) result.Add((nameof(feature_selection_metrics), string.Join(";", feature_selection_metrics == null ? new List<string>() : feature_selection_metrics)));
+            if (!skip_defaults || ((defaults.feature_selection_classes == null) ^ (this.feature_selection_classes == null)) || (defaults.feature_selection_classes != null && this.feature_selection_classes != null && !defaults.feature_selection_classes.SequenceEqual(this.feature_selection_classes))) result.Add((nameof(feature_selection_classes), string.Join(";", feature_selection_classes == null ? new List<int>() : feature_selection_classes)));
+            if (!skip_defaults || ((defaults.feature_selection_metrics == null) ^ (this.feature_selection_metrics == null)) || (defaults.feature_selection_metrics != null && this.feature_selection_metrics != null && !defaults.feature_selection_metrics.SequenceEqual(this.feature_selection_metrics))) result.Add((nameof(feature_selection_metrics), string.Join(";", feature_selection_metrics == null ? new List<string>() : feature_selection_metrics)));
             if (!skip_defaults || defaults.forward != this.forward) result.Add((nameof(forward), forward.ToString(CultureInfo.InvariantCulture)));
             if (!skip_defaults || defaults.grid_coef0_exp_begin != this.grid_coef0_exp_begin) result.Add((nameof(grid_coef0_exp_begin), grid_coef0_exp_begin?.ToString("G17",CultureInfo.InvariantCulture)));
             if (!skip_defaults || defaults.grid_coef0_exp_end != this.grid_coef0_exp_end) result.Add((nameof(grid_coef0_exp_end), grid_coef0_exp_end?.ToString("G17",CultureInfo.InvariantCulture)));

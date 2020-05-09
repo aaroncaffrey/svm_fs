@@ -73,6 +73,13 @@ namespace svm_fs
 
         internal static void Main(string[] args)
         {
+            //var x = new cmd_params();
+            //var a =x.get_options(true);
+            //var b = x.get_options(false);
+            //var c = x.get_options_ini_text(true);
+            //var d = x.get_options_ini_text(false);
+            //return;
+
             io_proxy.WriteLine(Environment.CommandLine);
 
             var cts = new CancellationTokenSource();
