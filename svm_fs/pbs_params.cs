@@ -23,7 +23,7 @@ namespace svm_fs
         internal static string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout";
 
         internal static string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        internal static string pbs_ctl_jobname = $@"svm_fs_ctl";
+        //internal static string pbs_ctl_jobname = $@"svm_fs_ctl";
         internal static string pbs_ctl_mail_addr = ""; // 
         internal static string pbs_ctl_mail_opt = "n"; // abe| n
         internal static string pbs_ctl_mem = "192GB";
@@ -35,7 +35,7 @@ namespace svm_fs
         internal static int pbs_ctl_ppn = 64;
                  
         internal static string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        internal static string pbs_wkr_jobname = $@"svm_fs_wkr";
+        //internal static string pbs_wkr_jobname = $@"svm_fs_wkr";
         internal static string pbs_wkr_mail_addr = ""; // 
         internal static string pbs_wkr_mail_opt = "n"; // abe|n
         internal static string pbs_wkr_mem = null;

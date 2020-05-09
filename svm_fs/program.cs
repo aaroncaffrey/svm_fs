@@ -67,7 +67,7 @@ namespace svm_fs
      
         public static void set_gc_mode()
         {
-            //GCSettings.LatencyMode = GCLatencyMode.Batch;
+            GCSettings.LatencyMode = GCLatencyMode.Batch;
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
         }
 
@@ -151,54 +151,63 @@ namespace svm_fs
                 array_count = int.Parse(pbs_job_array_count);
             }
 
-            if (cmd == cmd.ldr)
+            switch (cmd)
             {
-                svm_ldr.start_ldr(cts);
-            }
-
-            else if (cmd == cmd.ctl)
-            {
-                var options = new cmd_params();
-
-                if (options_filename_list.Count == 1)
+                case cmd.wkr:
                 {
-                    options = new cmd_params(io_proxy.ReadAllLines(options_filename_list.First()));
-                }
-
-                svm_ctl.feature_selection(options);
-            }
-
-            else if (cmd == cmd.wkr)
-            {
-                if (!string.IsNullOrWhiteSpace(input_file))
-                {
-                    var file_data = io_proxy.ReadAllLines(input_file, nameof(program), nameof(Main));
-
-                    var array_index = int.Parse(pbs_job_array_index);
-
-                    for (var i = 0; i < array_count; i++)
+                    if (!string.IsNullOrWhiteSpace(input_file))
                     {
-                        if (file_data.Length - 1 >= array_index + i)
+                        var file_data = io_proxy.ReadAllLines(input_file, nameof(program), nameof(Main));
+
+                        var array_index = int.Parse(pbs_job_array_index);
+
+                        for (var i = 0; i < array_count; i++)
                         {
-                            options_filename_list.Add( /*io_proxy.convert_path*/(file_data[array_index + i]));
+                            if (file_data.Length - 1 >= array_index + i)
+                            {
+                                options_filename_list.Add( /*io_proxy.convert_path*/(file_data[array_index + i]));
+                            }
+                        }
+
+                        options_filename_list = options_filename_list.Distinct().ToList();
+                    }
+
+                    foreach (var options_filename in options_filename_list)
+                    {
+                        var options = new cmd_params();
+
+                        if (!string.IsNullOrWhiteSpace(options_filename))
+                        {
+                            var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
+
+                            options = new cmd_params(file_data);
+
+                            svm_wkr.inner_cross_validation(options);
                         }
                     }
 
-                    options_filename_list = options_filename_list.Distinct().ToList();
+                    break;
                 }
 
-                foreach (var options_filename in options_filename_list)
+
+                case cmd.ctl:
                 {
                     var options = new cmd_params();
 
-                    if (!string.IsNullOrWhiteSpace(options_filename))
+                    if (options_filename_list.Count == 1)
                     {
-                        var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
-
-                        options = new cmd_params(file_data);
-
-                        svm_wkr.inner_cross_validation(options);
+                        options = new cmd_params(io_proxy.ReadAllLines(options_filename_list.First()));
                     }
+
+                    svm_ctl.feature_selection(options);
+                    break;
+                }
+
+
+                case cmd.ldr:
+                {
+                    svm_ldr.start_ldr(cts);
+                    break;
                 }
             }
         }
