@@ -719,7 +719,7 @@ namespace svm_fs
                     ctl_pbs_script_index++;
 
                     pbs_params.pbs_ctl_jobname = $"{nameof(svm_ctl)}_{ctl_pbs_script_index}";
-                    pbs_script_filename = Path.Combine(pbs_params.pbs_ctl_execution_directory, pbs_params.pbs_ctl_jobname);
+                    pbs_script_filename = Path.Combine(pbs_params.pbs_ctl_execution_directory, $"{pbs_params.pbs_ctl_jobname}.pbs");
 
                     if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_walltime))
                         pbs_script_lines.Add($@"#PBS -l walltime={pbs_params.pbs_ctl_walltime}");
@@ -757,7 +757,7 @@ namespace svm_fs
                     wkr_pbs_script_index++;
 
                     pbs_params.pbs_wkr_jobname = $"{nameof(svm_wkr)}_{wkr_pbs_script_index}";
-                    pbs_script_filename = Path.Combine(pbs_params.pbs_wkr_execution_directory, pbs_params.pbs_wkr_jobname);
+                    pbs_script_filename = Path.Combine(pbs_params.pbs_wkr_execution_directory, $"{pbs_params.pbs_wkr_jobname}.pbs");
 
                     if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_walltime))
                         pbs_script_lines.Add($@"#PBS -l walltime={pbs_params.pbs_wkr_walltime}");

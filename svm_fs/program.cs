@@ -73,6 +73,8 @@ namespace svm_fs
 
         internal static void Main(string[] args)
         {
+            io_proxy.WriteLine(Environment.CommandLine);
+
             var cts = new CancellationTokenSource();
             close_notifications(cts);
             check_x64();
