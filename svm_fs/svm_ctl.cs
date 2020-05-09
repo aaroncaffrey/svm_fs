@@ -621,8 +621,24 @@ namespace svm_fs
                     var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
                     group_tasks1.Clear();
 
+                    var wkr_parameters_list = jobs_group_level_part1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
+
+                    var job_list_filename = Path.Combine(pbs_params.pbs_wkr_submission_directory, $@"job_list_{iteration_index}.txt");
+                    io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
+
                     var wait_file_list = jobs_group_level_part1.Where(a=> a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
                     wait_for_results(wait_file_list);
+                    io_proxy.Delete(job_list_filename);
+
+
+
+
+
+
+
+
+
+
 
                     io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
                     io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
@@ -961,16 +977,22 @@ namespace svm_fs
             wait_tasks(group_tasks1.ToArray<Task>(), nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
             var results1 = group_tasks1.Select(a => a.Result).ToList();
             group_tasks1.Clear();
-            
-            
+
+
             var wkr_parameters_list = results1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
             //var wkr_parameters_list2 = results1.SelectMany(a => a.rets.Select(b=>b.cmd_params.options_filename).ToList()).ToList();
-            io_proxy.WriteAllLines($@"job_list_{iteration_index}.txt", wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
 
+            var job_list_filename = Path.Combine(pbs_params.pbs_wkr_submission_directory, $@"job_list_{iteration_index}.txt");
+            io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
+            
 
             var wait_file_list = results1.Where(a => a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
             wait_for_results(wait_file_list);
-            
+            io_proxy.Delete(job_list_filename);
+
+            // todo: delete other files
+            // todo: add this code to the other
+
             for (var _i = 0; _i < results1.Count; _i++)
             {
                 var i = _i;
@@ -1915,10 +1937,10 @@ namespace svm_fs
             to_merge.Add((true, p.libsvm_train_probability_estimates, null, merge_cmd_params.test_predict_filename, wkr_cmd_params.test_predict_filename, null));
             to_merge.Add((true, true, null, merge_cmd_params.test_predict_cm_filename, wkr_cmd_params.test_predict_cm_filename, "class_id"));
 
-            if (!cached)
-            {
-                submit_pbs_job(wkr_cmd_params);
-            }
+            //if (!cached)
+            //{
+            //    submit_pbs_job(wkr_cmd_params);
+            //}
 
             var ret = (
                        wait_file_list,
@@ -1930,21 +1952,21 @@ namespace svm_fs
             return ret;
         }
 
-        internal static void submit_pbs_job(cmd_params cmd_params) //(string jobs_fn)
-        {
-            var sub_dir = "";
-
-            if (cmd_params.cmd == cmd.ctl) { sub_dir = pbs_params.pbs_ctl_submission_directory; }
-            else if (cmd_params.cmd == cmd.wkr) { sub_dir = pbs_params.pbs_wkr_submission_directory; }
-
-            var source = cmd_params.options_filename;
-            var dest = Path.Combine(Path.GetDirectoryName(sub_dir), Path.GetFileName(cmd_params.options_filename));
-
-            if (source != dest)
-            {
-                io_proxy.Copy(source, dest, true, nameof(svm_ctl), nameof(submit_pbs_job));
-            }
-
+        //internal static void submit_pbs_job(cmd_params cmd_params) //(string jobs_fn)
+        //{
+        //    var sub_dir = "";
+        //
+        //    if (cmd_params.cmd == cmd.ctl) { sub_dir = pbs_params.pbs_ctl_submission_directory; }
+        //    else if (cmd_params.cmd == cmd.wkr) { sub_dir = pbs_params.pbs_wkr_submission_directory; }
+        //
+        //    var source = cmd_params.options_filename;
+        //    var dest = Path.Combine(Path.GetDirectoryName(sub_dir), Path.GetFileName(cmd_params.options_filename));
+        //
+        //    if (source != dest)
+        //    {
+        //        io_proxy.Copy(source, dest, true, nameof(svm_ctl), nameof(submit_pbs_job));
+        //    }
+        //
             //var psi = new ProcessStartInfo()
             //{
             //    FileName = jobs_fn,
@@ -1958,7 +1980,7 @@ namespace svm_fs
             //};
             //
             //Process.Start(psi);
-        }
+        //}
 
         internal static void update_cm(cmd_params p, List<performance_measure.confusion_matrix> cm_list)
         {

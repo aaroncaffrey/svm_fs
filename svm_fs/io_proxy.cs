@@ -19,7 +19,7 @@ namespace svm_fs
                     $@"Error: ""{msg}"" ""{e.GetType().ToString()}"" ""{e.Source}"" ""{e.Message}"" ""{e.StackTrace}""",
                     module_name, function_name);
 
-                e = e?.InnerException;
+                e = e != e?.InnerException ? e?.InnerException : null;
             } while (e != null);
         }
 
@@ -206,7 +206,7 @@ namespace svm_fs
 
             var exists = File.Exists(filename);
             
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) = {exists}", nameof(io_proxy), nameof(Exists));
+            //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) = {exists}", nameof(io_proxy), nameof(Exists));
 
             return exists;
         }
