@@ -482,7 +482,7 @@ namespace svm_fs
                 var psi = new ProcessStartInfo()
                 {
                     FileName = sub_cmd,
-                    Arguments = array ? $@"-t {array_start}-{array_end}:{array_increment} {pbs_script_filename}" : "",
+                    Arguments = (array ? $@"-t {array_start}-{array_end}:{array_increment} " : "") + pbs_script_filename,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
