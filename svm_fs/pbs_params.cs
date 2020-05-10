@@ -4,48 +4,66 @@ using System.Text;
 
 namespace svm_fs
 {
-    internal static class pbs_params
+    internal class pbs_params
     {
         internal const string svm_fs_home = "/mmfs1/data/scratch/k1040015/svm_fs";
         internal const string user_home = "/home/k1040015";
 
-        internal static string env_jobid = $@"${{JOBID}}${{PBS_JOBID}}${{MOAB_JOBID}}";
-        internal static string env_jobname = $@"${{JOBNAME}}${{PBS_JOBNAME}}${{MOAB_JOBNAME}}";
-        internal static string env_arrayindex = $@"${{PBS_ARRAYID}}${{MOAB_JOBARRAYINDEX}}";
-        internal static int env_arrayincr = 1;
-
-        internal static string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-
-        internal static string program_ctl_stderr_filename = $@"{nameof(svm_ctl)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stderr";
-        internal static string program_ctl_stdout_filename = $@"{nameof(svm_ctl)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout";
+        internal const string env_jobid = @"${{JOBID}}${{PBS_JOBID}}${{MOAB_JOBID}}";
+        internal const string env_jobname = @"${{JOBNAME}}${{PBS_JOBNAME}}${{MOAB_JOBNAME}}";
+        internal const string env_arrayindex = @"${{PBS_ARRAYID}}${{MOAB_JOBARRAYINDEX}}";
         
-        internal static string program_wkr_stderr_filename = $@"{nameof(svm_wkr)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stderr";
-        internal static string program_wkr_stdout_filename = $@"{nameof(svm_wkr)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout";
+        internal string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+      
+        internal string pbs_execution_directory = "";
+        internal string pbs_jobname = "";
+        internal string pbs_mail_addr = "";
+        internal string pbs_mail_opt = "n";
+        internal string pbs_mem = null;
+        internal string pbs_stdout_filename = $@"{nameof(svm_fs)}_%J_%I.pbs.stdout";
+        internal string pbs_stderr_filename = $@"{nameof(svm_fs)}_%J_%I.pbs.stderr";
+        internal TimeSpan pbs_walltime = TimeSpan.FromSeconds(0);
+        internal int pbs_nodes = 0;
+        internal int pbs_ppn = 0;
+        internal string program_stdout_filename = $@"{nameof(svm_fs)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout";
+        internal string program_stderr_filename = $@"{nameof(svm_fs)}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stderr";
 
-        internal static string pbs_ctl_execution_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        //internal static string pbs_ctl_jobname = $@"svm_fs_ctl";
-        internal static string pbs_ctl_mail_addr = ""; // 
-        internal static string pbs_ctl_mail_opt = "n"; // abe| n
-        internal static string pbs_ctl_mem = "192GB";
-        internal static string pbs_ctl_stderr_filename = $@"{nameof(svm_ctl)}_%J_%I.pbs.stderr";
-        internal static string pbs_ctl_stdout_filename = $@"{nameof(svm_ctl)}_%J_%I.pbs.stdout";
-        internal static string pbs_ctl_submission_directory = $@"{svm_fs_home}/pbs_ctl_sub/";
-        internal static string pbs_ctl_walltime = "240:00:00";
-        internal static int pbs_ctl_nodes = 1;
-        internal static int pbs_ctl_ppn = 64;
-                 
-        internal static string pbs_wkr_execution_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        //internal static string pbs_wkr_jobname = $@"svm_fs_wkr";
-        internal static string pbs_wkr_mail_addr = ""; // 
-        internal static string pbs_wkr_mail_opt = "n"; // abe|n
-        internal static string pbs_wkr_mem = null;
-        internal static string pbs_wkr_stderr_filename = $@"{nameof(svm_wkr)}_%J_%I.pbs.stderr";
-        internal static string pbs_wkr_stdout_filename = $@"{nameof(svm_wkr)}_%J_%I.pbs.stdout";
-        internal static string pbs_wkr_submission_directory = $@"{svm_fs_home}/pbs_wkr_sub/";
-        internal static string pbs_wkr_walltime = "0:30:00";
-        internal static int pbs_wkr_nodes = 1;
-        internal static int pbs_wkr_ppn = 16;
+        public static pbs_params get_default_ctl_values()
+        {
+            return new pbs_params()
+            {
+                pbs_execution_directory = $@"{svm_fs_home}/pbs_{cmd.ctl}_sub/",
+                pbs_jobname = $@"{nameof(svm_fs)}_{cmd.ctl}",
+                pbs_mail_addr = "",
+                pbs_mail_opt = "n",
+                pbs_mem = null,
+                pbs_stdout_filename = $"{nameof(svm_fs)}_{cmd.ctl}_%J_%I.pbs.stdout",
+                pbs_stderr_filename = $"{nameof(svm_fs)}_{cmd.ctl}_%J_%I.pbs.stderr",
+                pbs_walltime = TimeSpan.FromHours(240), //"240:00:00"
+                pbs_nodes = 1,
+                pbs_ppn = 64,
+                program_stdout_filename = $@"{nameof(svm_fs)}_{cmd.ctl}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout",
+                program_stderr_filename = $@"{nameof(svm_fs)}_{cmd.ctl}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stderr",
+            };
+        }
 
-
+        public static pbs_params get_default_wkr_values()
+        {
+            return new pbs_params()
+            {
+                pbs_execution_directory = $@"{svm_fs_home}/pbs_{cmd.wkr}_sub/",
+                pbs_jobname = $@"{nameof(svm_fs)}_{cmd.wkr}",
+                pbs_mail_addr = "",
+                pbs_mail_opt = "n",
+                pbs_mem = null,
+                pbs_stdout_filename = $"{nameof(svm_fs)}_{cmd.wkr}_%J_%I.pbs.stdout",
+                pbs_stderr_filename = $"{nameof(svm_fs)}_{cmd.wkr}_%J_%I.pbs.stderr",
+                pbs_walltime = TimeSpan.FromMinutes(30), //"00:30:00",
+                pbs_nodes = 1,
+                pbs_ppn = 16,
+                program_stdout_filename = $@"{nameof(svm_fs)}_{cmd.wkr}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout",
+                program_stderr_filename = $@"{nameof(svm_fs)}_{cmd.wkr}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stderr",
+            };
+        }
     }
 }

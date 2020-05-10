@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime;
 using System.Runtime.Loader;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace svm_fs
 {
@@ -172,8 +173,11 @@ namespace svm_fs
                         options_filename_list = options_filename_list.Distinct().ToList();
                     }
 
-                    foreach (var options_filename in options_filename_list)
+                    //foreach (var options_filename in options_filename_list)
+                    Parallel.For(0, options_filename_list.Count, options_filename_index =>
                     {
+                        var options_filename = options_filename_list[options_filename_index];
+                    
                         var options = new cmd_params();
 
                         if (!string.IsNullOrWhiteSpace(options_filename))
@@ -184,7 +188,7 @@ namespace svm_fs
 
                             svm_wkr.inner_cross_validation(options);
                         }
-                    }
+                    });
 
                     break;
                 }

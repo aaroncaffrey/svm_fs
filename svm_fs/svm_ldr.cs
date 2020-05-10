@@ -181,7 +181,7 @@ namespace svm_fs
 
             //var pbs_script_filename = Path.Combine(pbs_params.pbs_ctl_submission_directory, "svm_ctl.pbs");
 
-            var pbs_script_filename = make_pbs_script(launch_options_file, cmd.ctl, true);
+            var pbs_script_filename = make_pbs_script(launch_options_file, 0, cmd.ctl, null, true);
 
             var controller_job_id = msub(pbs_script_filename, false);
 
@@ -190,26 +190,22 @@ namespace svm_fs
 
         internal static void start_ldr(CancellationTokenSource cts, string controller_launch_options_filename = "")
         {
-            //var status_task = svm_ldr.status_task(cts);
-            //tasks.Add(controller_task);
-            //tasks.Add(status_task); 
-            //Task.WaitAll(tasks.ToArray<Task>());
+            io_proxy.WriteLine($@"Method: {nameof(start_ldr)}(CancellationTokenSource cts = ""{cts}"", string controller_launch_options_filename = ""{controller_launch_options_filename}"")", nameof(svm_ldr), nameof(start_ldr));
+            
+            io_proxy.CreateDirectory(pbs_params.get_default_ctl_values().pbs_execution_directory);
+            io_proxy.CreateDirectory(pbs_params.get_default_wkr_values().pbs_execution_directory);
 
-            //io_proxy.WriteLine($@"Method: {nameof(start_ldr)}(cmd_params controller_options = {controller_options.options_filename}, CancellationTokenSource cts = {cts})", nameof(svm_ldr), nameof(start_ldr));
-            io_proxy.WriteLine($@"Method: {nameof(start_ldr)}(CancellationTokenSource cts = {cts})", nameof(svm_ldr), nameof(start_ldr));
-
-            var job_ctl_submission_folder = /*io_proxy.convert_path*/(pbs_params.pbs_ctl_submission_directory);
-            var job_wkr_submission_folder = /*io_proxy.convert_path*/(pbs_params.pbs_wkr_submission_directory);
-            io_proxy.CreateDirectory(job_ctl_submission_folder);
-            io_proxy.CreateDirectory(job_wkr_submission_folder);
-
-            //start_ctl(controller_options);
+            // start controller
             start_ctl(controller_launch_options_filename);
 
-            var worker_jobs_task = svm_ldr.worker_jobs_task(job_wkr_submission_folder, cts.Token);
+            // listen for worker job requests
+            var worker_jobs_task = svm_ldr.worker_jobs_task(pbs_params.get_default_wkr_values().pbs_execution_directory, cts.Token);
 
+            
             var tasks = new List<Task>();
+            
             tasks.Add(worker_jobs_task);
+            
             svm_ctl.wait_tasks(tasks.ToArray<Task>(), nameof(svm_ldr), nameof(start_ldr));
         }
 
@@ -225,139 +221,157 @@ namespace svm_fs
             }
         }
 
-        internal static string read_job_id(string job_id_filename)
-        {
-            io_proxy.WriteLine($@"Method: read_job_id(string job_id_filename = {job_id_filename})", nameof(svm_ldr), nameof(read_job_id));
+        //internal static string read_job_id(string job_id_filename)
+        //{
+        //    io_proxy.WriteLine($@"Method: read_job_id(string job_id_filename = {job_id_filename})", nameof(svm_ldr), nameof(read_job_id));
+        //
+        //    var job_id = "";
+        //    //var job_id_filename = $"{options.options_filename}.job_id";
+        //    //job_id_filename = /*io_proxy.convert_path*/(job_id_filename);
+        //
+        //    if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(read_job_id)))
+        //    {
+        //        job_id = io_proxy.ReadAllText(job_id_filename).Trim().Split().LastOrDefault();
+        //    }
+        //
+        //    return job_id;
+        //}
 
-            var job_id = "";
-            //var job_id_filename = $"{options.options_filename}.job_id";
-            //job_id_filename = /*io_proxy.convert_path*/(job_id_filename);
-
-            if (io_proxy.is_file_available(job_id_filename, nameof(svm_ldr), nameof(read_job_id)))
-            {
-                job_id = io_proxy.ReadAllText(job_id_filename).Trim().Split().LastOrDefault();
-            }
-
-            return job_id;
-        }
-
-        internal static bool check_job_exists(string job_id)
-        {
-            io_proxy.WriteLine($@"Method: check_job_exists(string job_id = {job_id})", nameof(svm_ldr),
-                nameof(check_job_exists));
-
-            if (string.IsNullOrWhiteSpace(job_id))
-            {
-                return false;
-            }
-            // if job id is known, check the status is queued or running...
-
-            var psi = new ProcessStartInfo()
-            {
-                FileName = $@"checkjob",
-                Arguments = $@"{job_id}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-            };
-
-            var tries = 0;
-            var max_tries = 1_000_000;
-
-            while (tries < max_tries)
-            {
-                tries++;
-
-                try
-                {
-                    using (var process = Process.Start(psi))
-                    {
-                        if (process != null)
-                        {
-                            var stdout_task = process.StandardOutput.ReadToEndAsync();
-
-                            var stderr_task = process.StandardError.ReadToEndAsync();
-
-
-                            var exited = process.WaitForExit((int)(new TimeSpan(0, 0, 20)).TotalMilliseconds);
-
-                            var killed = false;
-                            if (!process.HasExited)
-                            {
-                                try
-                                {
-                                    process.Kill(true);
-                                    var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 0, 20)).TotalMilliseconds);
-                                }
-                                catch (Exception e)
-                                {
-                                    io_proxy.log_exception(e, "", nameof(svm_ldr), nameof(check_job_exists));
-                                }
-
-                                killed = true;
-                            }
-
-                            Task.WaitAll(new Task[] { stdout_task, stderr_task }, new TimeSpan(0, 0, 20));
-
-                            var stdout = stdout_task.IsCompleted ? stdout_task.Result : "";
-                            var stderr = stderr_task.IsCompleted ? stderr_task.Result : "";
-
-                            //if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(run_job)));
-                            if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(check_job_exists)));
-
-                            var exit_code = process.HasExited ? (int?)process.ExitCode : null;
-
-                            var stdout_lines = stdout?.Split(new char[] { '\r', '\n' });
-
-                            var state = stdout_lines?.FirstOrDefault(a => a.StartsWith("State:", StringComparison.InvariantCulture));
-
-                            if (exit_code == 0 && !string.IsNullOrWhiteSpace(stdout))
-                            {
-                                var job_exists = !string.IsNullOrWhiteSpace(state);
-
-                                return job_exists;
-                            }
-                            else if (killed)
-                            {
-                                io_proxy.WriteLine($"Error: Killed. Process did not respond. {Path.GetFileName(psi.FileName)}. Stdout: {stdout.Length}. Stderr: {stderr.Length}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
-
-                            }
-                            else
-                            {
-                                io_proxy.WriteLine($"Error: non zero exit code for process {Path.GetFileName(psi.FileName)}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
-                            }
-                        }
-                    }
-
-                    io_proxy.WriteLine($"Error: process could not start {Path.GetFileName(psi.FileName)}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
-                }
-                catch (Exception e)
-                {
-                    io_proxy.log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.check_job_exists));
-                }
-
-                try
-                {
-                    Task.Delay(new TimeSpan(0, 0, 15)).Wait();
-                }
-                catch (Exception e)
-                {
-                    io_proxy.log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.check_job_exists));
-                }
-            }
-
-            return false;
-        }
+        //internal static bool check_job_exists(string job_id)
+        //{
+        //    io_proxy.WriteLine($@"Method: check_job_exists(string job_id = {job_id})", nameof(svm_ldr),
+        //        nameof(check_job_exists));
+        //
+        //    if (string.IsNullOrWhiteSpace(job_id))
+        //    {
+        //        return false;
+        //    }
+        //    // if job id is known, check the status is queued or running...
+        //
+        //    var psi = new ProcessStartInfo()
+        //    {
+        //        FileName = $@"checkjob",
+        //        Arguments = $@"{job_id}",
+        //        RedirectStandardOutput = true,
+        //        RedirectStandardError = true,
+        //        RedirectStandardInput = true,
+        //    };
+        //
+        //    var tries = 0;
+        //    var max_tries = 1_000_000;
+        //
+        //    while (tries < max_tries)
+        //    {
+        //        tries++;
+        //
+        //        try
+        //        {
+        //            using (var process = Process.Start(psi))
+        //            {
+        //                if (process != null)
+        //                {
+        //                    var stdout_task = process.StandardOutput.ReadToEndAsync();
+        //
+        //                    var stderr_task = process.StandardError.ReadToEndAsync();
+        //
+        //
+        //                    var exited = process.WaitForExit((int)(new TimeSpan(0, 0, 20)).TotalMilliseconds);
+        //
+        //                    var killed = false;
+        //                    if (!process.HasExited)
+        //                    {
+        //                        try
+        //                        {
+        //                            process.Kill(true);
+        //                            var kill_exited = process.WaitForExit((int)(new TimeSpan(0, 0, 20)).TotalMilliseconds);
+        //                        }
+        //                        catch (Exception e)
+        //                        {
+        //                            io_proxy.log_exception(e, "", nameof(svm_ldr), nameof(check_job_exists));
+        //                        }
+        //
+        //                        killed = true;
+        //                    }
+        //
+        //                    Task.WaitAll(new Task[] { stdout_task, stderr_task }, new TimeSpan(0, 0, 20));
+        //
+        //                    var stdout = stdout_task.IsCompleted ? stdout_task.Result : "";
+        //                    var stderr = stderr_task.IsCompleted ? stderr_task.Result : "";
+        //
+        //                    //if (!string.IsNullOrWhiteSpace(stdout)) stdout.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stdout)}: {a}", nameof(svm_ldr), nameof(check_job_exists)));
+        //                    if (!string.IsNullOrWhiteSpace(stderr)) stderr.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList().ForEach(a => io_proxy.WriteLine($@"{nameof(stderr)}: {a}", nameof(svm_ldr), nameof(check_job_exists)));
+        //
+        //                    var exit_code = process.HasExited ? (int?)process.ExitCode : null;
+        //
+        //                    var stdout_lines = stdout?.Split(new char[] { '\r', '\n' });
+        //
+        //                    var state = stdout_lines?.FirstOrDefault(a => a.StartsWith("State:", StringComparison.InvariantCulture));
+        //
+        //                    if (exit_code == 0 && !string.IsNullOrWhiteSpace(stdout))
+        //                    {
+        //                        var job_exists = !string.IsNullOrWhiteSpace(state);
+        //
+        //                        return job_exists;
+        //                    }
+        //                    else if (killed)
+        //                    {
+        //                        io_proxy.WriteLine($"Error: Killed. Process did not respond. {Path.GetFileName(psi.FileName)}. Stdout: {stdout.Length}. Stderr: {stderr.Length}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
+        //
+        //                    }
+        //                    else
+        //                    {
+        //                        io_proxy.WriteLine($"Error: non zero exit code for process {Path.GetFileName(psi.FileName)}. Tries: {tries}. Exit code: {exit_code}.", nameof(svm_ldr), nameof(check_job_exists));
+        //                    }
+        //                }
+        //            }
+        //
+        //            io_proxy.WriteLine($"Error: process could not start {Path.GetFileName(psi.FileName)}. Tries {tries}.", nameof(svm_ldr), nameof(check_job_exists));
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            io_proxy.log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.check_job_exists));
+        //        }
+        //
+        //        try
+        //        {
+        //            Task.Delay(new TimeSpan(0, 0, 15)).Wait();
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            io_proxy.log_exception(e, "", nameof(svm_ldr), nameof(svm_ldr.check_job_exists));
+        //        }
+        //    }
+        //
+        //    return false;
+        //}
 
         //internal static object submitted_options_files_lock = new object();
         //internal static List<string> submitted_options_files = new List<string>();
 
-        internal static object submitted_job_list_files_lock = new object();
-        internal static List<string> submitted_job_list_files = new List<string>();
+        private static object submitted_job_list_files_lock = new object();
+        private static List<string> submitted_job_list_files = new List<string>();
 
         internal static List<string> run_worker_jobs(string job_submission_folder)
         {
-            io_proxy.WriteLine($@"Method: run_worker_jobs(string job_submission_folder = {job_submission_folder})", nameof(svm_ldr), nameof(run_worker_jobs));
+            io_proxy.WriteLine($@"Method: run_worker_jobs(string job_submission_folder = ""{job_submission_folder}"")", nameof(svm_ldr), nameof(run_worker_jobs));
+
+
+            var max_job_array_size = 50_000;
+            var nodes = 24;
+            var node_vcpus = 64;
+            var total_vcpus = 1440;
+            var node_ram = 256 - node_vcpus; // leave 1gb free per vcpu for other tasks = 192
+            var ram_per_vcpu = node_ram / node_vcpus;  // 192 / 64 = 3gb per vcpu
+
+
+            var pbs_params = svm_fs.pbs_params.get_default_wkr_values();
+
+            var max_concurrent_jobs = total_vcpus / pbs_params.pbs_ppn; //1440 / 16 = 90
+            var max_mem = ram_per_vcpu * pbs_params.pbs_ppn;
+
+
+            
+
 
             var job_ids = new List<string>();
 
@@ -372,15 +386,26 @@ namespace svm_fs
                 {
                     if (submitted_job_list_files.Contains(parameter_list_file)) continue;
 
-                    var job_array_length = io_proxy.ReadAllLines(parameter_list_file, nameof(svm_ldr), nameof(run_worker_jobs)).Length;
+                    var array_size = io_proxy.ReadAllLines(parameter_list_file, nameof(svm_ldr), nameof(run_worker_jobs)).Length;
+
+                    var array_window_size = array_size / max_concurrent_jobs;
+
+                    var num_array_jobs = array_size / array_window_size;
+
+                    pbs_params.pbs_walltime = TimeSpan.FromMinutes(((array_window_size * 3) / pbs_params.pbs_ppn) + 10); // 3 minutes per item ... 
+
+                    if (num_array_jobs > max_job_array_size)
+                    {
+                        throw new Exception($@"num_array_jobs > max_job_array_size");
+                    }
+
 
                     submitted_job_list_files.Add(parameter_list_file);
 
-                    
 
-                    var pbs_script_filename = make_pbs_script(parameter_list_file, cmd.wkr, true);
+                    var pbs_script_filename = make_pbs_script(parameter_list_file, array_window_size, cmd.wkr, pbs_params, true);
 
-                    var wkr_job_id = msub(pbs_script_filename, true, 0, job_array_length - 1, pbs_params.env_arrayincr);
+                    var wkr_job_id = msub(pbs_script_filename, true, 0, array_size - 1, array_window_size);
 
                     if (!string.IsNullOrWhiteSpace(wkr_job_id))
                     {
@@ -389,59 +414,6 @@ namespace svm_fs
                         // don't delete any files here in case job crashes and needs to be rerun
                     }
                 }
-
-                // program input is a text file with a list of parameter files, and the line number to load
-                // 1. make pbs file
-                // 2. call msub
-                // 3. ???
-
-
-
-                //var options_files = Directory.GetFiles(job_submission_folder, "*.options", SearchOption.AllDirectories).Except(submitted_options_files).ToList();
-
-                //options_files = options_files.Where(a => io_proxy.is_file_available(a)).ToList();
-
-                //var cmd_params_list = options_files.Select((options_file, i) =>
-                //{
-                //    var fd = io_proxy.ReadAllLines(options_file, nameof(svm_ldr), nameof(run_worker_jobs));
-
-                //    if (fd != null && fd.Length > 0)
-                //    {
-                //        var r = new cmd_params(fd);
-
-                //        return r;
-                //    }
-
-                //    return null;
-
-                //}).ToList();
-
-
-
-                //var job_id_tasks = cmd_params_list.Select((cmd_params, i) => (cmd_params != null && cmd_params.cmd == cmd.wkr) ? run_job_async(cmd_params) : null).ToList();
-
-                ////Task.WaitAll(job_id_tasks.Where(a => a != null).ToArray<Task>());
-                //svm_ctl.wait_tasks(job_id_tasks.Where(a => a != null).ToArray<Task>(), nameof(svm_ldr), nameof(run_worker_jobs));
-
-                //var job_ids = job_id_tasks.Select((a, i) => a?.Result.job_id).ToList();
-
-                //var submitted = options_files.Where((a, i) => !string.IsNullOrWhiteSpace(job_ids[i])).ToList();
-
-                //submitted_options_files.AddRange(submitted);
-
-                //foreach (var a in submitted)
-                //{
-                //    try
-                //    {
-                //        io_proxy.Delete(a, nameof(svm_ldr), nameof(run_worker_jobs));
-                //    }
-                //    catch (Exception e)
-                //    {
-                //        io_proxy.log_exception(e,"", nameof(svm_ldr), nameof(svm_ldr.run_worker_jobs));
-                //    }
-                //}
-
-                //return job_ids;
             }
 
             return job_ids;
@@ -665,7 +637,7 @@ namespace svm_fs
                     // 4. add to list of submitted jobs
                     //add_submitted_job(options);
 
-                    io_proxy.WriteLine($@" {sub_cmd} {pbs_script_filename}. {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
+                    io_proxy.WriteLine($@"{sub_cmd} {pbs_script_filename} -> {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
 
                     //lock (finish_marker_files_lock)
                     //{
@@ -677,7 +649,7 @@ namespace svm_fs
                 }
                 else
                 {
-                    io_proxy.WriteLine($@" Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.  {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
+                    io_proxy.WriteLine($@"Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.  {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
                 }
 
 
@@ -694,147 +666,70 @@ namespace svm_fs
         }
 
         private static object make_pbs_script_lock = new object();
-        private static int ctl_pbs_script_index = 0;
-        private static int wkr_pbs_script_index = 0;
+        private static int ctl_pbs_script_index = -1;
+        private static int wkr_pbs_script_index = -1;
 
-        private static string make_pbs_script(string input_file, cmd cmd, bool rerunnable = true)
+        private static string make_pbs_script(string input_file, int array_window_size, cmd cmd, pbs_params pbs_params = null, bool rerunnable = true)
         {
-            var ctl_pbs_script_index1 = 0;
-            var wkr_pbs_script_index1 = 0;
+            io_proxy.WriteLine($@"Method: make_pbs_script(string input_file = {input_file}, cmd cmd = {cmd}, bool rerunnable = {rerunnable}, )", nameof(svm_ldr), nameof(make_pbs_script));
+
+            var script_index = 0;
 
             lock (make_pbs_script_lock)
             {
                 if (cmd == cmd.ctl)
                 {
-                    ctl_pbs_script_index1 = ctl_pbs_script_index++;
+                    script_index = ctl_pbs_script_index++;
                 }
                 else if (cmd == cmd.wkr)
                 {
-                    wkr_pbs_script_index1 = wkr_pbs_script_index++;
+                    script_index = wkr_pbs_script_index++;
                 }
             }
 
+            var pbs_script_lines = new List<string>();
 
-            io_proxy.WriteLine(
-                    $@"Method: make_pbs_script(string input_file = {input_file}, cmd cmd = {cmd}, bool rerunnable = {rerunnable}, )",
-                    nameof(svm_ldr), nameof(make_pbs_script));
-
-                //if (io_proxy.is_file_available(pbs_script_filename))
-                //{
-                //    return;
-                //}
-
-                var pbs_script_lines = new List<string>();
-
-                var stdout_file = "";
-                var stderr_file = "";
-
-                var run_line = "";
-
-                var pbs_script_filename = "";
-
+            if (pbs_params == null)
+            {
                 if (cmd == cmd.ctl)
                 {
-                    
-
-                    var pbs_ctl_jobname = $"{nameof(svm_ctl)}_{ctl_pbs_script_index1}";
-                    pbs_script_filename = Path.Combine(pbs_params.pbs_ctl_execution_directory, $"{pbs_ctl_jobname}.pbs");
-
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_walltime))
-                        pbs_script_lines.Add($@"#PBS -l walltime={pbs_params.pbs_ctl_walltime}");
-                    if (pbs_params.pbs_ctl_nodes > 0)
-                        pbs_script_lines.Add(
-                            $@"#PBS -l nodes={pbs_params.pbs_ctl_nodes}{(pbs_params.pbs_ctl_ppn > 0 ? $@":ppn={pbs_params.pbs_ctl_ppn}" : "")}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_mem))
-                        pbs_script_lines.Add($@"#PBS -l mem={pbs_params.pbs_ctl_mem}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_mem))
-                        pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
-                    if (!string.IsNullOrWhiteSpace(pbs_ctl_jobname))
-                        pbs_script_lines.Add($@"#PBS -N {pbs_ctl_jobname}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_mail_opt))
-                        pbs_script_lines.Add($@"#PBS -m {pbs_params.pbs_ctl_mail_opt}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_mail_addr))
-                        pbs_script_lines.Add($@"#PBS -M {pbs_params.pbs_ctl_mail_addr}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_stdout_filename))
-                        pbs_script_lines.Add(
-                            $@"#PBS -o { /*io_proxy.convert_path*/(pbs_params.pbs_ctl_stdout_filename)}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_stderr_filename))
-                        pbs_script_lines.Add(
-                            $@"#PBS -e { /*io_proxy.convert_path*/(pbs_params.pbs_ctl_stderr_filename)}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_ctl_execution_directory))
-                        pbs_script_lines.Add(
-                            $@"#PBS -d { /*io_proxy.convert_path*/(pbs_params.pbs_ctl_execution_directory)}");
-
-                    stdout_file = /*io_proxy.convert_path*/(pbs_params.program_ctl_stdout_filename);
-                    stderr_file = /*io_proxy.convert_path*/(pbs_params.program_ctl_stderr_filename);
-
-                    run_line =
-                        $@"{pbs_params.program_runtime} -cm {cmd.ctl} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {pbs_params.env_arrayincr} -of {input_file}";
+                    pbs_params = pbs_params.get_default_ctl_values();
                 }
                 else if (cmd == cmd.wkr)
                 {
-                    
-
-                    var pbs_wkr_jobname = $"{nameof(svm_wkr)}_{wkr_pbs_script_index1}";
-                    pbs_script_filename = Path.Combine(pbs_params.pbs_wkr_execution_directory, $"{pbs_wkr_jobname}.pbs");
-
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_walltime))
-                        pbs_script_lines.Add($@"#PBS -l walltime={pbs_params.pbs_wkr_walltime}");
-                    if (pbs_params.pbs_wkr_nodes > 0)
-                        pbs_script_lines.Add(
-                            $@"#PBS -l nodes={pbs_params.pbs_wkr_nodes}{(pbs_params.pbs_wkr_ppn > 0 ? $@":ppn={pbs_params.pbs_wkr_ppn}" : "")}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_mem))
-                        pbs_script_lines.Add($@"#PBS -l mem={pbs_params.pbs_wkr_mem}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_mem))
-                        pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
-                    if (!string.IsNullOrWhiteSpace(pbs_wkr_jobname))
-                        pbs_script_lines.Add($@"#PBS -N {pbs_wkr_jobname}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_mail_opt))
-                        pbs_script_lines.Add($@"#PBS -m {pbs_params.pbs_wkr_mail_opt}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_mail_addr))
-                        pbs_script_lines.Add($@"#PBS -M {pbs_params.pbs_wkr_mail_addr}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_stdout_filename))
-                        pbs_script_lines.Add(
-                            $@"#PBS -o { /*io_proxy.convert_path*/(pbs_params.pbs_wkr_stdout_filename)}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_stderr_filename))
-                        pbs_script_lines.Add(
-                            $@"#PBS -e { /*io_proxy.convert_path*/(pbs_params.pbs_wkr_stderr_filename)}");
-                    if (!string.IsNullOrWhiteSpace(pbs_params.pbs_wkr_execution_directory))
-                        pbs_script_lines.Add(
-                            $@"#PBS -d { /*io_proxy.convert_path*/(pbs_params.pbs_wkr_execution_directory)}");
-
-                    stdout_file = pbs_params.program_wkr_stdout_filename;
-                    stderr_file = pbs_params.program_wkr_stderr_filename;
-
-                    run_line =
-                        $@"{pbs_params.program_runtime} -cm {cmd.wkr} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {pbs_params.env_arrayincr} -in {input_file}";
-
+                    pbs_params = pbs_params.get_default_wkr_values();
                 }
+                else
+                {
+                    pbs_params = new pbs_params();
+                }
+            }
 
-                run_line +=
-                    $@"{(!string.IsNullOrEmpty(stdout_file) ? $@" 1> {stdout_file}" : "")}{(!string.IsNullOrEmpty(stderr_file) ? $@" 2> {stderr_file}" : "")}";
+            pbs_params.pbs_jobname = $@"{nameof(svm_fs)}_{cmd}_{script_index}";
+            var pbs_script_filename = Path.Combine(pbs_params.pbs_execution_directory, $"{pbs_params.pbs_jobname}.pbs");
 
-                //pbs_script_lines.Add($@"echo 1 > {pbs_finish_marker_filename}");
-                //pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
-                //pbs_script_lines.Add($@"date +""%a %Y/%m/%d %H:%M:%S""");
-                //pbs_script_lines.Add($@"echo 0 > {pbs_finish_marker_filename}");
-                //var pbs_script_filename = $@"~/svm_fs/pbs_job_{options.pbs_jobname}_{options.job_id}.pbs";
+            if (pbs_params.pbs_walltime != null && pbs_params.pbs_walltime.TotalSeconds > 0) pbs_script_lines.Add($@"#PBS -l walltime={Math.Floor(pbs_params.pbs_walltime.TotalHours):00}:{pbs_params.pbs_walltime.Minutes:00}:{pbs_params.pbs_walltime.Seconds:00}");
+            if (pbs_params.pbs_nodes > 0) pbs_script_lines.Add($@"#PBS -l nodes={pbs_params.pbs_nodes}{(pbs_params.pbs_ppn > 0 ? $@":ppn={pbs_params.pbs_ppn}" : "")}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_mem)) pbs_script_lines.Add($@"#PBS -l mem={pbs_params.pbs_mem}");
+            pbs_script_lines.Add($@"#PBS -r {(rerunnable ? "y" : "n")}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_jobname)) pbs_script_lines.Add($@"#PBS -N {pbs_params.pbs_jobname}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_mail_opt)) pbs_script_lines.Add($@"#PBS -m {pbs_params.pbs_mail_opt}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_mail_addr)) pbs_script_lines.Add($@"#PBS -M {pbs_params.pbs_mail_addr}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_stdout_filename)) pbs_script_lines.Add($@"#PBS -o {pbs_params.pbs_stdout_filename}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_stderr_filename)) pbs_script_lines.Add($@"#PBS -e {pbs_params.pbs_stderr_filename}");
+            if (!string.IsNullOrWhiteSpace(pbs_params.pbs_execution_directory)) pbs_script_lines.Add($@"#PBS -d {pbs_params.pbs_execution_directory}");
 
+            var run_line = $@"{pbs_params.program_runtime} -cm {cmd} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {array_window_size} ${(cmd==cmd.wkr?"-of":"-in")} {input_file}{(!string.IsNullOrEmpty(pbs_params.program_stdout_filename) ? $@" 1> {pbs_params.program_stdout_filename}" : "")}{(!string.IsNullOrEmpty(pbs_params.program_stderr_filename) ? $@" 2> {pbs_params.program_stderr_filename}" : "")}";
 
-                pbs_script_lines.Add($@"module load GCCcore");
-                pbs_script_lines.Add(run_line);
+            pbs_script_lines.Add($@"module load GCCcore");
+            pbs_script_lines.Add(run_line);
 
+            io_proxy.WriteAllLines(pbs_script_filename, pbs_script_lines);
+            io_proxy.WriteLine(run_line, nameof(svm_ldr), nameof(make_pbs_script));
 
+            return pbs_script_filename;
 
-
-
-
-                io_proxy.WriteAllLines(pbs_script_filename, pbs_script_lines);
-
-                io_proxy.WriteLine(run_line, nameof(svm_ldr), nameof(make_pbs_script));
-
-                return pbs_script_filename;
-            
         }
     }
 }
+

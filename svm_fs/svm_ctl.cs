@@ -623,7 +623,7 @@ namespace svm_fs
 
                     var wkr_parameters_list = jobs_group_level_part1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
 
-                    var job_list_filename = Path.Combine(pbs_params.pbs_wkr_submission_directory, $@"job_list_{iteration_index}.txt");
+                    var job_list_filename = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{iteration_index}.txt");
                     io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
 
                     var wait_file_list = jobs_group_level_part1.Where(a=> a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
@@ -982,7 +982,7 @@ namespace svm_fs
             var wkr_parameters_list = results1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
             //var wkr_parameters_list2 = results1.SelectMany(a => a.rets.Select(b=>b.cmd_params.options_filename).ToList()).ToList();
 
-            var job_list_filename = Path.Combine(pbs_params.pbs_wkr_submission_directory, $@"job_list_{iteration_index}.txt");
+            var job_list_filename = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{iteration_index}.txt");
             io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
             
 

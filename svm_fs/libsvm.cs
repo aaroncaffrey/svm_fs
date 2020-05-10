@@ -31,7 +31,8 @@ namespace svm_fs
             bool shrinking_heuristics = true,
             TimeSpan? process_max_time = null,
             bool quiet_mode = true,
-            int memory_limit_mb = 1024
+            int memory_limit_mb = 1024,
+            bool log = false
             )
         {
             //libsvm_train_exe_file = /*io_proxy.convert_path*/(libsvm_train_exe_file);
@@ -170,7 +171,7 @@ namespace svm_fs
                         //   return (cmd_line, null, null);
                     }
 
-                    io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
+                    if (log) io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
                         
 
                     try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(train)); }
@@ -222,7 +223,7 @@ namespace svm_fs
                         
                     process.WaitForExit();
 
-                    io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
+                    if (log) io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(train));
 
                     var exit_code = process.ExitCode;
 
@@ -267,7 +268,7 @@ namespace svm_fs
             return (cmd_line, null, null);
         }
 
-        internal static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null)
+        internal static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null, bool log = false)
         {
             //libsvm_predict_exe_file = /*io_proxy.convert_path*/(libsvm_predict_exe_file);
             //test_file = /*io_proxy.convert_path*/(test_file);
@@ -341,7 +342,7 @@ namespace svm_fs
                         //   return (cmd_line, null, null);
                     }
 
-                    io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
+                    if (log) io_proxy.WriteLine($"Spawned process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
                     try { process.PriorityBoostEnabled = priority_boost_enabled; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
                     try { process.PriorityClass = priority_class; } catch (Exception e) { io_proxy.log_exception(e, "", nameof(svm_ctl), nameof(predict)); }
 
@@ -349,7 +350,7 @@ namespace svm_fs
                     var stderr = process.StandardError.ReadToEndAsync();
 
                     process.WaitForExit();
-                    io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
+                    if (log) io_proxy.WriteLine($"Exited process {Path.GetFileName(start.FileName)}: {process.Id}", nameof(libsvm), nameof(predict));
 
                     var exit_code = process.ExitCode;
 
