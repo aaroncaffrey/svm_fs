@@ -666,8 +666,8 @@ namespace svm_fs
         }
 
         private static object make_pbs_script_lock = new object();
-        private static int ctl_pbs_script_index = -1;
-        private static int wkr_pbs_script_index = -1;
+        private static int ctl_pbs_script_index = 0;
+        private static int wkr_pbs_script_index = 0;
 
         private static string make_pbs_script(string input_file, int array_window_size, cmd cmd, pbs_params pbs_params = null, bool rerunnable = true)
         {
@@ -719,7 +719,7 @@ namespace svm_fs
             if (!string.IsNullOrWhiteSpace(pbs_params.pbs_stderr_filename)) pbs_script_lines.Add($@"#PBS -e {pbs_params.pbs_stderr_filename}");
             if (!string.IsNullOrWhiteSpace(pbs_params.pbs_execution_directory)) pbs_script_lines.Add($@"#PBS -d {pbs_params.pbs_execution_directory}");
 
-            var run_line = $@"{pbs_params.program_runtime} -cm {cmd} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {array_window_size} ${(cmd==cmd.wkr?"-of":"-in")} {input_file}{(!string.IsNullOrEmpty(pbs_params.program_stdout_filename) ? $@" 1> {pbs_params.program_stdout_filename}" : "")}{(!string.IsNullOrEmpty(pbs_params.program_stderr_filename) ? $@" 2> {pbs_params.program_stderr_filename}" : "")}";
+            var run_line = $@"{pbs_params.program_runtime} -cm {cmd} -ji {pbs_params.env_jobid} -jn {pbs_params.env_jobname} -ai {pbs_params.env_arrayindex} -ac {array_window_size} {(cmd==cmd.wkr?"-of":"-in")} {input_file}{(!string.IsNullOrEmpty(pbs_params.program_stdout_filename) ? $@" 1> {pbs_params.program_stdout_filename}" : "")}{(!string.IsNullOrEmpty(pbs_params.program_stderr_filename) ? $@" 2> {pbs_params.program_stderr_filename}" : "")}";
 
             pbs_script_lines.Add($@"module load GCCcore");
             pbs_script_lines.Add(run_line);
