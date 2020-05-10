@@ -437,7 +437,7 @@ namespace svm_fs
 
         internal cmd_params(string[] params_file_data = null)//string[] args)
         {
-            if (params_file_data == null || params_file_data.Length == 0) return;
+            if (params_file_data == null || params_file_data.Length == 0) {return;}
 
 
 
@@ -589,12 +589,12 @@ namespace svm_fs
                 train_model_filename = $@"{train_filename}.model";
             }
 
-            if (string.IsNullOrWhiteSpace(experiment_name))
-            {
-                throw new ArgumentNullException(nameof(experiment_name));
-            }
+            //if (string.IsNullOrWhiteSpace(experiment_name))
+            //{
+            //    throw new ArgumentNullException(nameof(experiment_name));
+            //}
 
-            /*convert_path*/make_dirs();
+            make_dirs();
         }
 
         internal string[] get_options_ini_text(bool skip_defaults)
