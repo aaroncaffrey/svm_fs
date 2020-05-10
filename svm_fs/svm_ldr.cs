@@ -637,7 +637,7 @@ namespace svm_fs
                     // 4. add to list of submitted jobs
                     //add_submitted_job(options);
 
-                    io_proxy.WriteLine($@"{sub_cmd} {pbs_script_filename} -> {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
+                    io_proxy.WriteLine($@"{cmd_line} -> {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
 
                     //lock (finish_marker_files_lock)
                     //{
@@ -649,7 +649,7 @@ namespace svm_fs
                 }
                 else
                 {
-                    io_proxy.WriteLine($@"Error: {sub_cmd} {pbs_script_filename} failed.  Exit code: {exit_code}.  {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
+                    io_proxy.WriteLine($@"Error: {cmd_line} failed.  Exit code: {exit_code}.  {nameof(job_id)} = {job_id}.", nameof(svm_ldr), nameof(msub));
                 }
 
 

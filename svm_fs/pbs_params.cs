@@ -37,13 +37,13 @@ namespace svm_fs
                 pbs_mail_addr = "",
                 pbs_mail_opt = "n",
                 pbs_mem = null,
-                pbs_stdout_filename = $"{nameof(svm_fs)}_{cmd.ctl}_%J_%I.pbs.stdout",
-                pbs_stderr_filename = $"{nameof(svm_fs)}_{cmd.ctl}_%J_%I.pbs.stderr",
+                pbs_stdout_filename = $"{nameof(svm_fs)}_{cmd.ctl}.pbs.stdout",
+                pbs_stderr_filename = $"{nameof(svm_fs)}_{cmd.ctl}.pbs.stderr",
                 pbs_walltime = TimeSpan.FromHours(240), //"240:00:00"
                 pbs_nodes = 1,
                 pbs_ppn = 64,
-                program_stdout_filename = $@"{nameof(svm_fs)}_{cmd.ctl}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout",
-                program_stderr_filename = $@"{nameof(svm_fs)}_{cmd.ctl}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stderr",
+                program_stdout_filename = $@"{nameof(svm_fs)}_{cmd.ctl}_{env_jobid}_{env_jobname}.program.stdout",
+                program_stderr_filename = $@"{nameof(svm_fs)}_{cmd.ctl}_{env_jobid}_{env_jobname}.program.stderr",
             };
         }
 
