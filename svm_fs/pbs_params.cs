@@ -9,9 +9,9 @@ namespace svm_fs
         internal const string svm_fs_home = "/mmfs1/data/scratch/k1040015/svm_fs";
         internal const string user_home = "/home/k1040015";
 
-        internal const string env_jobid = @"${{JOBID}}${{PBS_JOBID}}${{MOAB_JOBID}}";
-        internal const string env_jobname = @"${{JOBNAME}}${{PBS_JOBNAME}}${{MOAB_JOBNAME}}";
-        internal const string env_arrayindex = @"${{PBS_ARRAYID}}${{MOAB_JOBARRAYINDEX}}";
+        internal const string env_jobid = @"${JOBID}${PBS_JOBID}${MOAB_JOBID}";
+        internal const string env_jobname = @"${JOBNAME}${PBS_JOBNAME}${MOAB_JOBNAME}";
+        internal const string env_arrayindex = @"${PBS_ARRAYID}${MOAB_JOBARRAYINDEX}";
         
         internal string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
       
