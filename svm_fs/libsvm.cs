@@ -32,7 +32,7 @@ namespace svm_fs
             TimeSpan? process_max_time = null,
             bool quiet_mode = true,
             int memory_limit_mb = 1024,
-            bool log = false
+            bool log = true
             )
         {
             //libsvm_train_exe_file = /*io_proxy.convert_path*/(libsvm_train_exe_file);
@@ -268,7 +268,7 @@ namespace svm_fs
             return (cmd_line, null, null);
         }
 
-        internal static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null, bool log = false)
+        internal static (string cmd_line, string stdout, string stderr) predict(string libsvm_predict_exe_file, string test_file, string model_file, string predictions_out_file, bool probability_estimates, string stdout_file = null, string stderr_file = null, bool log = true)
         {
             //libsvm_predict_exe_file = /*io_proxy.convert_path*/(libsvm_predict_exe_file);
             //test_file = /*io_proxy.convert_path*/(test_file);
