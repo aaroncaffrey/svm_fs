@@ -152,10 +152,10 @@ namespace svm_fs
             if (cm_arg_index > -1 && args.Length - 1 >= cm_arg_index + 1 && !arg_key_indexes.Contains(cm_arg_index + 1)) cmd = (svm_fs.cmd)Enum.Parse(typeof(svm_fs.cmd), args[cm_arg_index + 1]);
             if (ji_arg_index > -1 && args.Length - 1 >= ji_arg_index + 1 && !arg_key_indexes.Contains(ji_arg_index + 1)) pbs_job_index = args[ji_arg_index + 1];
             if (jn_arg_index > -1 && args.Length - 1 >= jn_arg_index + 1 && !arg_key_indexes.Contains(jn_arg_index + 1)) pbs_job_name = args[jn_arg_index + 1];
-            if (ai_arg_index > -1 && args.Length - 1 >= ai_arg_index + 1 && !arg_key_indexes.Contains(ai_arg_index + 1)) array_start = int.Parse(args[ai_arg_index + 1]);
-            if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1 && !arg_key_indexes.Contains(ac_arg_index + 1)) array_step = int.Parse(args[ac_arg_index + 1]);
+            if (ai_arg_index > -1 && args.Length - 1 >= ai_arg_index + 1 && !arg_key_indexes.Contains(ai_arg_index + 1)) array_start = int.TryParse(args[ai_arg_index + 1], out var array_start2) ? array_start2 : 0;
+            if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1 && !arg_key_indexes.Contains(ac_arg_index + 1)) array_step = int.TryParse(args[ac_arg_index + 1], out var array_step2) ? array_step2 : 1;
             if (in_arg_index > -1 && args.Length - 1 >= in_arg_index + 1 && !arg_key_indexes.Contains(in_arg_index + 1)) input_file = args[in_arg_index + 1];
-            if (of_arg_index > -1 && args.Length - 1 >= of_arg_index + 1 && !arg_key_indexes.Contains(of_arg_index + 1)) options_filename_list.Add( /*io_proxy.convert_path*/(args[of_arg_index + 1]));
+            if (of_arg_index > -1 && args.Length - 1 >= of_arg_index + 1 && !arg_key_indexes.Contains(of_arg_index + 1)) options_filename_list.Add(args[of_arg_index + 1]);
 
             //io_proxy.WriteLine($@"pbs_job_index = ""{pbs_job_index}"", pbs_job_name = ""{pbs_job_name}"", pbs_job_array_index = ""{pbs_job_array_index}"", pbs_job_array_count = ""{pbs_job_array_count}"", input_file = ""{input_file}"", options_filename_list = ""{string.Join("; ", options_filename_list)}""");
 
