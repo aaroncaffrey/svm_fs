@@ -25,8 +25,8 @@ namespace svm_fs
         //internal List<(int class_id, string class_name)> class_training_sizes = null;
         //internal string pbs_jobid_filename;
 
-        internal const string svm_fs_home = "/mmfs1/data/scratch/k1040015/svm_fs";
-        internal const string user_home = "/home/k1040015";
+        internal const string svm_fs_home = @"/mmfs1/data/scratch/k1040015/svm_fs";
+        internal const string user_home = @"/home/k1040015";
 
 
         internal bool forward;
@@ -89,7 +89,7 @@ namespace svm_fs
         internal List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
         internal string alphabet;
         internal string category;
-        internal string dataset_dir = $@"{user_home}/dataset/";
+        internal string dataset_dir = $@"{user_home}/dataset/"; //@"E:\caddy\input\"
         internal string dimension;
         internal string experiment_name = null;
         internal string group;
@@ -307,7 +307,7 @@ namespace svm_fs
             if (p.Select(a => a.train_predict_filename).Distinct().Count() == 1) this.train_predict_filename = p.FirstOrDefault().train_predict_filename;
 
 
-            /*convert_path*/make_dirs();
+            make_dirs();
         }
 
         internal cmd_params(cmd_params p)
@@ -427,10 +427,10 @@ namespace svm_fs
             this.train_predict_filename = p.train_predict_filename;
 
 
-            /*convert_path*/make_dirs();
+            make_dirs();
         }
 
-        internal cmd_params(string params_filename) : this(io_proxy.ReadAllLines(/*io_proxy.convert_path*/(params_filename), nameof(cmd_params), nameof(cmd_params)))
+        internal cmd_params(string params_filename) : this(io_proxy.ReadAllLines(params_filename, nameof(cmd_params), nameof(cmd_params)))
         {
 
         }

@@ -6,11 +6,8 @@ namespace svm_fs
 {
     internal class pbs_params
     {
-        internal const string svm_fs_home = "/mmfs1/data/scratch/k1040015/svm_fs";
-        internal const string user_home = "/home/k1040015";
-
-        internal const string env_jobid = @"${JOBID}${PBS_JOBID}${MOAB_JOBID}";
-        internal const string env_jobname = @"${JOBNAME}${PBS_JOBNAME}${MOAB_JOBNAME}";
+        internal const string env_jobid = @"${PBS_JOBID}${MOAB_JOBID}";
+        internal const string env_jobname = @"${PBS_JOBNAME}${MOAB_JOBNAME}";
         internal const string env_arrayindex = @"${PBS_ARRAYID}${MOAB_JOBARRAYINDEX}";
         
         internal string program_runtime = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -32,7 +29,7 @@ namespace svm_fs
         {
             return new pbs_params()
             {
-                pbs_execution_directory = $@"{svm_fs_home}/pbs_{cmd.ctl}_sub/",
+                pbs_execution_directory = $@"{cmd_params.svm_fs_home}/pbs_{cmd.ctl}_sub/",
                 pbs_jobname = $@"{nameof(svm_fs)}_{cmd.ctl}",
                 pbs_mail_addr = "",
                 pbs_mail_opt = "n",
@@ -51,7 +48,7 @@ namespace svm_fs
         {
             return new pbs_params()
             {
-                pbs_execution_directory = $@"{svm_fs_home}/pbs_{cmd.wkr}_sub/",
+                pbs_execution_directory = $@"{cmd_params.svm_fs_home}/pbs_{cmd.wkr}_sub/",
                 pbs_jobname = $@"{nameof(svm_fs)}_{cmd.wkr}",
                 pbs_mail_addr = "",
                 pbs_mail_opt = "n",

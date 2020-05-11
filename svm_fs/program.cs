@@ -74,6 +74,8 @@ namespace svm_fs
 
         internal static void Main(string[] args)
         {
+            //-cm ctl -ji 52887.kuhpcmgt-vip.kuhpc.local -jn svm_fs_ctl_0 -ai -ac 0 -of
+
             //var x = new cmd_params();
             //var a =x.get_options(true);
             //var b = x.get_options(false);
