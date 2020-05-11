@@ -65,7 +65,7 @@ namespace svm_fs
                 throw new Exception("Must run in 64bit mode");
             }
         }
-     
+
         public static void set_gc_mode()
         {
             GCSettings.LatencyMode = GCLatencyMode.Batch;
@@ -139,96 +139,94 @@ namespace svm_fs
 
             var pbs_job_index = "";
             var pbs_job_name = "";
-            var pbs_job_array_index = "";
-            var pbs_job_array_count = "";
+
+            //var pbs_job_array_count = "";
             var input_file = "";
             //var options_filename = "";
             var options_filename_list = new List<string>();
             var cmd = svm_fs.cmd.none;
 
-            if (cm_arg_index > -1 && args.Length - 1 >= cm_arg_index + 1 && !arg_key_indexes.Contains(cm_arg_index + 1)) cmd = (svm_fs.cmd) Enum.Parse(typeof(svm_fs.cmd), args[cm_arg_index + 1]);
+            var array_start = 0;
+            var array_step = 1;
+
+            if (cm_arg_index > -1 && args.Length - 1 >= cm_arg_index + 1 && !arg_key_indexes.Contains(cm_arg_index + 1)) cmd = (svm_fs.cmd)Enum.Parse(typeof(svm_fs.cmd), args[cm_arg_index + 1]);
             if (ji_arg_index > -1 && args.Length - 1 >= ji_arg_index + 1 && !arg_key_indexes.Contains(ji_arg_index + 1)) pbs_job_index = args[ji_arg_index + 1];
             if (jn_arg_index > -1 && args.Length - 1 >= jn_arg_index + 1 && !arg_key_indexes.Contains(jn_arg_index + 1)) pbs_job_name = args[jn_arg_index + 1];
-            if (ai_arg_index > -1 && args.Length - 1 >= ai_arg_index + 1 && !arg_key_indexes.Contains(ai_arg_index + 1)) pbs_job_array_index = args[ai_arg_index + 1];
-            if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1 && !arg_key_indexes.Contains(ac_arg_index + 1)) pbs_job_array_count = args[ac_arg_index + 1];
+            if (ai_arg_index > -1 && args.Length - 1 >= ai_arg_index + 1 && !arg_key_indexes.Contains(ai_arg_index + 1)) array_start = int.Parse(args[ai_arg_index + 1]);
+            if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1 && !arg_key_indexes.Contains(ac_arg_index + 1)) array_step = int.Parse(args[ac_arg_index + 1]);
             if (in_arg_index > -1 && args.Length - 1 >= in_arg_index + 1 && !arg_key_indexes.Contains(in_arg_index + 1)) input_file = args[in_arg_index + 1];
             if (of_arg_index > -1 && args.Length - 1 >= of_arg_index + 1 && !arg_key_indexes.Contains(of_arg_index + 1)) options_filename_list.Add( /*io_proxy.convert_path*/(args[of_arg_index + 1]));
 
             //io_proxy.WriteLine($@"pbs_job_index = ""{pbs_job_index}"", pbs_job_name = ""{pbs_job_name}"", pbs_job_array_index = ""{pbs_job_array_index}"", pbs_job_array_count = ""{pbs_job_array_count}"", input_file = ""{input_file}"", options_filename_list = ""{string.Join("; ", options_filename_list)}""");
 
-            var array_count = 1;
 
-            if (!string.IsNullOrWhiteSpace(pbs_job_array_count))
-            {
-                array_count = int.Parse(pbs_job_array_count);
-            }
+
 
             switch (cmd)
             {
                 case cmd.wkr:
-                {
-                    if (!string.IsNullOrWhiteSpace(input_file))
                     {
-                        var file_data = io_proxy.ReadAllLines(input_file, nameof(program), nameof(Main));
-
-                        var array_index = int.Parse(pbs_job_array_index);
-
-                        for (var i = 0; i < array_count; i++)
+                        if (!string.IsNullOrWhiteSpace(input_file))
                         {
-                            if (file_data.Length - 1 >= array_index + i)
+                            var file_data = io_proxy.ReadAllLines(input_file, nameof(program), nameof(Main));
+
+                            for (var i = 0; i < array_step; i++)
                             {
-                                options_filename_list.Add( /*io_proxy.convert_path*/(file_data[array_index + i]));
+                                if (file_data.Length - 1 >= array_start + i)
+                                {
+                                    var options_filename = file_data[array_start + i];
+
+                                    if (!string.IsNullOrWhiteSpace(options_filename))
+                                    {
+                                        options_filename_list.Add(options_filename);
+                                    }
+                                }
                             }
+
+                            options_filename_list = options_filename_list.Distinct().ToList();
                         }
 
-                        options_filename_list = options_filename_list.Distinct().ToList();
-                    }
-
-                    //foreach (var options_filename in options_filename_list)
-                    Parallel.For(0, options_filename_list.Count, options_filename_index =>
-                    {
-                        var options_filename = options_filename_list[options_filename_index];
-                    
-                        var options = new cmd_params();
-
-                        if (!string.IsNullOrWhiteSpace(options_filename))
+                        //foreach (var options_filename in options_filename_list)
+                        Parallel.For(0, options_filename_list.Count, options_filename_index =>
                         {
+                            var options_filename = options_filename_list[options_filename_index];
+
                             var file_data = io_proxy.ReadAllLines(options_filename, nameof(program), nameof(Main));
 
-                            options = new cmd_params(file_data);
+                            var options = new cmd_params(file_data);
 
                             svm_wkr.inner_cross_validation(options);
-                        }
-                    });
+                            
+                        });
 
-                    break;
-                }
+                        break;
+                    }
 
 
                 case cmd.ctl:
-                {
-                    var options = new cmd_params();
-
-                    if (options_filename_list.Count == 1)
                     {
-                        options = new cmd_params(io_proxy.ReadAllLines(options_filename_list.First()));
-                    }
+                        var options = new cmd_params();
 
-                    svm_ctl.feature_selection(options);
-                    break;
-                }
+                        if (options_filename_list.Count == 1)
+                        {
+                            options = new cmd_params(io_proxy.ReadAllLines(options_filename_list.First()));
+                        }
+
+                        svm_ctl.feature_selection(options);
+                        break;
+                    }
 
 
                 case cmd.ldr:
-                {
-                    svm_ldr.start_ldr(cts);
-                    break;
-                }
+                    {
+                        svm_ldr.start_ldr(cts);
+                        break;
+                    }
             }
         }
 
     }
 }
 
-  
+
 
