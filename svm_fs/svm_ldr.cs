@@ -385,7 +385,7 @@ namespace svm_fs
                     var pbs_params = svm_fs.pbs_params.get_default_wkr_values();
 
                     var max_concurrent_jobs = total_vcpus / pbs_params.pbs_ppn; //1440 / 16 = 90
-                    var max_mem = ram_per_vcpu * pbs_params.pbs_ppn;
+                    //var max_mem = ram_per_vcpu * pbs_params.pbs_ppn;
 
 
                     var array_size = io_proxy.ReadAllLines(parameter_list_file, nameof(svm_ldr), nameof(run_worker_jobs)).Length;
@@ -394,8 +394,8 @@ namespace svm_fs
 
                     var num_array_jobs = array_size / array_window_size;
 
-                    pbs_params.pbs_walltime = TimeSpan.FromMinutes(((array_window_size * 3) / pbs_params.pbs_ppn) + 10); // 3 minutes per item ... 
-                    pbs_params.pbs_mem = $"{max_mem}gb";
+                    pbs_params.pbs_walltime = TimeSpan.FromHours(240);// TimeSpan.FromMinutes(((array_window_size * 3) / pbs_params.pbs_ppn) + 10); // 3 minutes per item ... 
+                    //pbs_params.pbs_mem = $"{max_mem}gb";
 
                     if (num_array_jobs > max_job_array_size)
                     {
