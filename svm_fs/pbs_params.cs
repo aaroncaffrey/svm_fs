@@ -55,7 +55,7 @@ namespace svm_fs
                 pbs_mem = null,
                 pbs_stdout_filename = $"{nameof(svm_fs)}_{cmd.wkr}_%J_%I.pbs.stdout",
                 pbs_stderr_filename = $"{nameof(svm_fs)}_{cmd.wkr}_%J_%I.pbs.stderr",
-                pbs_walltime = TimeSpan.FromMinutes(30), //"00:30:00",
+                pbs_walltime = TimeSpan.FromMinutes(240), //"00:30:00",
                 pbs_nodes = 1,
                 pbs_ppn = 16,
                 program_stdout_filename = $@"{nameof(svm_fs)}_{cmd.wkr}_{env_jobid}_{env_jobname}_{env_arrayindex}.program.stdout",

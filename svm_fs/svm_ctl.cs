@@ -774,6 +774,9 @@ namespace svm_fs
                 test_group_kernel_scaling_perf(p, fs_exterior_vars.iteration_index, fs_exterior_vars.highest_scoring_group_indexes, groups, downsampled_training_class_folds, class_folds, dataset_instance_list_grouped);
             }
 
+            var finished_fn = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"finished.txt");
+            io_proxy.WriteAllLines(finished_fn, new List<string>(), nameof(svm_ctl), nameof(feature_selection));
+            
             // output winner details
         }
 

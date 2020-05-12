@@ -67,7 +67,7 @@ namespace svm_fs
         //    return controller_task;
         //}
 
-        internal static Task worker_jobs_task(string job_submission_folder, CancellationToken ct)
+        internal static Task worker_jobs_task(string job_submission_folder, CancellationToken ct, int total_vcpus_per_process = 16)
         {
             io_proxy.WriteLine($@"Method: worker_jobs_task(string job_submission_folder = {job_submission_folder}, CancellationToken ct = {ct})", nameof(svm_ldr), nameof(worker_jobs_task));
 
@@ -77,8 +77,17 @@ namespace svm_fs
             {
                 while (!ct.IsCancellationRequested)
                 {
+                    var finished_fn = Path.Combine(job_submission_folder, "finished.txt");
+                    var is_ctl_finished = io_proxy.Exists(finished_fn);
 
-                    var job_ids = run_worker_jobs(job_submission_folder);
+                    if (is_ctl_finished)
+                    {
+                        io_proxy.Delete(finished_fn);
+
+                        break;
+                    }
+
+                    var job_ids = run_worker_jobs(job_submission_folder, total_vcpus_per_process);
 
                     try
                     {
@@ -188,7 +197,7 @@ namespace svm_fs
             return controller_job_id;
         }
 
-        internal static void start_ldr(CancellationTokenSource cts, string controller_launch_options_filename = "")
+        internal static void start_ldr(CancellationTokenSource cts, int total_vcpus_per_process, string controller_launch_options_filename = "")
         {
             io_proxy.WriteLine($@"Method: {nameof(start_ldr)}(CancellationTokenSource cts = ""{cts}"", string controller_launch_options_filename = ""{controller_launch_options_filename}"")", nameof(svm_ldr), nameof(start_ldr));
             
@@ -199,7 +208,7 @@ namespace svm_fs
             start_ctl(controller_launch_options_filename);
 
             // listen for worker job requests
-            var worker_jobs_task = svm_ldr.worker_jobs_task(pbs_params.get_default_wkr_values().pbs_execution_directory, cts.Token);
+            var worker_jobs_task = svm_ldr.worker_jobs_task(pbs_params.get_default_wkr_values().pbs_execution_directory, cts.Token, total_vcpus_per_process);
 
             
             var tasks = new List<Task>();
@@ -209,17 +218,17 @@ namespace svm_fs
             svm_ctl.wait_tasks(tasks.ToArray<Task>(), nameof(svm_ldr), nameof(start_ldr));
         }
 
-        internal static void write_job_id(string job_id_filename, string job_id)
-        {
-            io_proxy.WriteLine($@"Method: write_job_id(string job_id_filename = {job_id_filename}, string job_id = {job_id})", nameof(svm_ldr), nameof(write_job_id));
-
-            if (!string.IsNullOrWhiteSpace(job_id))
-            {
-                //job_id_filename = /*io_proxy.convert_path*/(job_id_filename);
-
-                io_proxy.WriteAllText(job_id_filename, job_id);
-            }
-        }
+        //internal static void write_job_id(string job_id_filename, string job_id)
+        //{
+        //    io_proxy.WriteLine($@"Method: write_job_id(string job_id_filename = {job_id_filename}, string job_id = {job_id})", nameof(svm_ldr), nameof(write_job_id));
+        //
+        //    if (!string.IsNullOrWhiteSpace(job_id))
+        //    {
+        //        //job_id_filename = /*io_proxy.convert_path*/(job_id_filename);
+        //
+        //        io_proxy.WriteAllText(job_id_filename, job_id);
+        //    }
+        //}
 
         //internal static string read_job_id(string job_id_filename)
         //{
@@ -351,23 +360,33 @@ namespace svm_fs
         private static object submitted_job_list_files_lock = new object();
         private static List<string> submitted_job_list_files = new List<string>();
 
-        internal static List<string> run_worker_jobs(string job_submission_folder)
+        internal static List<string> run_worker_jobs(string job_submission_folder, int total_vcpus_per_process = 16)
         {
             io_proxy.WriteLine($@"Method: run_worker_jobs(string job_submission_folder = ""{job_submission_folder}"")", nameof(svm_ldr), nameof(run_worker_jobs));
 
-            var default_ctl_values = pbs_params.get_default_ctl_values();
+            var default_ctl_values = svm_fs.pbs_params.get_default_ctl_values();
+
+            var ctl_vcpus = default_ctl_values.pbs_nodes * default_ctl_values.pbs_ppn;
 
             var max_job_array_size = 50_000;
-            var nodes = 24;
-            var node_vcpus = 64;
-            var total_vcpus = 1440 - (default_ctl_values.pbs_nodes * default_ctl_values.pbs_ppn);
-            var node_ram = 256 - node_vcpus; // leave 1gb free per vcpu for other tasks = 192
-            var ram_per_vcpu = node_ram / node_vcpus;  // 192 / 64 = 3gb per vcpu
-
-
-            
+            //var nodes = 24;
+            //var node_vcpus = 64;
+            ///var total_vcpus = 1440 - ();
+            //var node_ram = 256 - node_vcpus; // leave 1gb free per vcpu for other tasks = 192
+            //var ram_per_vcpu = node_ram / node_vcpus;  // 192 / 64 = 3gb per vcpu
 
             
+            var pbs_params = svm_fs.pbs_params.get_default_wkr_values();
+            pbs_params.pbs_ppn = total_vcpus_per_process;
+
+
+            var total_vcpus = 1440 - (ctl_vcpus + 320);
+            //var total_vcpus_per_process = 16;
+            var total_concurrent_processes = (int)Math.Floor((double)total_vcpus / (double)total_vcpus_per_process);
+            
+
+
+
 
 
             var job_ids = new List<string>();
@@ -382,22 +401,21 @@ namespace svm_fs
                 foreach (var parameter_list_file in parameter_list_files)
                 {
                     if (submitted_job_list_files.Contains(parameter_list_file)) continue;
+                    
 
-                    var pbs_params = svm_fs.pbs_params.get_default_wkr_values();
+                    var line_count = io_proxy.ReadAllLines(parameter_list_file, nameof(svm_ldr), nameof(run_worker_jobs)).Length;
 
-                    var max_concurrent_jobs = total_vcpus / pbs_params.pbs_ppn; //1440 / 16 = 90
-                    //var max_mem = ram_per_vcpu * pbs_params.pbs_ppn;
+                    //var array_step = array_size / total_concurrent_processes;
 
+                    
 
-                    var array_size = io_proxy.ReadAllLines(parameter_list_file, nameof(svm_ldr), nameof(run_worker_jobs)).Length;
+                    var lines_per_process = (int)Math.Ceiling((double)line_count / (double)total_concurrent_processes);
 
-                    var array_step = array_size / max_concurrent_jobs;
-
-                    var num_array_jobs = array_size / array_step;
-
-                    pbs_params.pbs_walltime = TimeSpan.FromHours(240);// TimeSpan.FromMinutes(((array_window_size * 3) / pbs_params.pbs_ppn) + 10); // 3 minutes per item ... 
+                    //pbs_params.pbs_walltime = TimeSpan.FromHours(240);// TimeSpan.FromMinutes(((array_window_size * 3) / pbs_params.pbs_ppn) + 10); // 3 minutes per item ... 
                     //pbs_params.pbs_mem = $"{max_mem}gb";
 
+                    
+                    var num_array_jobs = line_count / lines_per_process;
                     if (num_array_jobs > max_job_array_size)
                     {
                         throw new Exception($@"num_array_jobs > max_job_array_size");
@@ -406,9 +424,9 @@ namespace svm_fs
 
 
 
-                    var pbs_script_filename = make_pbs_script(parameter_list_file, array_step, cmd.wkr, pbs_params, true);
+                    var pbs_script_filename = make_pbs_script(parameter_list_file, lines_per_process, cmd.wkr, pbs_params, true);
 
-                    var wkr_job_id = msub(pbs_script_filename, true, 0, array_size - 1, array_step);
+                    var wkr_job_id = msub(pbs_script_filename, true, 0, line_count - 1, lines_per_process);
 
                     if (!string.IsNullOrWhiteSpace(wkr_job_id))
                     {
