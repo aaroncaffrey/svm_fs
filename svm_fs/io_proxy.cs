@@ -164,7 +164,7 @@ namespace svm_fs
                 var thread_id = Thread.CurrentThread.ManagedThreadId;
                 var task_id = Task.CurrentId ?? 0;
                 //Memory usage: 
-                var s = $@"{DateTime.Now:G} {(GC.GetTotalMemory(false) / 1_000_000_000d):000.00}gb {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text}";
+                var s = $@"{DateTime.Now:G} {(GC.GetTotalMemory(false) / 1_000_000_000d):000.00}gb {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text ?? ""}";
                 if (use_lock)
                 {
                     lock (_console_lock)

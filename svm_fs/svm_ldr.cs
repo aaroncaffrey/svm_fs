@@ -78,11 +78,15 @@ namespace svm_fs
                 while (!ct.IsCancellationRequested)
                 {
                     var finished_fn = Path.Combine(job_submission_folder, "finished.txt");
-                    var is_ctl_finished = io_proxy.Exists(finished_fn);
+                    var is_ctl_finished = io_proxy.is_file_available(finished_fn, nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
 
                     if (is_ctl_finished)
                     {
-                        io_proxy.Delete(finished_fn);
+                        var finished_timestamp = io_proxy.ReadAllLines(finished_fn, nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task)).FirstOrDefault();
+
+                        io_proxy.WriteLine(finished_timestamp, nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
+                        
+                        io_proxy.Delete(finished_fn, nameof(svm_ldr), nameof(svm_ldr.worker_jobs_task));
 
                         break;
                     }
@@ -456,7 +460,7 @@ namespace svm_fs
         //(string job_id, /*string job_id_filename,*/ string pbs_script_filename/*, string pbs_finish_marker_filename*//*, string msub_stdout, string msub_stderr*/)
         internal static string msub(string pbs_script_filename, bool array = false, int array_start = 0, int array_end = 0, int array_step = 1)//cmd_params options, string job_id = null, bool rerunnable = true)
         {
-            //io_proxy.WriteLine($@"Method: run_job(cmd_params options = {options.options_filename}, string job_id = {job_id}, bool rerunnable = {rerunnable})", nameof(svm_ldr), nameof(msub));
+            io_proxy.WriteLine($@"Method: msub(string pbs_script_filename = ""{pbs_script_filename}"", bool array = ""{array}"", int array_start = ""{array_start}"", int array_end = ""{array_end}"", int array_step = ""{array_step}"")", nameof(svm_ldr), nameof(msub));
 
             const string sub_cmd = "msub";
 

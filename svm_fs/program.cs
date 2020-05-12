@@ -163,7 +163,7 @@ namespace svm_fs
             if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1 && !arg_key_indexes.Contains(ac_arg_index + 1)) array_step = int.TryParse(args[ac_arg_index + 1], out var array_step2) ? array_step2 : 1;
             if (in_arg_index > -1 && args.Length - 1 >= in_arg_index + 1 && !arg_key_indexes.Contains(in_arg_index + 1)) input_file = args[in_arg_index + 1];
             if (of_arg_index > -1 && args.Length - 1 >= of_arg_index + 1 && !arg_key_indexes.Contains(of_arg_index + 1)) options_filename_list.Add(args[of_arg_index + 1]);
-            if (pc_arg_index > -1 && args.Length - 1 >= pc_arg_index + 1 && !arg_key_indexes.Contains(pc_arg_index + 1)) array_step = int.TryParse(args[pc_arg_index + 1], out var total_vcpus_per_process2) ? total_vcpus_per_process2 : 1;
+            if (pc_arg_index > -1 && args.Length - 1 >= pc_arg_index + 1 && !arg_key_indexes.Contains(pc_arg_index + 1)) total_vcpus_per_process = int.TryParse(args[pc_arg_index + 1], out var total_vcpus_per_process2) ? total_vcpus_per_process2 : 1;
 
             //io_proxy.WriteLine($@"pbs_job_index = ""{pbs_job_index}"", pbs_job_name = ""{pbs_job_name}"", pbs_job_array_index = ""{pbs_job_array_index}"", pbs_job_array_count = ""{pbs_job_array_count}"", input_file = ""{input_file}"", options_filename_list = ""{string.Join("; ", options_filename_list)}""");
 

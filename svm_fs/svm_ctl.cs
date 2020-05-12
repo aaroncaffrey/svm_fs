@@ -775,9 +775,11 @@ namespace svm_fs
             }
 
             var finished_fn = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"finished.txt");
-            io_proxy.WriteAllLines(finished_fn, new List<string>(), nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteAllLines(finished_fn, new List<string>() { $"{fs_exterior_vars.sw_fs.Elapsed:dd\\:hh\\:mm\\:ss}" }, nameof(svm_ctl), nameof(feature_selection));
             
             // output winner details
+            
+            
         }
 
         private static void test_group_kernel_scaling_perf(cmd_params p, int iteration_index, List<int> highest_scoring_group_indexes,
