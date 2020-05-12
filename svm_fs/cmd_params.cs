@@ -28,6 +28,9 @@ namespace svm_fs
         internal const string svm_fs_home = @"/mmfs1/data/scratch/k1040015/svm_fs";
         internal const string user_home = @"/home/k1040015";
 
+        //internal const string svm_fs_home = @"c:/mmfs1/data/scratch/k1040015/svm_fs";
+        //internal const string user_home = @"c:/home/k1040015";
+
 
         internal bool forward;
         internal bool group_features = true;
@@ -89,7 +92,8 @@ namespace svm_fs
         internal List<string> feature_selection_metrics = new List<string>() { nameof(performance_measure.confusion_matrix.F1S) };
         internal string alphabet;
         internal string category;
-        internal string dataset_dir = $@"{user_home}/dataset/"; //@"E:\caddy\input\"
+        internal string dataset_dir = $@"{user_home}/dataset/";
+        //internal string dataset_dir = @"E:\caddy\input\";
         internal string dimension;
         internal string experiment_name = null;
         internal string group;

@@ -184,11 +184,11 @@ namespace svm_fs
                         {
                             var incomplete = tasks.Count(a => !a.IsCompleted);
                             var complete = tasks.Length - incomplete;
-                            var pct = ((double) complete / (double) tasks.Length) * 100;
+                            var pct = ((double)complete / (double)tasks.Length) * 100;
 
                             var time_remaining = TimeSpan.FromTicks(
-                                (long) (DateTime.Now.Subtract(start_time).Ticks *
-                                        ((double) incomplete / (double) (complete == 0 ? 1 : complete))));
+                                (long)(DateTime.Now.Subtract(start_time).Ticks *
+                                        ((double)incomplete / (double)(complete == 0 ? 1 : complete))));
 
                             io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl),
                                 nameof(feature_selection));
@@ -219,25 +219,222 @@ namespace svm_fs
             }
         }
 
+        internal class feature_selection_vars
+        {
+            internal ((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params) winner;
+            internal (int index, (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) key, List<(int fid, string alphabet, string dimension, string category, string source, string @group, string member, string perspective, int alphabet_id, int dimension_id, int category_id, int source_id, int group_id, int member_id, int perspective_id)> list, List<int> columns) winner_group;
+            internal (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) highest_score_last_iteration_group_key = default;
+            internal (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) highest_score_this_iteration_group_key = default;
+            internal bool forward;
+            internal bool score_better_than_all = false;
+            internal bool score_better_than_last = false;
+            internal cmd_params p;
+            internal cmd_params winner_cmd_params;
+            internal double highest_score_all_iteration = 0d;
+            internal double highest_score_last_iteration = 0d;
+            internal double highest_score_this_iteration = 0d;
+            internal double score_increase_from_all = 0d;
+            internal double score_increase_from_all_pct;
+            internal double score_increase_from_last = 0d;
+            internal double score_increase_from_last_pct;
+            internal int highest_score_last_iteration_group_index = -1;
+            internal int highest_score_this_iteration_group_index = -1;
+            internal int iteration_index = -1;
+            internal int iterations_not_better_than_all = 0;
+            internal int iterations_not_better_than_last = 0;
+            internal int limit_iteration_not_better_than_all = 10;
+            internal int limit_iteration_not_better_than_last = 5;
+            internal int winning_iteration = 0;
+            internal List<int> currently_selected_group_indexes = new List<int>();
+            internal List<int> highest_scoring_group_indexes = new List<int>();
+            internal List<List<int>> previous_tests = new List<List<int>>();
+            internal List<string> summary_lines = new List<string>();
+            internal Stopwatch sw_fs = new Stopwatch();
+            internal Stopwatch sw_iteration = new Stopwatch();
+            internal string checkpoint_fn;
+            internal string final_list_fn;
+            internal string iteration_folder;
+            internal string job_list_fn;
+            internal string previous_tests_fn;
+            internal string root_folder;
+            internal string summary_fn;
+
+
+            internal feature_selection_vars(cmd_params p)
+            {
+                this.p = p;
+            }
+
+            internal void init_iteration()
+            {
+                this.root_folder = p.results_root_folder;
+                this.summary_fn = Path.Combine(this.root_folder, "summary.csv");
+                this.final_list_fn = Path.Combine(this.root_folder, "final_list.csv");
+
+
+                this.highest_score_last_iteration_group_index = this.highest_score_this_iteration_group_index;
+                this.highest_score_last_iteration_group_key = this.highest_score_this_iteration_group_key;
+                this.highest_score_this_iteration_group_key = default;
+                this.highest_score_this_iteration_group_index = -1;
+                this.highest_score_last_iteration = this.highest_score_this_iteration;
+                this.highest_score_this_iteration = 0d;
+                this.score_better_than_last = false;
+                this.score_better_than_all = false;
+                this.score_increase_from_last = 0d;
+                this.score_increase_from_all = 0d;
+                this.iteration_index++;
+
+                this.iteration_folder = Path.Combine(p.results_root_folder, $@"itr_{this.iteration_index}");
+                this.job_list_fn = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{this.iteration_index}.txt");
+                this.checkpoint_fn = Path.Combine(p.results_root_folder, $@"itr_{this.iteration_index}", $@"{nameof(this.currently_selected_group_indexes)}.txt");
+                this.previous_tests_fn = Path.Combine(p.results_root_folder, $@"itr_{this.iteration_index}", $@"previous_tests.txt");
+
+
+                if (!this.sw_fs.IsRunning) { this.sw_fs.Start(); }
+
+                this.sw_iteration.Reset();
+                this.sw_iteration.Start();
+            }
+
+
+
+            internal bool load_checkpoint()
+            {
+                var checkpoint_exists = io_proxy.is_file_available(checkpoint_fn, nameof(svm_ctl), nameof(feature_selection));
+
+                if (!checkpoint_exists) return false;
+
+                io_proxy.WriteLine($@"--------------- Checkpoint loading: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(feature_selection));
+
+                this.currently_selected_group_indexes.Clear();
+                this.highest_scoring_group_indexes.Clear();
+
+                var checkpoint_data1 = io_proxy.ReadAllLines(checkpoint_fn, nameof(svm_ctl), nameof(feature_selection));
+                var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn, nameof(svm_ctl), nameof(feature_selection));
+                this.previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b, CultureInfo.InvariantCulture)).ToList()).ToList();
+
+                foreach (var cpd in checkpoint_data1)
+                {
+                    var cpd_key = cpd.Substring(0, cpd.IndexOf('=', StringComparison.InvariantCulture));
+                    var cpd_value = cpd.Substring(cpd_key.Length + 1);
+
+                    switch (cpd_key)
+                    {
+                        case nameof(currently_selected_group_indexes): currently_selected_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList()); break;
+                        case nameof(highest_score_all_iteration): highest_score_all_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture); break;
+                        case nameof(highest_score_last_iteration): highest_score_last_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture); break;
+                        case nameof(highest_score_this_iteration): highest_score_this_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture); break;
+                        case nameof(highest_scoring_group_indexes): highest_scoring_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList()); break;
+                        case nameof(iteration_index): iteration_index = int.Parse(cpd_value, CultureInfo.InvariantCulture); break;
+                        case nameof(iterations_not_better_than_all): iterations_not_better_than_all = int.Parse(cpd_value, CultureInfo.InvariantCulture); break;
+                        case nameof(iterations_not_better_than_last): iterations_not_better_than_last = int.Parse(cpd_value, CultureInfo.InvariantCulture); break;
+                        case nameof(score_better_than_all): score_better_than_all = bool.Parse(cpd_value); break;
+                        case nameof(score_better_than_last): score_better_than_last = bool.Parse(cpd_value); break;
+                        case nameof(score_increase_from_all): score_increase_from_all = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture); break;
+                        case nameof(score_increase_from_last): score_increase_from_last = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture); break;
+                        case nameof(winning_iteration): winning_iteration = int.Parse(cpd_value, CultureInfo.InvariantCulture); break;
+                        case nameof(highest_score_last_iteration_group_key): highest_score_last_iteration_group_key = (cpd_value.Split(new[] { ',', ';' })[0].Trim(), cpd_value.Split(new[] { ',', ';' })[1].Trim(), cpd_value.Split(new[] { ',', ';' })[2].Trim(), cpd_value.Split(new[] { ',', ';' })[3].Trim(), cpd_value.Split(new[] { ',', ';' })[4].Trim(), cpd_value.Split(new[] { ',', ';' })[5].Trim(), cpd_value.Split(new[] { ',', ';' })[6].Trim()); break;
+                        case nameof(highest_score_this_iteration_group_key): highest_score_this_iteration_group_key = (cpd_value.Split(new[] { ',', ';' })[0].Trim(), cpd_value.Split(new[] { ',', ';' })[1].Trim(), cpd_value.Split(new[] { ',', ';' })[2].Trim(), cpd_value.Split(new[] { ',', ';' })[3].Trim(), cpd_value.Split(new[] { ',', ';' })[4].Trim(), cpd_value.Split(new[] { ',', ';' })[5].Trim(), cpd_value.Split(new[] { ',', ';' })[6].Trim()); break;
+                        case nameof(forward): forward = bool.Parse(cpd_value); break;
+                        case nameof(score_increase_from_all_pct): score_increase_from_all_pct = double.Parse(cpd_value); break;
+                        case nameof(score_increase_from_last_pct): score_increase_from_last_pct = double.Parse(cpd_value); break;
+                        case nameof(highest_score_last_iteration_group_index): highest_score_last_iteration_group_index = int.Parse(cpd_value); break;
+                        case nameof(highest_score_this_iteration_group_index): highest_score_this_iteration_group_index = int.Parse(cpd_value); break;
+                        case nameof(limit_iteration_not_better_than_all): limit_iteration_not_better_than_all = int.Parse(cpd_value); break;
+                        case nameof(limit_iteration_not_better_than_last): limit_iteration_not_better_than_last = int.Parse(cpd_value); break;
+                        case nameof(previous_tests): previous_tests = cpd_value.Split('|').Select(a => a.Split(new[] { ',', ';' }).Select(b => int.Parse(b)).ToList()).ToList(); break;
+                        case nameof(checkpoint_fn): checkpoint_fn = cpd_value; break;
+                        case nameof(final_list_fn): final_list_fn = cpd_value; break;
+                        case nameof(iteration_folder): iteration_folder = cpd_value; break;
+                        case nameof(job_list_fn): job_list_fn = cpd_value; break;
+                        case nameof(previous_tests_fn): previous_tests_fn = cpd_value; break;
+                        case nameof(root_folder): root_folder = cpd_value; break;
+                        case nameof(summary_fn): summary_fn = cpd_value; break;
+
+                        default: break;
+                    }
+                }
+
+                currently_selected_group_indexes = currently_selected_group_indexes.Distinct().OrderBy(a => a).ToList();
+                highest_scoring_group_indexes = highest_scoring_group_indexes.Distinct().OrderBy(a => a).ToList();
+
+                io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(feature_selection));
+
+                return true;
+            }
+
+            internal List<(string key, string value)> save_checkpoint()
+            {
+                sw_iteration.Stop();
+
+                var elapsed_iteration = $@"{sw_iteration.Elapsed:dd\:hh\:mm\:ss}";
+                var elapsed_fs = $@"{sw_fs.Elapsed:dd\:hh\:mm\:ss}";
+
+                var checkpoint_data = new List<(string key, string value)>
+                {
+                    (nameof(currently_selected_group_indexes), $@"{string.Join(";", currently_selected_group_indexes)}"),
+                    (nameof(elapsed_fs), $@"{elapsed_fs}"),
+                    (nameof(elapsed_iteration), $@"{elapsed_iteration}"),
+                    (nameof(forward), $@"{forward}"),
+                    (nameof(highest_score_all_iteration), $@"{highest_score_all_iteration:G17}"),
+                    (nameof(highest_score_last_iteration), $@"{highest_score_last_iteration:G17}"),
+                    (nameof(highest_score_last_iteration_group_index), $@"{highest_score_last_iteration_group_index}"),
+                    (nameof(highest_score_last_iteration_group_key), $@"{highest_score_last_iteration_group_key.ToString().Replace(", ", ";", StringComparison.InvariantCulture).Replace("(", "", StringComparison.InvariantCulture).Replace(")", "", StringComparison.InvariantCulture)}"),
+                    (nameof(highest_score_this_iteration), $@"{highest_score_this_iteration:G17}"),
+                    (nameof(highest_score_this_iteration_group_index), $@"{highest_score_this_iteration_group_index}"),
+                    (nameof(highest_score_this_iteration_group_key), $@"{highest_score_this_iteration_group_key.ToString().Replace(", ", ";", StringComparison.InvariantCulture).Replace("(", "", StringComparison.InvariantCulture).Replace(")", "", StringComparison.InvariantCulture)}"),
+                    (nameof(highest_scoring_group_indexes), $@"{string.Join(";", highest_scoring_group_indexes)}"),
+                    (nameof(iteration_index), $@"{iteration_index}"),
+                    (nameof(iterations_not_better_than_all), $@"{iterations_not_better_than_all}"),
+                    (nameof(iterations_not_better_than_last), $@"{iterations_not_better_than_last}"),
+                    (nameof(score_better_than_all), $@"{score_better_than_all}"),
+                    (nameof(score_better_than_last), $@"{score_better_than_last}"),
+                    (nameof(score_increase_from_all), $@"{score_increase_from_all:G17}"),
+                    (nameof(score_increase_from_all_pct), $@"{score_increase_from_all_pct:G17}"),
+                    (nameof(score_increase_from_last), $@"{score_increase_from_last:G17}"),
+                    (nameof(score_increase_from_last_pct), $@"{score_increase_from_last_pct:G17}"),
+                    (nameof(winning_iteration), $@"{winning_iteration}"),
+                    (nameof(limit_iteration_not_better_than_all), $@"{limit_iteration_not_better_than_all}"),
+                    (nameof(limit_iteration_not_better_than_last), $@"{limit_iteration_not_better_than_last}"),
+                    //(nameof(previous_tests), string.Join("|",previous_tests.Select(a=> string.Join(";",a)).ToList())), // too long as there would be up to ~7000 items per list
+                    (nameof(checkpoint_fn), checkpoint_fn),
+                    (nameof(final_list_fn), final_list_fn),
+                    (nameof(iteration_folder), iteration_folder),
+                    (nameof(job_list_fn), job_list_fn),
+                    (nameof(previous_tests_fn), previous_tests_fn),
+                    (nameof(root_folder), root_folder),
+                    (nameof(summary_fn), summary_fn),
+                };
+
+                checkpoint_data.AddRange(winner_cmd_params.get_options().Select(a => ($"p_{a.key}", a.value)).ToList());
+
+                io_proxy.WriteAllLines(checkpoint_fn, checkpoint_data.Select(a => $"{a.key}={a.value}").ToList());
+
+                var winner_options = this.winner.cmd_params.get_options(false);
+
+
+                if (summary_lines == null || summary_lines.Count == 0)
+                {
+                    summary_lines.Add($"{string.Join(",", checkpoint_data.Select(a => a.key).ToList())},{string.Join(",", performance_measure.confusion_matrix.csv_header.Select(h => $"cm_{h}").ToList())},{string.Join(",", winner_options.Select(a => a.key).ToList())}");
+                }
+
+                this.winner.cms.cm_list.ForEach(c => summary_lines.Add($"{string.Join(",", checkpoint_data.Select(a => a.value).ToList())},{c.ToString()},{string.Join(",", winner_options.Select(a => a.value).ToList())}"));
+
+                io_proxy.WriteAllLines(summary_fn, summary_lines);
+
+                var previous_tests_data = previous_tests.Select(a => string.Join(";", a)).ToList();
+                io_proxy.WriteAllLines(previous_tests_fn, previous_tests_data);
+
+                return checkpoint_data;
+            }
+        }
+
+
         internal static void feature_selection(cmd_params p)
         {
-            //p.feature_count = 0;
-            //p.group_count = 0;
-
-            // Load dataset
-            //io_proxy.WriteLine("Start: Loading dataset...");
-
-
-
             var required_default = false;
-
             var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
-
             //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
-
-            //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
-
-
 
             var dataset = dataset_loader.read_binary_dataset(
                 p.dataset_dir,
@@ -251,10 +448,6 @@ namespace svm_fs
                 required_default,
                 required_matches
                 );
-
-
-
-            //io_proxy.WriteLine("End: Loading dataset...");
 
             var class_ids = dataset.dataset_instance_list.Select(a => a.class_id).Distinct().ToList();
 
@@ -273,22 +466,12 @@ namespace svm_fs
 
             var dataset_instance_list_grouped = dataset.dataset_instance_list.GroupBy(a => a.class_id).Select(a => (class_id: a.Key, examples: a.ToList())).ToList();
 
-            //var alphabet = b[1];
-            //var dimension = b[2];
-            //var category = b[3];
-            //var source = b[4];
-            //var group = b[5];
-            //var member = b[6];
-            //var perspective = b[7];
-
             var groups = p.group_features ? dataset.dataset_headers.GroupBy(a => (a.alphabet, a.dimension, a.category, a.source, a.group, member: "", perspective: "")).Skip(1).Select((a, i) => (index: i, key: a.Key, list: a.ToList(), columns: a.Select(b => b.fid).ToList())).ToList() : dataset.dataset_headers.GroupBy(a => a.fid).Skip(1).Select((a, i) => (index: i, key: (a.First().alphabet, a.First().dimension, a.First().category, a.First().source, a.First().group, a.First().member, a.First().perspective), list: a.ToList(), columns: a.Select(b => b.fid).ToList())).ToList();
             var group_keys = groups.Select(a => a.key).ToList();
             var group_keys_distinct = group_keys.Distinct().ToList();
 
             if (group_keys.Count != group_keys_distinct.Count) throw new Exception();
 
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
 
             var test_run = true;
             if (test_run)
@@ -297,581 +480,290 @@ namespace svm_fs
 
                 //group count -- total groups currently selected/testing
                 //feature count -- total features currently selected/testing
-
-                io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-                io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
             }
 
-            var iteration_index = -1;
-            var winning_iteration = 0;
-            //var last_winning_iteration = 0;
+            io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
 
-            var highest_score_last_iteration_group_index = -1;
-            var highest_score_this_iteration_group_index = -1;
-
-            (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) highest_score_last_iteration_group_key = default;
-            (string alphabet, string dimension, string category, string source, string @group, string member, string perspective) highest_score_this_iteration_group_key = default;
-
-            var iterations_not_better_than_last = 0;
-            var iterations_not_better_than_all = 0;
-            var currently_selected_group_indexes = new List<int>();
-            var highest_scoring_group_indexes = new List<int>();
-            var highest_score_last_iteration = 0d;
-            var highest_score_this_iteration = 0d;
-            var highest_score_all_iteration = 0d;
-            var score_increase_from_last = 0d;
-            var score_increase_from_all = 0d;
-            var score_better_than_last = false;
-            var score_better_than_all = false;
-            var sw_fs = new Stopwatch();
-
-            var previous_tests = new List<List<int>>();
-
-            var limit_iteration_not_better_than_last = 5;
-            var limit_iteration_not_better_than_all = 10;
-
-            var root_folder = /*io_proxy.convert_path*/(p.results_root_folder);
-            var summary_fn = /*io_proxy.convert_path*/(Path.Combine(root_folder, "summary.csv"));
-
-            var summary_lines = new List<string>();
-
-            //lock (wait_ready_lock)
-            //{
-            //    wait_items = groups.Count;
-            //    wait_items_ready = 0;
-            //    wait_ready = false;
-            //}
-
-            sw_fs.Start();
+            var fs_exterior_vars = new feature_selection_vars(p);
 
             do
             {
-                highest_score_last_iteration_group_index = highest_score_this_iteration_group_index;
-                highest_score_last_iteration_group_key = highest_score_this_iteration_group_key;
-                highest_score_this_iteration_group_key = default;
-                highest_score_this_iteration_group_index = -1;
-                highest_score_last_iteration = highest_score_this_iteration;
-                highest_score_this_iteration = 0d;
-                score_better_than_last = false;
-                score_better_than_all = false;
-                score_increase_from_last = 0d;
-                score_increase_from_all = 0d;
-                iteration_index++;
+                fs_exterior_vars.init_iteration();
 
-                io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-                io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(feature_selection));
-                io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"--------------- Start of iteration {fs_exterior_vars.iteration_index} ---------------", nameof(svm_ctl), nameof(feature_selection));
 
-                var sw_iteration = new Stopwatch();
-                sw_iteration.Start();
-
-
-                var iteration_folder = Path.Combine(p.results_root_folder, $@"itr_{iteration_index}");
-                var checkpoint_fn = Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"{nameof(currently_selected_group_indexes)}.txt");
-                var previous_tests_fn = Path.Combine(p.results_root_folder, $@"itr_{iteration_index}", $@"previous_tests.txt");
-
-                if (io_proxy.is_file_available(checkpoint_fn, nameof(svm_ctl), nameof(feature_selection)))
+                if (fs_exterior_vars.load_checkpoint())
                 {
-                    io_proxy.WriteLine($@"--------------- Checkpoint loaded: {checkpoint_fn} ---------------", nameof(svm_ctl), nameof(feature_selection));
-
-
-                    currently_selected_group_indexes.Clear();
-                    highest_scoring_group_indexes.Clear();
-
-                    var checkpoint_data1 = io_proxy.ReadAllLines(checkpoint_fn, nameof(svm_ctl), nameof(feature_selection));
-                    var previous_tests_data = io_proxy.ReadAllLines(previous_tests_fn, nameof(svm_ctl), nameof(feature_selection));
-                    previous_tests = previous_tests_data.Select(a => a.Split(';').Select(b => int.Parse(b, CultureInfo.InvariantCulture)).ToList()).ToList();
-
-                    foreach (var cpd in checkpoint_data1)
-                    {
-                        var cpd_key = cpd.Substring(0, cpd.IndexOf('=', StringComparison.InvariantCulture));
-                        var cpd_value = cpd.Substring(cpd_key.Length + 1);
-
-                        switch (cpd_key)
-                        {
-                            case nameof(iteration_index):// "iteration_index":
-                                iteration_index = int.Parse(cpd_value, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(winning_iteration):// winning_iteration":
-                                winning_iteration = int.Parse(cpd_value, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(iterations_not_better_than_last):// "iterations_not_better_than_last":
-                                iterations_not_better_than_last = int.Parse(cpd_value, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(iterations_not_better_than_all):// "iterations_not_better_than_all":
-                                iterations_not_better_than_all = int.Parse(cpd_value, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(currently_selected_group_indexes):// "currently_selected_group_indexes":
-                                currently_selected_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList());
-                                break;
-
-                            case nameof(highest_scoring_group_indexes):// "highest_scoring_group_indexes":
-                                highest_scoring_group_indexes.AddRange(cpd_value.Split(';').Select(a => int.Parse(a, CultureInfo.InvariantCulture)).ToList());
-                                break;
-
-                            case nameof(highest_score_last_iteration):// "highest_score_last_iteration":
-                                highest_score_last_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(highest_score_this_iteration):// "highest_score_this_iteration":
-                                highest_score_this_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(highest_score_all_iteration):// "highest_score_all_iteration":
-                                highest_score_all_iteration = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(score_increase_from_last):// "score_increase_from_last":
-                                score_increase_from_last = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(score_increase_from_all):// "score_increase_from_all":
-                                score_increase_from_all = double.Parse(cpd_value, NumberStyles.Float, CultureInfo.InvariantCulture);
-                                break;
-
-                            case nameof(score_better_than_last):// "score_better_than_last":
-                                score_better_than_last = bool.Parse(cpd_value);
-                                break;
-
-                            case nameof(score_better_than_all):// "score_better_than_all":
-                                score_better_than_all = bool.Parse(cpd_value);
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-
-                    currently_selected_group_indexes = currently_selected_group_indexes.Distinct().OrderBy(a => a).ToList();
-                    highest_scoring_group_indexes = highest_scoring_group_indexes.Distinct().OrderBy(a => a).ToList();
-
-
                     continue;
+                }
+
+                var currently_selected_groups = fs_exterior_vars.currently_selected_group_indexes.Select(a => groups[a]).ToList();
+                var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
+
+                var group_tasks1 =
+                    new List<
+                        Task<
+                            (
+                            List<string> wait_file_list,
+                            cmd_params p,
+                            List<int> this_test_group_indexes,
+                            List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm,
+                            List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets,
+                            List<cmd_params> wkr_cmd_params_list
+                            )>>();
+
+                for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                {
+                    var group_index = _group_index;
+
+                    var task = Task.Run(() =>
+                    {
+                        var is_group_index_selected = fs_exterior_vars.currently_selected_group_indexes.Contains(group_index);
+
+                        var is_forward = !is_group_index_selected;
+
+                        var this_test_group_indexes = fs_exterior_vars.currently_selected_group_indexes.ToList();
+
+
+                        if (is_forward)
+                        {
+                            this_test_group_indexes.Add(group_index);
+                        }
+                        else
+                        {
+                            this_test_group_indexes.Remove(group_index);
+
+                            // do not remove if the only selected feature 
+                            if (fs_exterior_vars.currently_selected_group_indexes.Count == 1)
+                            {
+                                io_proxy.WriteLine(
+                                    $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1",
+                                    nameof(svm_ctl), nameof(feature_selection));
+
+                                return default;
+                            }
+
+                            // do not remove if was just added
+                            if (fs_exterior_vars.highest_score_last_iteration_group_index == group_index)
+                            {
+                                io_proxy.WriteLine(
+                                    $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index",
+                                    nameof(svm_ctl), nameof(feature_selection));
+
+                                return default;
+                            }
+                        }
+
+                        this_test_group_indexes = this_test_group_indexes.OrderBy(a => a).Distinct().ToList();
+
+
+                        var already_tested = fs_exterior_vars.previous_tests.Any(a => a.SequenceEqual(this_test_group_indexes));
+
+                        // do not repeat the same test
+                        if (already_tested)
+                        {
+                            io_proxy.WriteLine(
+                                $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}",
+                                nameof(svm_ctl), nameof(feature_selection));
+
+                            return default;
+                        }
+
+                        var group = group_index > -1 ? groups[group_index] : default;
+
+                        var group_key = group.key;
+
+                        var old_group_count = currently_selected_groups.Count;
+                        var new_group_count = this_test_group_indexes.Count;
+
+                        var query_cols = is_group_index_selected
+                            ? currently_selected_groups_columns.Except(group.columns).OrderBy(a => a).Distinct()
+                                .ToList()
+                            : currently_selected_groups_columns.Union(group.columns).OrderBy(a => a).Distinct()
+                                .ToList();
+
+                        var old_feature_count = currently_selected_groups_columns.Count;
+                        var new_feature_count = query_cols.Count;
+
+                        var jobs_randomisation_level = group_cv_part1(
+                            //0,
+                            p,
+                            downsampled_training_class_folds,
+                            class_folds,
+                            dataset_instance_list_grouped,
+                            fs_exterior_vars.iteration_index,
+                            group_index,
+                            groups,
+                            query_cols,
+                            is_forward,
+                            old_feature_count,
+                            new_feature_count,
+                            old_group_count,
+                            new_group_count,
+                            group_key,
+                            this_test_group_indexes);
+
+                        return jobs_randomisation_level;
+                    });
+
+                    group_tasks1.Add(task);
+                }
+
+                wait_tasks(group_tasks1.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
+                var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
+                group_tasks1.Clear();
+
+                var wkr_parameters_list = jobs_group_level_part1.SelectMany(a => a == default ? new List<string>() : a.wkr_cmd_params_list?.Select(b => b.options_filename).ToList() ?? new List<string>()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+
+                io_proxy.WriteAllLines(fs_exterior_vars.job_list_fn, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
+
+                var wait_file_list = jobs_group_level_part1.Where(a => a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
+                wait_for_results(wait_file_list);
+                io_proxy.Delete(fs_exterior_vars.job_list_fn);
+
+                if (jobs_group_level_part1 == null || jobs_group_level_part1.Count == 0)
+                {
+                    io_proxy.WriteLine($@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(feature_selection));
+
+                    break;
+                }
+
+                var group_tasks2 = new List<Task<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
+
+                for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                {
+                    var group_index = _group_index;
+
+                    var task = Task.Run(() =>
+                    {
+                        var part1_result = jobs_group_level_part1[group_index];
+
+                        if (part1_result == default)
+                        {
+                            //io_proxy.WriteLine($@"Error: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
+
+                            return default;
+                        }
+
+                        var part2_result = group_cv_part2(part1_result);
+
+                        return part2_result;
+                    });
+
+                    group_tasks2.Add(task);
+                }
+
+
+                wait_tasks(group_tasks2.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
+                var jobs_group_level_part2 = group_tasks2.Select(a => a.Result).Where(a => a != default).ToList();
+                group_tasks2.Clear();
+
+                jobs_group_level_part2.ForEach(a => fs_exterior_vars.previous_tests.Add(a.this_test_group_indexes));
+
+                // get ranks by group
+                var cm_inputs = get_cm_inputs(p, jobs_group_level_part2, groups, fs_exterior_vars.iteration_folder, fs_exterior_vars.iteration_index);
+
+                if (cm_inputs == null || cm_inputs.Count <= 0)
+                {
+                    io_proxy.WriteLine($@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}: cm_inputs == null || cm_inputs.Count <= 0", nameof(svm_ctl), nameof(feature_selection));
+
+                    break;
+                }
+
+
+                // add best group to selected groups
+
+                fs_exterior_vars.winner = cm_inputs.First();
+                fs_exterior_vars.winner_group = groups[fs_exterior_vars.winner.cmd_params.group_index];
+
+                fs_exterior_vars.winner_cmd_params = fs_exterior_vars.winner.cmd_params;
+
+                fs_exterior_vars.forward = !fs_exterior_vars.currently_selected_group_indexes.Contains(fs_exterior_vars.winner.cmd_params.group_index);
+
+                fs_exterior_vars.highest_score_this_iteration_group_index = fs_exterior_vars.winner.cmd_params.group_index;
+                fs_exterior_vars.highest_score_this_iteration_group_key = fs_exterior_vars.winner_group.key;
+
+                fs_exterior_vars.highest_score_this_iteration = fs_exterior_vars.winner.cms.cm_list.Where(b => p.feature_selection_classes == null || p.feature_selection_classes.Count == 0 || p.feature_selection_classes.Contains(b.class_id.Value)).Average(b => b.get_perf_value_strings().Where(c => p.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value));
+
+                fs_exterior_vars.score_increase_from_last = fs_exterior_vars.highest_score_this_iteration - fs_exterior_vars.highest_score_last_iteration;
+                fs_exterior_vars.score_increase_from_all = fs_exterior_vars.highest_score_this_iteration - fs_exterior_vars.highest_score_all_iteration;
+
+                fs_exterior_vars.score_increase_from_last_pct = fs_exterior_vars.highest_score_last_iteration != 0 ? fs_exterior_vars.score_increase_from_last / fs_exterior_vars.highest_score_last_iteration : 0;
+                fs_exterior_vars.score_increase_from_all_pct = fs_exterior_vars.highest_score_last_iteration != 0 ? fs_exterior_vars.score_increase_from_all / fs_exterior_vars.highest_score_all_iteration : 0;
+
+                fs_exterior_vars.score_better_than_last = fs_exterior_vars.score_increase_from_last > 0;
+                fs_exterior_vars.score_better_than_all = fs_exterior_vars.score_increase_from_all > 0;
+
+                fs_exterior_vars.iterations_not_better_than_last = fs_exterior_vars.score_better_than_last ? 0 : fs_exterior_vars.iterations_not_better_than_last + 1;
+                fs_exterior_vars.iterations_not_better_than_all = fs_exterior_vars.score_better_than_all ? 0 : fs_exterior_vars.iterations_not_better_than_all + 1;
+
+
+                if (fs_exterior_vars.forward)
+                {
+                    fs_exterior_vars.currently_selected_group_indexes.Add(fs_exterior_vars.winner.cmd_params.group_index);
                 }
                 else
                 {
-
-
-                    // 1. iteration winning score
-                    // 2. selected features
-
-
-                    //io_proxy.WriteLine($@"--------------- Start of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
-
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-
-                    //score_improved = false;
-                    //var _iteration_index = iteration_index;
-                    var currently_selected_groups = currently_selected_group_indexes.Select(a => groups[a]).ToList();
-                    var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
-
-                    //var jobs_group_level = Enumerable.Range(0, groups.Count).AsParallel().AsOrdered().Select(group_index =>
-
-
-                    /*var jobs_group_level = new 
-                        List<(
-                            List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level,
-                            List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, 
-                            List<int> this_test_group_indexes
-                        )>();
-                        */
-                    //var group_tasks = new List<Task<(
-                    //    List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level,
-                    //    List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs,
-                    //    List<int> this_test_group_indexes
-                    //    )>>();
-
-                    var group_tasks1 =
-                        new List<
-                            Task<
-                                (
-                                List<string> wait_file_list,
-                                cmd_params p,
-                                List<int> this_test_group_indexes,
-                                List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm,
-                                List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets,
-                                List<cmd_params> wkr_cmd_params_list
-                                )>>();
-
-                    //GCSettings.IsServerGC
-                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
-                    {
-                        var group_index = _group_index;
-
-                        var task = Task.Run(() =>
-                        {
-                            //GC.TryStartNoGCRegion(1024 * 1000 * 1000);
-                            var is_group_index_selected = currently_selected_group_indexes.Contains(group_index);
-
-                            var is_forward = !is_group_index_selected;
-
-                            var this_test_group_indexes = currently_selected_group_indexes.ToList();
-
-
-                            if (is_forward)
-                            {
-                                this_test_group_indexes.Add(group_index);
-                            }
-                            else
-                            {
-                                this_test_group_indexes.Remove(group_index);
-
-                                // do not remove if the only selected feature 
-                                if (currently_selected_group_indexes.Count == 1)
-                                {
-                                    io_proxy.WriteLine(
-                                        $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1",
-                                        nameof(svm_ctl), nameof(feature_selection));
-
-                                    //jobs_group_level.Add(default);
-                                    return default;
-                                }
-
-
-                                // do not remove if was just added
-                                if (highest_score_last_iteration_group_index == group_index)
-                                {
-                                    io_proxy.WriteLine(
-                                        $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index",
-                                        nameof(svm_ctl), nameof(feature_selection));
-
-                                    //jobs_group_level.Add(default);
-
-                                    return default;
-                                }
-                            }
-
-                            this_test_group_indexes = this_test_group_indexes.OrderBy(a => a).Distinct().ToList();
-
-
-                            var already_tested = previous_tests.Any(a => a.SequenceEqual(this_test_group_indexes));
-
-                            // do not repeat the same test
-                            if (already_tested)
-                            {
-
-                                io_proxy.WriteLine(
-                                    $@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}",
-                                    nameof(svm_ctl), nameof(feature_selection));
-
-                                //jobs_group_level.Add(default);
-
-                                return default;
-                            }
-
-                            var group = group_index > -1 ? groups[group_index] : default;
-
-                            var group_key = group.key;
-
-                            var old_group_count = currently_selected_groups.Count;
-                            var new_group_count =
-                                this_test_group_indexes.Count; //old_group_count + (is_group_index_selected ? -1 : 1);
-
-                            var query_cols = is_group_index_selected
-                                ? currently_selected_groups_columns.Except(group.columns).OrderBy(a => a).Distinct()
-                                    .ToList()
-                                : currently_selected_groups_columns.Union(group.columns).OrderBy(a => a).Distinct()
-                                    .ToList();
-
-                            var old_feature_count = currently_selected_groups_columns.Count;
-                            var new_feature_count = query_cols.Count;
-
-
-
-
-                            var jobs_randomisation_level = group_cv_part1(
-                                //0,
-                                p,
-                                downsampled_training_class_folds,
-                                class_folds,
-                                dataset_instance_list_grouped,
-                                iteration_index,
-                                group_index,
-                                groups,
-                                query_cols,
-                                is_forward,
-                                old_feature_count,
-                                new_feature_count,
-                                old_group_count,
-                                new_group_count,
-                                group_key,
-                                this_test_group_indexes);
-
-                            return jobs_randomisation_level;
-
-                            //jobs_group_level.Add(jobs_randomisation_level);
-
-
-
-
-                            //GC.EndNoGCRegion();
-                        });
-
-
-                        group_tasks1.Add(task);
-                    }//).ToList();
-
-                    wait_tasks(group_tasks1.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
-                    var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
-                    group_tasks1.Clear();
-
-                    var wkr_parameters_list = jobs_group_level_part1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
-
-                    var job_list_filename = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{iteration_index}.txt");
-                    io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
-
-                    var wait_file_list = jobs_group_level_part1.Where(a=> a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
-                    wait_for_results(wait_file_list);
-                    io_proxy.Delete(job_list_filename);
-
-
-
-
-
-
-
-
-
-
-
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
-
-                    if (jobs_group_level_part1 == null || jobs_group_level_part1.Count == 0)
-                    {
-                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: jobs_group_level == null || jobs_group_level.Count == 0", nameof(svm_ctl), nameof(feature_selection));
-
-                        break;
-                    }
-
-                    var group_tasks2 = new List<Task<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
-
-                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
-                    {
-                        var group_index = _group_index;
-
-                        var task = Task.Run(() =>
-                        {
-                            var part1_result = jobs_group_level_part1[group_index];
-
-                            if (part1_result == default)
-                            {
-                                io_proxy.WriteLine($@"Error: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
-
-                                return default;
-                            }
-
-                            var part2_result = group_cv_part2(part1_result);
-
-                            return part2_result;
-                        });
-
-
-                        group_tasks2.Add(task);
-                    }
-
-
-                    wait_tasks(group_tasks2.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
-                    var jobs_group_level_part2 = group_tasks2.Select(a => a.Result).Where(a=> a != default).ToList();
-                    group_tasks2.Clear();
-
-                    jobs_group_level_part2.ForEach(a => previous_tests.Add(a.this_test_group_indexes));
-
-                    // get ranks by group
-                    var cm_inputs = get_cm_inputs(p, jobs_group_level_part2, groups, iteration_folder, iteration_index);
-
-                    if (cm_inputs == null || cm_inputs.Count <= 0)
-                    {
-                        io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}: cm_inputs == null || cm_inputs.Count <= 0", nameof(svm_ctl), nameof(feature_selection));
-
-                        break;
-                    }
-
-
-                    // add best group to selected groups
-
-
-                    //currently_selected_group_indexes.Add(cm_inputs.First().cmd_params.group_index);
-
-
-                    var winner = cm_inputs.First();
-                    var winner_group = groups[winner.cmd_params.group_index];
-
-                    var forward = !currently_selected_group_indexes.Contains(winner.cmd_params.group_index);
-
-                    highest_score_this_iteration_group_index = winner.cmd_params.group_index;
-                    highest_score_this_iteration_group_key = winner_group.key;
-
-                    highest_score_this_iteration = winner.cms.cm_list.Where(b => p.feature_selection_classes == null || p.feature_selection_classes.Count == 0 || p.feature_selection_classes.Contains(b.class_id.Value)).Average(b => b.get_perf_value_strings().Where(c => p.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value));
-
-                    score_increase_from_last = highest_score_this_iteration - highest_score_last_iteration;
-                    score_increase_from_all = highest_score_this_iteration - highest_score_all_iteration;
-
-                    var score_increase_from_last_pct = highest_score_last_iteration != 0 ? score_increase_from_last / highest_score_last_iteration : 0;
-                    var score_increase_from_all_pct = highest_score_last_iteration != 0 ? score_increase_from_all / highest_score_all_iteration : 0;
-
-                    score_better_than_last = score_increase_from_last > 0;
-                    score_better_than_all = score_increase_from_all > 0;
-
-
-                    iterations_not_better_than_last = score_better_than_last ? 0 : iterations_not_better_than_last + 1;
-                    iterations_not_better_than_all = score_better_than_all ? 0 : iterations_not_better_than_all + 1;
-
-
-
-
-                    //if (score_better_than_last) // commented out so that more iterations can be tried to not get trapped in a low local optima
-                    //{
-                    if (forward)
-                    {
-                        currently_selected_group_indexes.Add(winner.cmd_params.group_index);
-                    }
-                    else
-                    {
-                        currently_selected_group_indexes.RemoveAll(a => a == winner.cmd_params.group_index);
-                    }
-
-                    currently_selected_group_indexes = currently_selected_group_indexes.OrderBy(a => a).Distinct().ToList();
-                    //}
-
-                    if (score_better_than_all)
-                    {
-                        winning_iteration = iteration_index;
-
-                        highest_score_all_iteration = highest_score_this_iteration;
-
-                        highest_scoring_group_indexes = currently_selected_group_indexes.ToList();
-                    }
-
-                    io_proxy.WriteLine($@"Score {(score_better_than_last ? "improved" : "not improved")} from last iteration; score {(score_better_than_last ? "increased" : "decreased")} by {score_increase_from_last} from {highest_score_last_iteration} to {highest_score_this_iteration}.", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine($@"Best score {(score_better_than_last ? "is" : "would have been")} to {(forward ? "add" : "remove")} group {winner.cmd_params.group_index} {groups[winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(feature_selection));
-
-                    // highest_score_last_iteration
-
-
-                    // 1. check if grid search results cache are loaded?
-                    // 2. rerun file if kernel refuses
-
-                    // 1. per feature: output cm per outer-fold
-                    // 2. per feature: combine outer-fold cm into one file
-                    // 3. per feature: output cm (all results combined into one prediction file)
-                    // 4. all features: output cm with features ordered by predictive ability rank
-
-                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
-                    io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
-                    //io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(interactive));
-
-
-                    sw_iteration.Stop();
-                    var elapsed_iteration = $@"{sw_iteration.Elapsed:dd\:hh\:mm\:ss}";
-                    var elapsed_fs = $@"{sw_fs.Elapsed:dd\:hh\:mm\:ss}";
-
-                    var checkpoint_data = new List<(string key, string value)>
-                    {
-                        ($@"{nameof(iteration_index)}", $@"{iteration_index}"),
-                        ($@"{nameof(winning_iteration)}", $@"{winning_iteration}"),
-                        ($@"{nameof(highest_score_last_iteration_group_index)}",
-                            $@"{highest_score_last_iteration_group_index}"),
-                        ($@"{nameof(highest_score_this_iteration_group_index)}",
-                            $@"{highest_score_this_iteration_group_index}"),
-                        ($@"{nameof(highest_score_last_iteration_group_key)}",
-                            $@"{highest_score_last_iteration_group_key.ToString().Replace(",", ";", StringComparison.InvariantCulture).Replace("(", "", StringComparison.InvariantCulture).Replace(")", "", StringComparison.InvariantCulture)}"),
-                        ($@"{nameof(highest_score_this_iteration_group_key)}",
-                            $@"{highest_score_this_iteration_group_key.ToString().Replace(",", ";", StringComparison.InvariantCulture).Replace("(", "", StringComparison.InvariantCulture).Replace(")", "", StringComparison.InvariantCulture)}"),
-                        ($@"{nameof(forward)}", $@"{forward}"),
-                        ($@"{nameof(iterations_not_better_than_last)}", $@"{iterations_not_better_than_last}"),
-                        ($@"{nameof(iterations_not_better_than_all)}", $@"{iterations_not_better_than_all}"),
-                        ($@"{nameof(highest_score_last_iteration)}", $@"{highest_score_last_iteration:G17}"),
-                        ($@"{nameof(highest_score_this_iteration)}", $@"{highest_score_this_iteration:G17}"),
-                        ($@"{nameof(highest_score_all_iteration)}", $@"{highest_score_all_iteration:G17}"),
-                        ($@"{nameof(score_increase_from_last)}", $@"{score_increase_from_last:G17}"),
-                        ($@"{nameof(score_increase_from_last_pct)}", $@"{score_increase_from_last_pct:G17}"),
-                        ($@"{nameof(score_increase_from_all)}", $@"{score_increase_from_all:G17}"),
-                        ($@"{nameof(score_increase_from_all_pct)}", $@"{score_increase_from_all_pct:G17}"),
-                        ($@"{nameof(score_better_than_last)}", $@"{score_better_than_last}"),
-                        ($@"{nameof(score_better_than_all)}", $@"{score_better_than_all}"),
-                        ($@"{nameof(elapsed_iteration)}", $@"{elapsed_iteration}"),
-                        ($@"{nameof(elapsed_fs)}", $@"{elapsed_fs}"),
-                        ($@"{nameof(currently_selected_group_indexes)}",
-                            $@"{string.Join(";", currently_selected_group_indexes)}"),
-                        ($@"{nameof(highest_scoring_group_indexes)}",
-                            $@"{string.Join(";", highest_scoring_group_indexes)}")
-                    };
-                    //checkpoint_data.Add(($@"{nameof(selected_group_indexes)}", $@"{selected_group_indexes}"));
-
-                    checkpoint_data.AddRange(winner.cmd_params.get_options().Select(a => ($"p_{a.key}", a.value)).ToList());
-                    //checkpoint_data.AddRange(winner.cms.);
-
-                    io_proxy.WriteAllLines(checkpoint_fn, checkpoint_data.Select(a => $"{a.key}={a.value}").ToList());
-
-                    //var summary_fn = /*io_proxy.convert_path*/(Path.Combine(iteration_folder, "summary.csv"));
-
-
-
-                    if (summary_lines == null || summary_lines.Count == 0)
-                    {
-                        summary_lines.Add($"{string.Join(",", checkpoint_data.Select(a => a.key).ToList())},{string.Join(",", performance_measure.confusion_matrix.csv_header.Select(h => $"cm_{h}").ToList())}");
-                    }
-                    //  todo: add winnter cmd_params
-
-                    winner.cms.cm_list.ForEach(c => summary_lines.Add($"{string.Join(",", checkpoint_data.Select(a => a.value).ToList())},{c.ToString()}"));
-
-                    io_proxy.WriteAllLines(summary_fn, summary_lines);
-
-                    var previous_tests_data = previous_tests.Select(a => string.Join(";", a)).ToList();
-                    io_proxy.WriteAllLines(previous_tests_fn, previous_tests_data);
-
+                    fs_exterior_vars.currently_selected_group_indexes.RemoveAll(a => a == fs_exterior_vars.winner.cmd_params.group_index);
                 }
 
-                // previous winning iterations
-                // route taken 
+                fs_exterior_vars.currently_selected_group_indexes = fs_exterior_vars.currently_selected_group_indexes.OrderBy(a => a).Distinct().ToList();
 
 
-                io_proxy.WriteLine($@"score_better_than_last = {score_better_than_last}", nameof(svm_ctl), nameof(feature_selection));
-                io_proxy.WriteLine($@"(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all) = {(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all)}", nameof(svm_ctl), nameof(feature_selection));
-                io_proxy.WriteLine($@"currently_selected_group_indexes.Count < groups.Count = {currently_selected_group_indexes.Count < groups.Count}", nameof(svm_ctl), nameof(feature_selection));
+                if (fs_exterior_vars.score_better_than_all)
+                {
+                    fs_exterior_vars.winning_iteration = fs_exterior_vars.iteration_index;
 
-                io_proxy.WriteLine($@"--------------- End of iteration {iteration_index} ---------------", nameof(svm_ctl), nameof(feature_selection));
+                    fs_exterior_vars.highest_score_all_iteration = fs_exterior_vars.highest_score_this_iteration;
+
+                    fs_exterior_vars.highest_scoring_group_indexes = fs_exterior_vars.currently_selected_group_indexes.ToList();
+                }
+
+                io_proxy.WriteLine($@"Score {(fs_exterior_vars.score_better_than_last ? "improved" : "not improved")} from last iteration; score {(fs_exterior_vars.score_better_than_last ? "increased" : "decreased")} by {fs_exterior_vars.score_increase_from_last} from {fs_exterior_vars.highest_score_last_iteration} to {fs_exterior_vars.highest_score_this_iteration}.", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"Best score {(fs_exterior_vars.score_better_than_last ? "is" : "would have been")} to {(fs_exterior_vars.forward ? "add" : "remove")} group {fs_exterior_vars.winner.cmd_params.group_index} {groups[fs_exterior_vars.winner.cmd_params.group_index].key}", nameof(svm_ctl), nameof(feature_selection));
+
+                // 1. check if grid search results cache are loaded?
+                // 2. rerun file if kernel refuses
+
+                // 1. per feature: output cm per outer-fold
+                // 2. per feature: combine outer-fold cm into one file
+                // 3. per feature: output cm (all results combined into one prediction file)
+                // 4. all features: output cm with features ordered by predictive ability rank
 
 
+                var cp_data = fs_exterior_vars.save_checkpoint();
+
+                io_proxy.WriteLine($@"score_better_than_last = {fs_exterior_vars.score_better_than_last}", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"(iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all) = {(fs_exterior_vars.iterations_not_better_than_last < fs_exterior_vars.limit_iteration_not_better_than_last && fs_exterior_vars.iterations_not_better_than_all < fs_exterior_vars.limit_iteration_not_better_than_all)}", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"currently_selected_group_indexes.Count < groups.Count = {fs_exterior_vars.currently_selected_group_indexes.Count < groups.Count}", nameof(svm_ctl), nameof(feature_selection));
+                io_proxy.WriteLine($@"--------------- End of iteration {fs_exterior_vars.iteration_index} ---------------", nameof(svm_ctl), nameof(feature_selection));
             }
             while
             (
 
-                (score_better_than_last || (iterations_not_better_than_last < limit_iteration_not_better_than_last && iterations_not_better_than_all < limit_iteration_not_better_than_all))
+                (fs_exterior_vars.score_better_than_last || (fs_exterior_vars.iterations_not_better_than_last < fs_exterior_vars.limit_iteration_not_better_than_last && fs_exterior_vars.iterations_not_better_than_all < fs_exterior_vars.limit_iteration_not_better_than_all))
 
                 &&
 
-                (currently_selected_group_indexes.Count < groups.Count)
+                (fs_exterior_vars.currently_selected_group_indexes.Count < groups.Count)
 
             );
 
             io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
-            io_proxy.WriteLine($@"Finished after {iteration_index} iterations", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Finished after {fs_exterior_vars.iteration_index} iterations", nameof(svm_ctl), nameof(feature_selection));
 
             io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
-            io_proxy.WriteLine($@"Winning iteration: {winning_iteration}", nameof(svm_ctl), nameof(feature_selection));
-            io_proxy.WriteLine($@"Winning score: {highest_score_all_iteration}", nameof(svm_ctl), nameof(feature_selection));
-            io_proxy.WriteLine($@"Winning group indexes: {string.Join(", ", highest_scoring_group_indexes)}", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Winning iteration: {fs_exterior_vars.winning_iteration}", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Winning score: {fs_exterior_vars.highest_score_all_iteration}", nameof(svm_ctl), nameof(feature_selection));
+            io_proxy.WriteLine($@"Winning group indexes: {string.Join(", ", fs_exterior_vars.highest_scoring_group_indexes)}", nameof(svm_ctl), nameof(feature_selection));
 
 
             // todo: save final list
 
-            var final_list_fn = Path.Combine(root_folder, "final_list.csv");
-            var fl = highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";", StringComparison.InvariantCulture).Replace("(", "", StringComparison.InvariantCulture).Replace(")", "", StringComparison.InvariantCulture)},{string.Join(";", groups[a].columns)}").ToList();
-            fl.Insert(0, "group_index,group_key,columns");
-            io_proxy.WriteAllLines(final_list_fn, fl);
 
-            io_proxy.WriteLine($@"", nameof(svm_ctl), nameof(feature_selection));
-
+            var final_list = fs_exterior_vars.highest_scoring_group_indexes.Select(a => $"{a},{groups[a].key.ToString().Replace(",", ";", StringComparison.InvariantCulture).Replace("(", "", StringComparison.InvariantCulture).Replace(")", "", StringComparison.InvariantCulture)},{string.Join(";", groups[a].columns)}").ToList();
+            final_list.Insert(0, "group_index,group_key,columns");
+            io_proxy.WriteAllLines(fs_exterior_vars.final_list_fn, final_list);
 
             // after finding winning solution, check performance with different kernels and scaling methods
 
@@ -879,7 +771,7 @@ namespace svm_fs
 
             if (find_best_params)
             {
-                test_group_kernel_scaling_perf(p, iteration_index, highest_scoring_group_indexes, groups, downsampled_training_class_folds, class_folds, dataset_instance_list_grouped);
+                test_group_kernel_scaling_perf(p, fs_exterior_vars.iteration_index, fs_exterior_vars.highest_scoring_group_indexes, groups, downsampled_training_class_folds, class_folds, dataset_instance_list_grouped);
             }
 
             // output winner details
@@ -917,7 +809,7 @@ namespace svm_fs
             {
                 var kernel_index = _kernel_index;
                 var kernel_type = kernel_types[kernel_index];
-                
+
                 for (var _scale_function_index = 0; _scale_function_index < scale_functions.Count; _scale_function_index++)
                 {
                     var scale_function_index = _scale_function_index;
@@ -927,7 +819,7 @@ namespace svm_fs
                     {
                         var p2 = new cmd_params(p)
                         {
-                            svm_kernel = kernel_type, 
+                            svm_kernel = kernel_type,
                             scale_function = scale_function,
                             iteration = -1
                         };
@@ -979,12 +871,11 @@ namespace svm_fs
             group_tasks1.Clear();
 
 
-            var wkr_parameters_list = results1.SelectMany(a => a.wkr_cmd_params_list.Select(b => b.options_filename).ToList()).ToList();
-            //var wkr_parameters_list2 = results1.SelectMany(a => a.rets.Select(b=>b.cmd_params.options_filename).ToList()).ToList();
+            var wkr_parameters_list = results1.SelectMany(a => a == default ? new List<string>() : a.wkr_cmd_params_list?.Select(b => b.options_filename).ToList() ?? new List<string>()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
 
             var job_list_filename = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{iteration_index}.txt");
             io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
-            
+
 
             var wait_file_list = results1.Where(a => a != default && a.wait_file_list != null && a.wait_file_list.Count > 0).SelectMany(a => a.wait_file_list).Distinct().ToList();
             wait_for_results(wait_file_list);
@@ -1010,7 +901,7 @@ namespace svm_fs
             }
 
             wait_tasks(group_tasks2.ToArray<Task>(), nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
-            var results2 = group_tasks2.Select(a => a.Result).Where(a=> a != default).ToList();
+            var results2 = group_tasks2.Select(a => a.Result).Where(a => a != default).ToList();
             group_tasks2.Clear();
 
             //var jobs_group_level0 = jobs_group_level1.Where(a => a != default).SelectMany(a => a.Where(b => b != default).ToList()).ToList();
@@ -1309,7 +1200,7 @@ namespace svm_fs
 
             // submit jobs to scheduler
 
-            
+
 
             //var wkr_cmd_params_list = jobs_randomisation_level.SelectMany(a => a.Select(b => b.cmd_params).ToList()).ToList();
             var wkr_cmd_params_list = rets.Select(a => a.cmd_params).ToList();
@@ -1374,7 +1265,7 @@ namespace svm_fs
                 var fn = item.filenames.cm_file;
                 if (!io_proxy.is_file_available(fn, nameof(svm_ctl), nameof(group_cv_part2)))
                 {
-                    var cm_data = new List<string> {cms_header};
+                    var cm_data = new List<string> { cms_header };
                     cm_data.AddRange(item.cms.cm_list.Select(a =>
                             $@"{string.Join(",", item.cmd_params.get_options().Select(c => c.value).ToList())},{a.ToString()}")
                         .ToList());
@@ -1665,7 +1556,9 @@ namespace svm_fs
                 List<string> testing_text,
                 List<string> testing_id_text,
                 List<string> testing_meta_text
-            ) job
+                
+            ) job,
+                bool use_cache = true
         )
         {
             io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1762,7 +1655,7 @@ namespace svm_fs
 
             var options_text = wkr_cmd_params.get_options_ini_text(skip_defaults: true);
 
-            var use_cache = false;
+            
             var cached = true;
 
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
@@ -1829,7 +1722,7 @@ namespace svm_fs
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_labels_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 var test_labels = job.testing_text.Select(a => a.Length > 0 ? a.Substring(0, a.IndexOf(' ', StringComparison.InvariantCulture) > -1 ? a.IndexOf(' ', StringComparison.InvariantCulture) : 0) : "").ToList();
-                io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels);
+                io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels, nameof(svm_ctl), nameof(do_outer_cv_job));
                 io_proxy.WriteLine($"Saved testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 cached = false;
             }
@@ -1842,7 +1735,7 @@ namespace svm_fs
             {
                 if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
-                    io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text);
+                    io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text, nameof(svm_ctl), nameof(do_outer_cv_job));
                     io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                     cached = false;
                 }
@@ -1856,7 +1749,7 @@ namespace svm_fs
             {
                 if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
-                    io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text);
+                    io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text, nameof(svm_ctl), nameof(do_outer_cv_job));
                     io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                     cached = false;
                 }
@@ -1871,7 +1764,7 @@ namespace svm_fs
 
             //if (wkr_cmd_params.inner_cv_folds > 1)
             //{
-                //wait_file_list.Add(wkr_cmd_params.train_grid_filename);
+            //wait_file_list.Add(wkr_cmd_params.train_grid_filename);
             //}
 
             //wait_file_list.Add(cmd_params.train_model_filename);
@@ -1897,7 +1790,7 @@ namespace svm_fs
             var merge_cmd_params = new cmd_params(wkr_cmd_params)
             {
                 // stdout and stderr not currently actually merged.
-                
+
                 //pbs_ctl_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.pbs.stdout"),
                 //pbs_ctl_stderr_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_ctl)}.pbs.stderr"),
                 //pbs_wkr_stdout_filename = Path.Combine(merge_output_folder, $"{merge_filename}.merge.{nameof(svm_wkr)}.pbs.stdout"),
@@ -1967,19 +1860,19 @@ namespace svm_fs
         //        io_proxy.Copy(source, dest, true, nameof(svm_ctl), nameof(submit_pbs_job));
         //    }
         //
-            //var psi = new ProcessStartInfo()
-            //{
-            //    FileName = jobs_fn,
-            //
-            //    RedirectStandardError = true,
-            //    RedirectStandardInput = true,
-            //    RedirectStandardOutput = true,
-            //    UseShellExecute = false,
-            //    CreateNoWindow = false,
-            //    WindowStyle = ProcessWindowStyle.Hidden,
-            //};
-            //
-            //Process.Start(psi);
+        //var psi = new ProcessStartInfo()
+        //{
+        //    FileName = jobs_fn,
+        //
+        //    RedirectStandardError = true,
+        //    RedirectStandardInput = true,
+        //    RedirectStandardOutput = true,
+        //    UseShellExecute = false,
+        //    CreateNoWindow = false,
+        //    WindowStyle = ProcessWindowStyle.Hidden,
+        //};
+        //
+        //Process.Start(psi);
         //}
 
         internal static void update_cm(cmd_params p, List<performance_measure.confusion_matrix> cm_list)
@@ -2099,17 +1992,17 @@ namespace svm_fs
             var sw1 = new Stopwatch();
             sw1.Start();
 
-          // var itr = 0;
+            // var itr = 0;
 
             while (true)
             {
-               // itr++;
+                // itr++;
 
                 var new_files_found = file_wait_list.Where(a => io_proxy.is_file_available(a, nameof(svm_ctl), nameof(wait_for_results))).ToList();
 
                 if (new_files_found.Count > 0)
                 {
-                   // itr = 0;
+                    // itr = 0;
 
                     io_proxy.WriteLine("New files found: ", nameof(svm_ctl), nameof(wait_for_results));
                     for (var j = 0; j < new_files_found.Count; j++)
@@ -2130,11 +2023,11 @@ namespace svm_fs
                 }
                 //else if (itr >= 4)
                 //{
-                    //itr = 0;
+                //itr = 0;
 
-                    var pct = ((double)total_found / (double)total_files) * (double)100;
+                var pct = ((double)total_found / (double)total_files) * (double)100;
 
-                    io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
+                io_proxy.WriteLine($@"Files ready: {total_found} / {total_files} ( {pct:0.00}% ) [ Time: {sw1.Elapsed.ToString()} ] [ ETA: {calc_eta(sw1, total_found, total_files).ToString()} ]", nameof(svm_ctl), nameof(wait_for_results));
 
                 //}
 
