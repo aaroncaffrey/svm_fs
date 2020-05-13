@@ -128,6 +128,8 @@ namespace svm_fs
             var in_arg_index = args.ToList().FindIndex(a => a == "-in");
             var of_arg_index = args.ToList().FindIndex(a => a == "-of");
             var pc_arg_index = args.ToList().FindIndex(a => a == "-pc");
+            var pt_arg_index = args.ToList().FindIndex(a => a == "-pt");
+            var en_arg_index = args.ToList().FindIndex(a => a == "-en");
 
             var arg_key_indexes = new int[]
             {
@@ -139,6 +141,8 @@ namespace svm_fs
                 in_arg_index ,
                 of_arg_index ,
                 pc_arg_index ,
+                pt_arg_index ,
+                en_arg_index ,
             };
 
             var pbs_job_index = "";
@@ -153,8 +157,10 @@ namespace svm_fs
             var array_start = 0;
             var array_step = 1;
 
-            int total_vcpus_per_process = 1;
+            int total_vcpus_per_wkr_process = 1;
+            int total_wkr_vcpus = 1440 - (64 + 320);
 
+            var experiment_name = "";
 
             if (cm_arg_index > -1 && args.Length - 1 >= cm_arg_index + 1 && !arg_key_indexes.Contains(cm_arg_index + 1)) cmd = (svm_fs.cmd)Enum.Parse(typeof(svm_fs.cmd), args[cm_arg_index + 1]);
             if (ji_arg_index > -1 && args.Length - 1 >= ji_arg_index + 1 && !arg_key_indexes.Contains(ji_arg_index + 1)) pbs_job_index = args[ji_arg_index + 1];
@@ -163,7 +169,9 @@ namespace svm_fs
             if (ac_arg_index > -1 && args.Length - 1 >= ac_arg_index + 1 && !arg_key_indexes.Contains(ac_arg_index + 1)) array_step = int.TryParse(args[ac_arg_index + 1], out var array_step2) ? array_step2 : 1;
             if (in_arg_index > -1 && args.Length - 1 >= in_arg_index + 1 && !arg_key_indexes.Contains(in_arg_index + 1)) input_file = args[in_arg_index + 1];
             if (of_arg_index > -1 && args.Length - 1 >= of_arg_index + 1 && !arg_key_indexes.Contains(of_arg_index + 1)) options_filename_list.Add(args[of_arg_index + 1]);
-            if (pc_arg_index > -1 && args.Length - 1 >= pc_arg_index + 1 && !arg_key_indexes.Contains(pc_arg_index + 1)) total_vcpus_per_process = int.TryParse(args[pc_arg_index + 1], out var total_vcpus_per_process2) ? total_vcpus_per_process2 : 1;
+            if (pc_arg_index > -1 && args.Length - 1 >= pc_arg_index + 1 && !arg_key_indexes.Contains(pc_arg_index + 1)) total_vcpus_per_wkr_process = int.TryParse(args[pc_arg_index + 1], out var total_vcpus_per_process2) ? total_vcpus_per_process2 : 1;
+            if (pt_arg_index > -1 && args.Length - 1 >= pt_arg_index + 1 && !arg_key_indexes.Contains(pt_arg_index + 1)) total_wkr_vcpus = int.TryParse(args[pt_arg_index + 1], out var total_wkr_vcpus2) ? total_wkr_vcpus2 : total_wkr_vcpus;
+            if (en_arg_index > -1 && args.Length - 1 >= en_arg_index + 1 && !arg_key_indexes.Contains(en_arg_index + 1)) experiment_name = args[en_arg_index + 1];
 
             //io_proxy.WriteLine($@"pbs_job_index = ""{pbs_job_index}"", pbs_job_name = ""{pbs_job_name}"", pbs_job_array_index = ""{pbs_job_array_index}"", pbs_job_array_count = ""{pbs_job_array_count}"", input_file = ""{input_file}"", options_filename_list = ""{string.Join("; ", options_filename_list)}""");
 
@@ -203,6 +211,11 @@ namespace svm_fs
 
                             var options = new cmd_params(file_data);
 
+                            if (!string.IsNullOrWhiteSpace(experiment_name))
+                            {
+                                options.experiment_name = experiment_name;
+                            }
+
                             svm_wkr.inner_cross_validation(options);
                             
                         });
@@ -214,12 +227,18 @@ namespace svm_fs
                 case cmd.ctl:
                     {
                         var options = new cmd_params();
+                        options.cmd = cmd;
 
                         if (options_filename_list.Count == 1)
                         {
                             options = new cmd_params(io_proxy.ReadAllLines(options_filename_list.First()));
                         }
 
+                        if (!string.IsNullOrWhiteSpace(experiment_name))
+                        {
+                            options.experiment_name = experiment_name;
+                        }
+                        
                         svm_ctl.feature_selection(options);
                         break;
                     }
@@ -227,7 +246,7 @@ namespace svm_fs
 
                 case cmd.ldr:
                     {
-                        svm_ldr.start_ldr(cts, total_vcpus_per_process);
+                        svm_ldr.start_ldr(cts, experiment_name, total_vcpus_per_wkr_process, total_wkr_vcpus);
                         break;
                     }
             }

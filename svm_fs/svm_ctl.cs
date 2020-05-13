@@ -256,7 +256,7 @@ namespace svm_fs
             internal string iteration_folder;
             internal string job_list_fn;
             internal string previous_tests_fn;
-            internal string root_folder;
+            //internal string root_folder;
             internal string summary_fn;
 
 
@@ -267,9 +267,9 @@ namespace svm_fs
 
             internal void init_iteration()
             {
-                this.root_folder = p.results_root_folder;
-                this.summary_fn = Path.Combine(this.root_folder, "summary.csv");
-                this.final_list_fn = Path.Combine(this.root_folder, "final_list.csv");
+                
+                this.summary_fn = Path.Combine(p.results_root_folder, p.experiment_name, "summary.csv");
+                this.final_list_fn = Path.Combine(p.results_root_folder, p.experiment_name, "final_list.csv");
 
 
                 this.highest_score_last_iteration_group_index = this.highest_score_this_iteration_group_index;
@@ -284,10 +284,10 @@ namespace svm_fs
                 this.score_increase_from_all = 0d;
                 this.iteration_index++;
 
-                this.iteration_folder = Path.Combine(p.results_root_folder, $@"itr_{this.iteration_index}");
-                this.job_list_fn = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{this.iteration_index}.txt");
-                this.checkpoint_fn = Path.Combine(p.results_root_folder, $@"itr_{this.iteration_index}", $@"{nameof(this.currently_selected_group_indexes)}.txt");
-                this.previous_tests_fn = Path.Combine(p.results_root_folder, $@"itr_{this.iteration_index}", $@"previous_tests.txt");
+                this.iteration_folder = Path.Combine(p.results_root_folder, p.experiment_name, $@"itr_{this.iteration_index}");
+                this.job_list_fn = Path.Combine(new pbs_params(cmd.wkr, p.experiment_name).pbs_execution_directory, $@"job_list_{this.iteration_index}.txt");
+                this.checkpoint_fn = Path.Combine(p.results_root_folder, p.experiment_name, $@"itr_{this.iteration_index}", $@"{nameof(this.currently_selected_group_indexes)}.txt");
+                this.previous_tests_fn = Path.Combine(p.results_root_folder, p.experiment_name, $@"itr_{this.iteration_index}", $@"previous_tests.txt");
 
 
                 if (!this.sw_fs.IsRunning) { this.sw_fs.Start(); }
@@ -348,7 +348,7 @@ namespace svm_fs
                         case nameof(iteration_folder): iteration_folder = cpd_value; break;
                         case nameof(job_list_fn): job_list_fn = cpd_value; break;
                         case nameof(previous_tests_fn): previous_tests_fn = cpd_value; break;
-                        case nameof(root_folder): root_folder = cpd_value; break;
+                        //case nameof(root_folder): root_folder = cpd_value; break;
                         case nameof(summary_fn): summary_fn = cpd_value; break;
 
                         default: break;
@@ -402,7 +402,7 @@ namespace svm_fs
                     (nameof(iteration_folder), iteration_folder),
                     (nameof(job_list_fn), job_list_fn),
                     (nameof(previous_tests_fn), previous_tests_fn),
-                    (nameof(root_folder), root_folder),
+                    //(nameof(root_folder), root_folder),
                     (nameof(summary_fn), summary_fn),
                 };
 
@@ -774,7 +774,7 @@ namespace svm_fs
                 test_group_kernel_scaling_perf(p, fs_exterior_vars.iteration_index, fs_exterior_vars.highest_scoring_group_indexes, groups, downsampled_training_class_folds, class_folds, dataset_instance_list_grouped);
             }
 
-            var finished_fn = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"finished.txt");
+            var finished_fn = Path.Combine(new pbs_params(cmd.wkr, p.experiment_name).pbs_execution_directory, $@"finished.txt");
             io_proxy.WriteAllLines(finished_fn, new List<string>() { $"{fs_exterior_vars.sw_fs.Elapsed:dd\\:hh\\:mm\\:ss}" }, nameof(svm_ctl), nameof(feature_selection));
             
             // output winner details
@@ -878,7 +878,7 @@ namespace svm_fs
 
             var wkr_parameters_list = results1.SelectMany(a => a == default ? new List<string>() : a.wkr_cmd_params_list?.Select(b => b.options_filename).ToList() ?? new List<string>()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
 
-            var job_list_filename = Path.Combine(pbs_params.get_default_wkr_values().pbs_execution_directory, $@"job_list_{iteration_index}.txt");
+            var job_list_filename = Path.Combine(new pbs_params(cmd.wkr, p.experiment_name).pbs_execution_directory, $@"job_list_{iteration_index}.txt");
             io_proxy.WriteAllLines(job_list_filename, wkr_parameters_list, nameof(svm_ctl), nameof(test_group_kernel_scaling_perf));
 
 
@@ -925,7 +925,7 @@ namespace svm_fs
             // get ranks by kernel/scaling
 
 
-            var iteration_folder1 = /*io_proxy.convert_path*/(Path.Combine(p.results_root_folder, $"itr_{iteration_index}"));
+            var iteration_folder1 = Path.Combine(p.results_root_folder, p.experiment_name, $"itr_{iteration_index}");
 
             var cm_inputs1 = get_cm_inputs(p, results2, groups, iteration_folder1, iteration_index);
 
@@ -1580,9 +1580,9 @@ namespace svm_fs
             //            job.group_key.source, job.group_key.group, job.group_key.member, job.group_key.perspective,
             //}.Select(a => string.IsNullOrWhiteSpace(a) ? "_" : a).ToArray()); // todo: if used in future, also remove any invalid filename chars
 
-            var iteration_folder = Path.Combine(p.results_root_folder, $@"itr_{job.iteration_index}");
-            var group_folder = Path.Combine(p.results_root_folder, $@"itr_{job.iteration_index}", $@"grp_{job.group_index}", $@"svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}");
-            var outer_fold_folder = Path.Combine(p.results_root_folder, $@"itr_{job.iteration_index}", $@"grp_{job.group_index}", $@"svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}", $@"rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}");
+            var iteration_folder = Path.Combine(p.results_root_folder, p.experiment_name, $@"itr_{job.iteration_index}");
+            var group_folder = Path.Combine(p.results_root_folder, p.experiment_name, $@"itr_{job.iteration_index}", $@"grp_{job.group_index}", $@"svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}");
+            var outer_fold_folder = Path.Combine(p.results_root_folder, p.experiment_name, $@"itr_{job.iteration_index}", $@"grp_{job.group_index}", $@"svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}", $@"rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}");
 
             var job_output_folder = outer_fold_folder;
             var merge_output_folder = group_folder;
