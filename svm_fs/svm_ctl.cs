@@ -264,7 +264,7 @@ namespace svm_fs
 
             internal void init_iteration()
             {
-                
+
                 this.summary_fn = Path.Combine(p.results_root_folder, p.experiment_name, "summary.csv");
                 this.final_list_fn = Path.Combine(p.results_root_folder, p.experiment_name, "final_list.csv");
 
@@ -429,6 +429,9 @@ namespace svm_fs
 
         internal static void feature_selection(cmd_params p)
         {
+            var part1_use_tasks = false;
+            var part2_use_tasks = false;
+
             var required_default = false;
             var required_matches = new List<(bool required, string alphabet, string dimension, string category, string source, string group, string member, string perspective)>();
             //required_matches.Add((required: true, alphabet: null, dimension: null, category: null, source: null, group: null, member: null, perspective: null));
@@ -497,25 +500,145 @@ namespace svm_fs
                 var currently_selected_groups = fs_exterior_vars.currently_selected_group_indexes.Select(a => groups[a]).ToList();
                 var currently_selected_groups_columns = currently_selected_groups.SelectMany(a => a.columns).OrderBy(a => a).Distinct().ToList();
 
-                var group_tasks1 =
-                    new List<
-                        Task<
-                            (
-                            List<string> wait_file_list,
-                            cmd_params p,
-                            List<int> this_test_group_indexes,
-                            List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm,
-                            List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets,
-                            List<cmd_params> wkr_cmd_params_list
-                            )>>();
+                List<(List<string> wait_file_list, cmd_params p, List<int> this_test_group_indexes,
+                    List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename,
+                        string merge_in_filename, string average_header)> post_tm, List<(List<string> wait_file_list,
+                        cmd_params cmd_params, cmd_params merge_cmd_params,
+                        List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename,
+                            string merge_in_filename, string average_header)> to_merge)> rets, List<cmd_params>
+                    wkr_cmd_params_list)> jobs_group_level_part1 = null;
 
-                for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                
+
+                if (part1_use_tasks)
                 {
-                    var group_index = _group_index;
+                    var group_tasks1 =
+                        new List<
+                            Task<
+                                (
+                                List<string> wait_file_list,
+                                cmd_params p,
+                                List<int> this_test_group_indexes,
+                                List<(bool wait_first, bool has_header, string average_out_filename, string
+                                    merge_out_filename, string merge_in_filename, string average_header)> post_tm,
+                                List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params,
+                                    List<(bool wait_first, bool has_header, string average_out_filename, string
+                                        merge_out_filename, string merge_in_filename, string average_header)> to_merge)>
+                                rets,
+                                List<cmd_params> wkr_cmd_params_list
+                                )>>();
 
-                    var task = Task.Run(() =>
+                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
                     {
-                        var is_group_index_selected = fs_exterior_vars.currently_selected_group_indexes.Contains(group_index);
+                        var group_index = _group_index;
+
+                        var task = Task.Run(() =>
+                        {
+                            var is_group_index_selected =
+                                fs_exterior_vars.currently_selected_group_indexes.Contains(group_index);
+
+                            var is_forward = !is_group_index_selected;
+
+                            var this_test_group_indexes = fs_exterior_vars.currently_selected_group_indexes.ToList();
+
+
+                            if (is_forward)
+                            {
+                                this_test_group_indexes.Add(group_index);
+                            }
+                            else
+                            {
+                                this_test_group_indexes.Remove(group_index);
+
+                                // do not remove if the only selected feature 
+                                if (fs_exterior_vars.currently_selected_group_indexes.Count == 1)
+                                {
+                                    io_proxy.WriteLine(
+                                        $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1",
+                                        nameof(svm_ctl), nameof(feature_selection));
+
+                                    return default;
+                                }
+
+                                // do not remove if was just added
+                                if (fs_exterior_vars.highest_score_last_iteration_group_index == group_index)
+                                {
+                                    io_proxy.WriteLine(
+                                        $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index",
+                                        nameof(svm_ctl), nameof(feature_selection));
+
+                                    return default;
+                                }
+                            }
+
+                            this_test_group_indexes = this_test_group_indexes.OrderBy(a => a).Distinct().ToList();
+
+
+                            var already_tested =
+                                fs_exterior_vars.previous_tests.Any(a => a.SequenceEqual(this_test_group_indexes));
+
+                            // do not repeat the same test
+                            if (already_tested)
+                            {
+                                io_proxy.WriteLine(
+                                    $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}",
+                                    nameof(svm_ctl), nameof(feature_selection));
+
+                                return default;
+                            }
+
+                            var group = group_index > -1 ? groups[group_index] : default;
+
+                            var group_key = group.key;
+
+                            var old_group_count = currently_selected_groups.Count;
+                            var new_group_count = this_test_group_indexes.Count;
+
+                            var query_cols = is_group_index_selected
+                                ? currently_selected_groups_columns.Except(group.columns).OrderBy(a => a).Distinct()
+                                    .ToList()
+                                : currently_selected_groups_columns.Union(group.columns).OrderBy(a => a).Distinct()
+                                    .ToList();
+
+                            var old_feature_count = currently_selected_groups_columns.Count;
+                            var new_feature_count = query_cols.Count;
+
+                            var jobs_randomisation_level = group_cv_part1(
+                                //0,
+                                p,
+                                downsampled_training_class_folds,
+                                class_folds,
+                                dataset_instance_list_grouped,
+                                fs_exterior_vars.iteration_index,
+                                group_index,
+                                groups,
+                                query_cols,
+                                is_forward,
+                                old_feature_count,
+                                new_feature_count,
+                                old_group_count,
+                                new_group_count,
+                                group_key,
+                                this_test_group_indexes);
+
+                            return jobs_randomisation_level;
+                        });
+
+                        group_tasks1.Add(task);
+                    }
+
+                    wait_tasks(group_tasks1.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
+                    jobs_group_level_part1 = group_tasks1.Select(a => a.Result) /*.Where(a=> a != default)*/.ToList();
+                    group_tasks1.Clear();
+                }
+                else
+                {
+                    jobs_group_level_part1 = new List<(List<string> wait_file_list, cmd_params p, List<int> this_test_group_indexes, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> post_tm, List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> rets, List<cmd_params> wkr_cmd_params_list)>();
+
+                    for (var group_index = 0; group_index < groups.Count; group_index++)
+                    {
+                        var is_group_index_selected =
+                            fs_exterior_vars.currently_selected_group_indexes.Contains(group_index);
 
                         var is_forward = !is_group_index_selected;
 
@@ -537,7 +660,7 @@ namespace svm_fs
                                     $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, currently_selected_group_indexes.Count == 1",
                                     nameof(svm_ctl), nameof(feature_selection));
 
-                                return default;
+                                jobs_group_level_part1.Add(default); continue;
                             }
 
                             // do not remove if was just added
@@ -547,14 +670,15 @@ namespace svm_fs
                                     $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, highest_score_last_iteration_group_index == group_index",
                                     nameof(svm_ctl), nameof(feature_selection));
 
-                                return default;
+                                jobs_group_level_part1.Add(default); continue;
                             }
                         }
 
                         this_test_group_indexes = this_test_group_indexes.OrderBy(a => a).Distinct().ToList();
 
 
-                        var already_tested = fs_exterior_vars.previous_tests.Any(a => a.SequenceEqual(this_test_group_indexes));
+                        var already_tested =
+                            fs_exterior_vars.previous_tests.Any(a => a.SequenceEqual(this_test_group_indexes));
 
                         // do not repeat the same test
                         if (already_tested)
@@ -563,7 +687,7 @@ namespace svm_fs
                                 $@"{nameof(fs_exterior_vars.iteration_index)}={fs_exterior_vars.iteration_index}, {nameof(group_index)}={group_index}, already tested: {string.Join(",", this_test_group_indexes)}",
                                 nameof(svm_ctl), nameof(feature_selection));
 
-                            return default;
+                            jobs_group_level_part1.Add(default); continue;
                         }
 
                         var group = group_index > -1 ? groups[group_index] : default;
@@ -600,15 +724,10 @@ namespace svm_fs
                             group_key,
                             this_test_group_indexes);
 
-                        return jobs_randomisation_level;
-                    });
+                        jobs_group_level_part1.Add(jobs_randomisation_level);
 
-                    group_tasks1.Add(task);
+                    }
                 }
-
-                wait_tasks(group_tasks1.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
-                var jobs_group_level_part1 = group_tasks1.Select(a => a.Result)/*.Where(a=> a != default)*/.ToList();
-                group_tasks1.Clear();
 
                 var wkr_parameters_list = jobs_group_level_part1.SelectMany(a => a == default ? new List<string>() : a.wkr_cmd_params_list?.Select(b => b.options_filename).ToList() ?? new List<string>()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
 
@@ -625,35 +744,69 @@ namespace svm_fs
                     break;
                 }
 
-                var group_tasks2 = new List<Task<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
 
-                for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                
+
+                List<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool
+                        wait_first, bool has_header, string average_out_filename, string merge_out_filename, string
+                        merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string
+                        test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (
+                        List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix>
+                        cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>
+                    jobs_group_level_part2 = null;
+
+                if (part2_use_tasks)
                 {
-                    var group_index = _group_index;
+                    var group_tasks2 = new List<Task<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>>();
 
-                    var task = Task.Run(() =>
+                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
                     {
-                        var part1_result = jobs_group_level_part1[group_index];
+                        var group_index = _group_index;
+
+                        var task = Task.Run(() =>
+                        {
+                            var part1_result = jobs_group_level_part1[group_index];
+
+                            if (part1_result == default)
+                            {
+                                //io_proxy.WriteLine($@"Error: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
+
+                                return default;
+                            }
+
+                            var part2_result = group_cv_part2(part1_result);
+
+                            return part2_result;
+                        });
+
+                        group_tasks2.Add(task);
+                    }
+
+
+                    wait_tasks(group_tasks2.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
+                    jobs_group_level_part2 = group_tasks2.Select(a => a.Result).Where(a => a != default).ToList();
+                    group_tasks2.Clear();
+                }
+                else
+                {
+                    jobs_group_level_part2 = new List<(List<(List<string> wait_file_list, cmd_params cmd_params, cmd_params merge_cmd_params, List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)> jobs_randomisation_level, List<((string test_file, string test_comments_file, string prediction_file, string cm_file) filenames, (List<performance_measure.prediction> prediction_list, List<performance_measure.confusion_matrix> cm_list) cms, cmd_params cmd_params)> merge_cm_inputs, List<int> this_test_group_indexes)>();
+
+                    for (var _group_index = 0; _group_index < groups.Count; _group_index++)
+                    {
+                        //var group_index = _group_index;
+
+                        var part1_result = jobs_group_level_part1[_group_index];
 
                         if (part1_result == default)
                         {
-                            //io_proxy.WriteLine($@"Error: {nameof(part1_result)} was default value at {nameof(group_index)}={group_index}.");
-
-                            return default;
+                            continue;
                         }
 
                         var part2_result = group_cv_part2(part1_result);
 
-                        return part2_result;
-                    });
-
-                    group_tasks2.Add(task);
+                        jobs_group_level_part2.Add(part2_result);
+                    }
                 }
-
-
-                wait_tasks(group_tasks2.ToArray<Task>(), nameof(svm_ctl), nameof(feature_selection));
-                var jobs_group_level_part2 = group_tasks2.Select(a => a.Result).Where(a => a != default).ToList();
-                group_tasks2.Clear();
 
                 jobs_group_level_part2.ForEach(a => fs_exterior_vars.previous_tests.Add(a.this_test_group_indexes));
 
@@ -773,10 +926,10 @@ namespace svm_fs
 
             var finished_fn = Path.Combine(new pbs_params(cmd.wkr, p.experiment_name).pbs_execution_directory, $@"finished.txt");
             io_proxy.WriteAllLines(finished_fn, new List<string>() { $"{fs_exterior_vars.sw_fs.Elapsed:dd\\:hh\\:mm\\:ss}" }, nameof(svm_ctl), nameof(feature_selection));
-            
+
             // output winner details
-            
-         
+
+
             wait_tasks(file_delete_tasks.ToArray());
         }
 
@@ -1294,16 +1447,16 @@ namespace svm_fs
         {
             //if (delete_logs)
             //{
-                //var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
-                //if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
-                //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+            //var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
+            //if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
-                //var program_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename));
-                //if (io_proxy.is_file_empty(program_wkr_stderr_filename)) io_proxy.Delete(program_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
-                //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
+            //var program_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stderr_filename));
+            //if (io_proxy.is_file_empty(program_wkr_stderr_filename)) io_proxy.Delete(program_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.program_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
 
-                //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-                //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
             //}
 
             var files_to_delete = new List<string>()
@@ -1352,13 +1505,13 @@ namespace svm_fs
                 file_delete_tasks = file_delete_tasks.Where(a => !a.IsCompleted).ToList();
             }
 
-           // io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            // io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // delete testing files
-          //  io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-          //  io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-          //  io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-           // io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //  io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //  io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //  io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            // io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // test predictions
             //io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
@@ -1366,10 +1519,10 @@ namespace svm_fs
             //io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // delete training files
-           // io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-          //  io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-           // io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-           // io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            // io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //  io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            // io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            // io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // sanity train predictions
             //io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
@@ -1388,10 +1541,10 @@ namespace svm_fs
         {
             //if (delete_logs)
             //{
-                //try { io_proxy.Delete(p.pbs_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-                //try { io_proxy.Delete(p.pbs_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-                //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-                //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
+            //try { io_proxy.Delete(p.pbs_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
+            //try { io_proxy.Delete(p.pbs_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
+            //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
+            //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
             //}
 
             var files_to_delete = new List<string>()
@@ -1420,7 +1573,7 @@ namespace svm_fs
                 p.train_grid_filename,
             }.Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
 
-            var task = Task.Run(() => 
+            var task = Task.Run(() =>
             {
                 for (var i = 0; i < files_to_delete.Count; i++)
                 {
@@ -1577,7 +1730,7 @@ namespace svm_fs
             }
         }
 
-        private static void merge_pre_results(List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge)
+        private static void merge_pre_results(List<(bool wait_first, bool has_header, string average_out_filename, string merge_out_filename, string merge_in_filename, string average_header)> to_merge, bool log = false)
         {
             foreach (var t in to_merge.Where(a => !a.wait_first).GroupBy(a => a.merge_out_filename))
             {
@@ -1592,7 +1745,7 @@ namespace svm_fs
 
 
                 io_proxy.WriteAllLines(fn, read);
-                io_proxy.WriteLine("Saved merged inputs: " + fn, nameof(svm_ctl), nameof(merge_pre_results));
+                if (log) io_proxy.WriteLine("Saved merged inputs: " + fn, nameof(svm_ctl), nameof(merge_pre_results));
             }
         }
 
@@ -1632,7 +1785,7 @@ namespace svm_fs
                 List<string> testing_text,
                 List<string> testing_id_text,
                 List<string> testing_meta_text
-                
+
             ) job,
                 bool use_cache = true,
                 bool log = false
@@ -1732,109 +1885,199 @@ namespace svm_fs
 
             var options_text = wkr_cmd_params.get_options_ini_text(skip_defaults: true);
 
-            
+
             var cached = true;
 
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
+            while (true)
             {
-                io_proxy.WriteAllLines(wkr_cmd_params.options_filename, options_text);
-                if (log) io_proxy.WriteLine($"Saved wkr parameter options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                cached = false;
-            }
-            else
-            {
-                if (log) io_proxy.WriteLine($"Using cached options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-            }
-
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
-            {
-                io_proxy.WriteAllLines(wkr_cmd_params.train_filename, job.training_text);
-                if (log) io_proxy.WriteLine($"Saved training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                cached = false;
-            }
-            else
-            {
-                if (log) io_proxy.WriteLine($"Using cached training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-            }
-
-            if (p.save_train_id)
-            {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
+                if (!cached)
                 {
-                    io_proxy.WriteAllLines(wkr_cmd_params.train_id_filename, job.training_id_text);
-                    if (log) io_proxy.WriteLine($"Saved training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                    cached = false;
+                    use_cache = false;
+                }
+
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename, nameof(svm_ctl),
+                    nameof(do_outer_cv_job)))
+                {
+                    io_proxy.WriteAllLines(wkr_cmd_params.options_filename, options_text);
+                    if (log) io_proxy.WriteLine($"Saved wkr parameter options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (use_cache && cached)
+                    {
+                        cached = false;
+                        continue;
+                    }
                 }
                 else
                 {
-                    if (log) io_proxy.WriteLine($"Using cached training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log)
+                        io_proxy.WriteLine($"Using cached options: {wkr_cmd_params.options_filename}", nameof(svm_ctl),
+                            nameof(do_outer_cv_job));
                 }
-            }
 
-            if (p.save_train_meta)
-            {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_filename, nameof(svm_ctl),
+                    nameof(do_outer_cv_job)))
                 {
-                    io_proxy.WriteAllLines(wkr_cmd_params.train_meta_filename, job.training_meta_text);
-                    if (log) io_proxy.WriteLine($"Saved training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                    cached = false;
+                    io_proxy.WriteAllLines(wkr_cmd_params.train_filename, job.training_text);
+                    if (log)
+                        io_proxy.WriteLine($"Saved training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl),
+                            nameof(do_outer_cv_job));
+                    if (use_cache && cached)
+                    {
+                        cached = false;
+                        continue;
+                    }
                 }
                 else
                 {
-                    if (log) io_proxy.WriteLine($"Using cached training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log)
+                        io_proxy.WriteLine($"Using cached training data: {wkr_cmd_params.train_filename}",
+                            nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
-            }
 
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
-            {
-                io_proxy.WriteAllLines(wkr_cmd_params.test_filename, job.testing_text);
-                if (log) io_proxy.WriteLine($"Saved testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                cached = false;
-            }
-            else
-            {
-                if (log) io_proxy.WriteLine($"Using cached testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-            }
-
-            if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_labels_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
-            {
-                var test_labels = job.testing_text.Select(a => a.Length > 0 ? a.Substring(0, a.IndexOf(' ', StringComparison.InvariantCulture) > -1 ? a.IndexOf(' ', StringComparison.InvariantCulture) : 0) : "").ToList();
-                io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels, nameof(svm_ctl), nameof(do_outer_cv_job));
-                if (log) io_proxy.WriteLine($"Saved testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                cached = false;
-            }
-            else
-            {
-                if (log) io_proxy.WriteLine($"Using cached testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-            }
-
-            if (p.save_test_id)
-            {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
+                if (p.save_train_id)
                 {
-                    io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text, nameof(svm_ctl), nameof(do_outer_cv_job));
-                    if (log) io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                    cached = false;
+                    if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_id_filename, nameof(svm_ctl),
+                        nameof(do_outer_cv_job)))
+                    {
+                        io_proxy.WriteAllLines(wkr_cmd_params.train_id_filename, job.training_id_text);
+                        if (log)
+                            io_proxy.WriteLine($"Saved training ids: {wkr_cmd_params.train_id_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                        if (use_cache && cached)
+                        {
+                            cached = false;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (log)
+                            io_proxy.WriteLine($"Using cached training ids: {wkr_cmd_params.train_id_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                    }
+                }
+
+                if (p.save_train_meta)
+                {
+                    if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_meta_filename, nameof(svm_ctl),
+                        nameof(do_outer_cv_job)))
+                    {
+                        io_proxy.WriteAllLines(wkr_cmd_params.train_meta_filename, job.training_meta_text);
+                        if (log)
+                            io_proxy.WriteLine($"Saved training meta: {wkr_cmd_params.train_meta_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                        if (use_cache && cached)
+                        {
+                            cached = false;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (log)
+                            io_proxy.WriteLine($"Using cached training meta: {wkr_cmd_params.train_meta_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                    }
+                }
+
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_filename, nameof(svm_ctl),
+                    nameof(do_outer_cv_job)))
+                {
+                    io_proxy.WriteAllLines(wkr_cmd_params.test_filename, job.testing_text);
+                    if (log)
+                        io_proxy.WriteLine($"Saved testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl),
+                            nameof(do_outer_cv_job));
+                    if (use_cache && cached)
+                    {
+                        cached = false;
+                        continue;
+                    }
                 }
                 else
                 {
-                    if (log) io_proxy.WriteLine($"Using cached testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log)
+                        io_proxy.WriteLine($"Using cached testing data: {wkr_cmd_params.test_filename}",
+                            nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
-            }
 
-            if (p.save_test_meta)
-            {
-                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
+                if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_labels_filename, nameof(svm_ctl),
+                    nameof(do_outer_cv_job)))
                 {
-                    io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text, nameof(svm_ctl), nameof(do_outer_cv_job));
-                    if (log) io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
-                    cached = false;
+                    var test_labels = job.testing_text.Select(a =>
+                        a.Length > 0
+                            ? a.Substring(0,
+                                a.IndexOf(' ', StringComparison.InvariantCulture) > -1
+                                    ? a.IndexOf(' ', StringComparison.InvariantCulture)
+                                    : 0)
+                            : "").ToList();
+                    io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels, nameof(svm_ctl),
+                        nameof(do_outer_cv_job));
+                    if (log)
+                        io_proxy.WriteLine($"Saved testing labels data: {wkr_cmd_params.test_labels_filename}",
+                            nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (use_cache && cached)
+                    {
+                        cached = false;
+                        continue;
+                    }
                 }
                 else
                 {
-                    if (log) io_proxy.WriteLine($"Using cached testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log)
+                        io_proxy.WriteLine($"Using cached testing labels data: {wkr_cmd_params.test_labels_filename}",
+                            nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
+
+                if (p.save_test_id)
+                {
+                    if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_id_filename, nameof(svm_ctl),
+                        nameof(do_outer_cv_job)))
+                    {
+                        io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text, nameof(svm_ctl),
+                            nameof(do_outer_cv_job));
+                        if (log)
+                            io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl),
+                                nameof(do_outer_cv_job));
+                        if (use_cache && cached)
+                        {
+                            cached = false;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (log)
+                            io_proxy.WriteLine($"Using cached testing ids: {wkr_cmd_params.test_id_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                    }
+                }
+
+                if (p.save_test_meta)
+                {
+                    if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_meta_filename, nameof(svm_ctl),
+                        nameof(do_outer_cv_job)))
+                    {
+                        io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text,
+                            nameof(svm_ctl), nameof(do_outer_cv_job));
+                        if (log)
+                            io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                        if (use_cache && cached)
+                        {
+                            cached = false;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (log)
+                            io_proxy.WriteLine($"Using cached testing meta: {wkr_cmd_params.test_meta_filename}",
+                                nameof(svm_ctl), nameof(do_outer_cv_job));
+                    }
+                }
+
+                break;
             }
+
             //cmds.Add($@"start cmd /c {cmd_params.program_runtime} -j {cmd_params.options_filename}");
 
             var wait_file_list = new List<string>();
@@ -1848,6 +2091,7 @@ namespace svm_fs
             //wait_file_list.Add(wkr_cmd_params.test_predict_filename);
             wait_file_list.Add(wkr_cmd_params.test_predict_cm_filename);
 
+            /*
             if (cached)
             {
                 foreach (var f in wait_file_list)
@@ -1859,6 +2103,7 @@ namespace svm_fs
                     }
                 }
             }
+            */
 
             //var merge_filename = $"itr_{job.iteration_index}_grp_{job.group_index}_rnd_{job.randomisation_cv_index}_cv_{job.outer_cv_index}_svm_{(int)p.svm_type}_kl_{(int)p.svm_kernel}_sl_{(int)p.scale_function}";//"_job_{job.job_id}";
 
@@ -2070,13 +2315,15 @@ namespace svm_fs
             sw1.Start();
 
             // var itr = 0;
+            var file_wait_list_dirs = file_wait_list.Select(a => Path.GetDirectoryName(a)).Distinct().Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
 
-            var file_wait_list_dirs = file_wait_list.Select(a => Path.GetDirectoryName(a)).Distinct().ToList();
 
             while (true)
             {
                 // itr++;
-                var dir_listing = file_wait_list_dirs.SelectMany(a=> Directory.GetFiles(a)).ToList();
+
+
+                var dir_listing = file_wait_list_dirs.SelectMany(a => Directory.GetFiles(a)).ToList();
 
                 var file_wait_list2 = file_wait_list.Intersect(dir_listing).ToList();
 
@@ -2087,7 +2334,7 @@ namespace svm_fs
                     // itr = 0;
 
                     //io_proxy.WriteLine($@"New files found: {new_files_found.Count}", nameof(svm_ctl), nameof(wait_for_results));
-                    
+
                     //for (var j = 0; j < new_files_found.Count; j++)
                     //{
                     //    io_proxy.WriteLine($@"({j}): {new_files_found[j]}", nameof(svm_ctl), nameof(wait_for_results));
@@ -2098,6 +2345,9 @@ namespace svm_fs
                     files_found.AddRange(new_files_found.Select((a, i) => (a, DateTime.Now)).ToList());
 
                     file_wait_list = file_wait_list.Except(new_files_found).ToList();
+
+                    file_wait_list_dirs = file_wait_list.Select(a => Path.GetDirectoryName(a)).Distinct().Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+
                     total_found += new_files_found.Count;
 
                     //var pct = ((double)total_found / (double)total_files) * (double)100;

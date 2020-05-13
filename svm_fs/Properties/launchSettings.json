@@ -1,7 +1,8 @@
 {
   "profiles": {
     "svm_fs": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-cm ctl -en test_ex2"
     }
   }
 }
