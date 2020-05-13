@@ -1,0 +1,9 @@
+﻿#PBS -l nodes=1:ppn=64
+
+cd ~/svm_fs
+git pull
+
+cd ~/svm_fs/svm_fs
+rm compile.pbs.*
+
+~/.dotnet/dotnet publish --self-contained -r linux-x64 -c Release
