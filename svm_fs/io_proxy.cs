@@ -150,45 +150,53 @@ namespace svm_fs
             return path;*/
         //}
 
-        private static readonly object _console_lock = new object();
-        private static readonly object _log_lock = new object();
-        private static string log_file = null;
+        //private static readonly object _console_lock = new object();
+        //private static readonly object _log_lock = new object();
+        //private static string log_file = null;
 
         internal static void WriteLine(string text = "", string module_name = "", string function_name = "", bool use_lock = false)
         {
             //if (!program.verbose) return;
 
-            try
-            {
-                var pid = Process.GetCurrentProcess().Id;
-                var thread_id = Thread.CurrentThread.ManagedThreadId;
-                var task_id = Task.CurrentId ?? 0;
-                //Memory usage: 
-                var s = $@"{DateTime.Now:G} {Math.Ceiling(GC.GetTotalMemory(false) / 1_000_000_000d):00}gb {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text ?? ""}";
-                if (use_lock)
-                {
-                    lock (_console_lock)
-                    {
-                        Console.WriteLine(s);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine(s);
-                }
+            //try
+            //{
+                //const bool e_pid = false;
+                //const bool e_threadid = false;
+                //const bool e_taskid = false;
+                //const bool e_mem = false;
 
-                if (!String.IsNullOrEmpty(log_file))
-                {
-                    lock (_log_lock)
-                    {
-                        File.AppendAllLines(log_file, new string[] {s});
-                    }
-                }
-            }
-            catch (Exception)// e)
-            {
-                //svm_ldr.log_exception(e, "", nameof(io_proxy), nameof(is_file_available));
-            }
+                //var pid = Process.GetCurrentProcess().Id;
+                //var thread_id = Thread.CurrentThread.ManagedThreadId;
+                //var task_id = Task.CurrentId ?? 0;
+                //Memory usage: 
+                //var s = $@"{DateTime.Now:G} {(e_mem ? $@"{Math.Ceiling(GC.GetTotalMemory(false) / 1_000_000_000d):00}gb" : "")} {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text ?? ""}";
+                
+                var s = $@"{DateTime.Now:G} {module_name}.{function_name} -> {text ?? ""}";
+                
+                //if (use_lock)
+                //{
+                //    lock (_console_lock)
+                //    {
+                //        Console.WriteLine(s);
+                //    }
+                //}
+                //else
+                //{
+                    Console.WriteLine(s);
+                        //}
+
+            //    if (!String.IsNullOrEmpty(log_file))
+            //    {
+            //        lock (_log_lock)
+            //        {
+            //            File.AppendAllLines(log_file, new string[] {s});
+            //        }
+            //    }
+            //}
+            //catch (Exception)// e)
+            //{
+            //    //svm_ldr.log_exception(e, "", nameof(io_proxy), nameof(is_file_available));
+            //}
         }
 
         //internal static bool is_file_empty(string filename, string module_name = "", string function_name = "")
