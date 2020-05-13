@@ -99,7 +99,7 @@ namespace svm_fs
 
             foreach (var r in res)
             {
-                io_proxy.WriteLine(r.ToString(), nameof(grid), nameof(get_best_rate));
+                //io_proxy.WriteLine(r.ToString(), nameof(grid), nameof(get_best_rate));
 
                 var is_rate_better = ((best_rate <= 0) || (r.rate > -1 && r.rate > best_rate));
                 
@@ -138,7 +138,7 @@ namespace svm_fs
 
             var ret = ((best_cost, best_gamma, best_epsilon, best_coef0, best_degree), best_rate);
 
-            io_proxy.WriteLine("r: " + ret, nameof(grid), nameof(get_best_rate));
+            //io_proxy.WriteLine("r: " + ret, nameof(grid), nameof(get_best_rate));
 
             return ret;
         }
@@ -410,9 +410,9 @@ namespace svm_fs
                     quiet_mode,
                     memory_limit_mb);
 
-                if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(grid_parameter_search));
-                if (!string.IsNullOrWhiteSpace(train_result.stdout)) io_proxy.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(grid_parameter_search));
-                if (!string.IsNullOrWhiteSpace(train_result.stderr)) io_proxy.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(grid_parameter_search));
+                //if (!string.IsNullOrWhiteSpace(train_result.cmd_line)) io_proxy.WriteLine(train_result.cmd_line, nameof(svm_wkr), nameof(grid_parameter_search));
+                //if (!string.IsNullOrWhiteSpace(train_result.stdout)) io_proxy.WriteLine(train_result.stdout, nameof(svm_wkr), nameof(grid_parameter_search));
+                //if (!string.IsNullOrWhiteSpace(train_result.stderr)) io_proxy.WriteLine(train_result.stderr, nameof(svm_wkr), nameof(grid_parameter_search));
 
                 var train_result_lines = train_result.stdout?.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
@@ -458,7 +458,7 @@ namespace svm_fs
 
             var xr = get_best_rate(results);
 
-            io_proxy.WriteLine("Grid search complete.", nameof(grid), nameof(grid_parameter_search));
+            //io_proxy.WriteLine("Grid search complete.", nameof(grid), nameof(grid_parameter_search));
             return xr;
         }
 

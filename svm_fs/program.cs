@@ -68,7 +68,7 @@ namespace svm_fs
 
         public static void set_gc_mode()
         {
-            GCSettings.LatencyMode = GCLatencyMode.Batch;
+            //GCSettings.LatencyMode = GCLatencyMode.Batch;
             GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
         }
 

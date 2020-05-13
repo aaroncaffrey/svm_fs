@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
@@ -190,14 +191,10 @@ namespace svm_fs
                                 (long)(DateTime.Now.Subtract(start_time).Ticks *
                                         ((double)incomplete / (double)(complete == 0 ? 1 : complete))));
 
-                            io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl),
-                                nameof(feature_selection));
-                            io_proxy.WriteLine(
-                                $@"{module_name}.{function_name} -> {complete} / {tasks.Length} ( {pct:0.00} % ) [ {time_remaining:dd\:hh\:mm\:ss\.fff} ]",
-                                nameof(svm_ctl), nameof(wait_tasks));
-                            io_proxy.WriteLine(
-                                $@"{module_name}.{function_name} -> Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB",
-                                nameof(svm_ctl), nameof(feature_selection));
+                            //io_proxy.WriteLine($@"{module_name}.{function_name} -> ", nameof(svm_ctl), nameof(feature_selection));
+                            io_proxy.WriteLine($@"{module_name}.{function_name} -> {complete} / {tasks.Length} ( {pct:0.00} % ) [ {time_remaining:dd\:hh\:mm\:ss\.fff} ]", nameof(svm_ctl), nameof(wait_tasks));
+
+                            //io_proxy.WriteLine($@"{module_name}.{function_name} -> Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(feature_selection));
                         }
                     }
                     catch (Exception e)
@@ -779,7 +776,8 @@ namespace svm_fs
             
             // output winner details
             
-            
+         
+            wait_tasks(file_delete_tasks.ToArray());
         }
 
         private static void test_group_kernel_scaling_perf(cmd_params p, int iteration_index, List<int> highest_scoring_group_indexes,
@@ -965,9 +963,9 @@ namespace svm_fs
                 score: a.cms.cm_list.Where(b => ranking_metric_params.feature_selection_classes == null || ranking_metric_params.feature_selection_classes.Count == 0 || ranking_metric_params.feature_selection_classes.Contains(b.class_id.Value))
                     .Average(b => b.get_perf_value_strings().Where(c => ranking_metric_params.feature_selection_metrics.Any(d => string.Equals(c.name, d, StringComparison.InvariantCultureIgnoreCase))).Average(c => c.value)))).ToList();
 
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+            //io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
             ranked_scores.ForEach(a => io_proxy.WriteLine($"Rank index: {a.rank_index}, score: {a.score}, group_index: {a.group_index}, item: {a.group_key}", nameof(svm_ctl), nameof(feature_selection)));
-            io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
+            //io_proxy.WriteLine("", nameof(svm_ctl), nameof(feature_selection));
 
 
 
@@ -1025,7 +1023,7 @@ namespace svm_fs
                 List<int> this_test_group_indexes = default
                 )
         {
-            io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv_part1));
+            //io_proxy.WriteLine($@"{nameof(iteration_index)}={iteration_index}, {nameof(group_index)}={group_index}", nameof(svm_ctl), nameof(group_cv_part1));
 
             query_cols = query_cols.ToList();
 
@@ -1294,8 +1292,8 @@ namespace svm_fs
 
         internal static void delete_temp_wkr_files(cmd_params p, bool delete_logs = true)
         {
-            if (delete_logs)
-            {
+            //if (delete_logs)
+            //{
                 //var pbs_wkr_stderr_filename = Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stderr_filename));
                 //if (io_proxy.is_file_empty(pbs_wkr_stderr_filename)) io_proxy.Delete(pbs_wkr_stderr_filename, nameof(svm_wkr), nameof(delete_temp_wkr_files));
                 //io_proxy.Delete(Path.Combine(p.pbs_wkr_execution_directory, Path.GetFileName(p.pbs_wkr_stdout_filename)), nameof(svm_wkr), nameof(delete_temp_wkr_files));
@@ -1306,26 +1304,72 @@ namespace svm_fs
 
                 //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
                 //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //}
+
+            var files_to_delete = new List<string>()
+            {
+                // testing files
+                p.options_filename,
+                p.test_id_filename,
+                p.test_meta_filename,
+                p.test_filename,
+                p.test_labels_filename,
+
+                // test prediction files
+                // p.test_predict_cm_filename,
+                // p.test_predict_filename,
+
+                // training files
+                p.train_filename,
+                p.train_id_filename,
+                p.train_meta_filename,
+                p.train_model_filename,
+
+                // train prediction files
+                // p.train_predict_cm_filename
+                // p.train_predict_filename,
+
+                p.train_grid_filename,
+            }.Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+
+            var task = Task.Run(() =>
+            {
+                for (var i = 0; i < files_to_delete.Count; i++)
+                {
+                    try
+                    {
+                        File.Delete(files_to_delete[i]);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            });
+
+            lock (file_delete_tasks_lock)
+            {
+                file_delete_tasks.Add(task);
+                file_delete_tasks = file_delete_tasks.Where(a => !a.IsCompleted).ToList();
             }
 
-            io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+           // io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // delete testing files
-            io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+          //  io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+          //  io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+          //  io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+           // io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // test predictions
-            io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+            //io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // delete training files
-            io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
-            io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+           // io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+          //  io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+           // io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
+           // io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
 
             // sanity train predictions
             //io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_wkr_files));
@@ -1342,36 +1386,63 @@ namespace svm_fs
 
         internal static void delete_temp_merge_files(cmd_params p, bool delete_logs = true)
         {
-            if (delete_logs)
-            {
+            //if (delete_logs)
+            //{
                 //try { io_proxy.Delete(p.pbs_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
                 //try { io_proxy.Delete(p.pbs_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
                 //try { io_proxy.Delete(p.program_wkr_stderr_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
                 //try { io_proxy.Delete(p.program_wkr_stdout_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
+            //}
+
+            var files_to_delete = new List<string>()
+            {
+                // testing files
+                p.options_filename,
+                p.test_id_filename,
+                p.test_meta_filename,
+                p.test_filename,
+                //p.test_labels_filename,
+
+                // test prediction files
+                // p.test_predict_cm_filename,
+                // p.test_predict_filename,
+
+                // training files
+                p.train_filename,
+                p.train_id_filename,
+                p.train_meta_filename,
+                p.train_model_filename,
+
+                // train prediction files
+                // p.train_predict_cm_filename
+                // p.train_predict_filename,
+
+                p.train_grid_filename,
+            }.Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+
+            var task = Task.Run(() => 
+            {
+                for (var i = 0; i < files_to_delete.Count; i++)
+                {
+                    try
+                    {
+                        File.Delete(files_to_delete[i]);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            });
+
+            lock (file_delete_tasks_lock)
+            {
+                file_delete_tasks.Add(task);
+                file_delete_tasks = file_delete_tasks.Where(a => !a.IsCompleted).ToList();
             }
-
-            // testing files
-            io_proxy.Delete(p.options_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.test_id_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.test_meta_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.test_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            //try { io_proxy.Delete(p.test_labels_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-
-            // test prediction files
-            //try { io_proxy.Delete(p.test_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            //try { io_proxy.Delete(p.test_predict_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-
-            // training files
-            io_proxy.Delete(p.train_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.train_id_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.train_meta_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.train_model_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-
-            // train prediction files
-            //try { io_proxy.Delete(p.train_predict_cm_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            //try { io_proxy.Delete(p.train_predict_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
-            io_proxy.Delete(p.train_grid_filename, nameof(svm_ctl), nameof(delete_temp_merge_files));
         }
+
+        private static object file_delete_tasks_lock = new object();
+        private static List<Task> file_delete_tasks = new List<Task>();
 
         internal static void delete_temp_merge_files(List<cmd_params> cmd_params_list, bool delete_logs = true)
         {
@@ -1502,7 +1573,7 @@ namespace svm_fs
 
 
                 io_proxy.WriteAllLines(fn, read);
-                io_proxy.WriteLine("Saved merged results: " + fn, nameof(svm_ctl), nameof(merge_post_results));
+                //io_proxy.WriteLine("Saved merged results: " + fn, nameof(svm_ctl), nameof(merge_post_results));
             }
         }
 
@@ -1566,7 +1637,7 @@ namespace svm_fs
                 bool use_cache = true
         )
         {
-            io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_outer_cv_job));
+            //io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_outer_cv_job));
 
             //var merge_param_list = new List<cmd_params>();
 
@@ -1999,21 +2070,27 @@ namespace svm_fs
 
             // var itr = 0;
 
+            var file_wait_list_dirs = file_wait_list.Select(a => Path.GetDirectoryName(a)).Distinct().ToList();
+
             while (true)
             {
                 // itr++;
+                var dir_listing = file_wait_list_dirs.SelectMany(a=> Directory.GetFiles(a)).ToList();
 
-                var new_files_found = file_wait_list.Where(a => io_proxy.is_file_available(a, nameof(svm_ctl), nameof(wait_for_results))).ToList();
+                var file_wait_list2 = file_wait_list.Intersect(dir_listing).ToList();
+
+                var new_files_found = file_wait_list2.Where(a => io_proxy.is_file_available(a, nameof(svm_ctl), nameof(wait_for_results))).ToList();
 
                 if (new_files_found.Count > 0)
                 {
                     // itr = 0;
 
-                    io_proxy.WriteLine("New files found: ", nameof(svm_ctl), nameof(wait_for_results));
-                    for (var j = 0; j < new_files_found.Count; j++)
-                    {
-                        io_proxy.WriteLine($@"({j}): {new_files_found[j]}", nameof(svm_ctl), nameof(wait_for_results));
-                    }
+                    //io_proxy.WriteLine($@"New files found: {new_files_found.Count}", nameof(svm_ctl), nameof(wait_for_results));
+                    
+                    //for (var j = 0; j < new_files_found.Count; j++)
+                    //{
+                    //    io_proxy.WriteLine($@"({j}): {new_files_found[j]}", nameof(svm_ctl), nameof(wait_for_results));
+                    //}
 
 
 

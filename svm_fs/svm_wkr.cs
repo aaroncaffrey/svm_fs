@@ -9,7 +9,7 @@ namespace svm_fs
 {
     internal static class svm_wkr
     {
-        internal static void inner_cross_validation(cmd_params p, bool use_cache = true, bool log = true)
+        internal static void inner_cross_validation(cmd_params p, bool use_cache = true, bool log = false)
         {
             if (use_cache)
             {

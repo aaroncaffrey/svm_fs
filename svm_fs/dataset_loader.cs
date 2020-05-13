@@ -125,14 +125,12 @@ namespace svm_fs
             
             io_proxy.WriteLine($@"{nameof(positive_class_id)} = {positive_class_id:+#;-#;+0}", nameof(dataset_loader), nameof(read_binary_dataset));
             io_proxy.WriteLine($@"{nameof(negative_class_id)} = {negative_class_id:+#;-#;+0}", nameof(dataset_loader), nameof(read_binary_dataset));
-
             io_proxy.WriteLine($@"{nameof(class_names)} = {string.Join(", ", class_names)}", nameof(dataset_loader), nameof(read_binary_dataset));
-
             io_proxy.WriteLine($@"{nameof(dataset_csv_files)}: {string.Join(", ", dataset_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
             io_proxy.WriteLine($@"{nameof(dataset_header_csv_files)}: {string.Join(", ", dataset_header_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
             io_proxy.WriteLine($@"{nameof(dataset_comment_csv_files)}: {string.Join(", ", dataset_comment_csv_files)}", nameof(dataset_loader), nameof(read_binary_dataset));
-
             io_proxy.WriteLine($@"Reading non-novel dataset headers...", nameof(dataset_loader), nameof(read_binary_dataset));
+
 
             // READ HEADER CSV FILE - ALL CLASSES HAVE THE SAME HEADERS/FEATURES
 
@@ -466,7 +464,7 @@ namespace svm_fs
 
         internal static void remove_large_groups(dataset dataset, int max_group_size )
         {
-            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_large_groups));
+            //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_large_groups));
 
             var groups = dataset.dataset_headers.Skip(1).GroupBy(a => (a.alphabet_id, a.dimension_id, a.category_id, a.source_id, a.group_id)).OrderBy(a=>a.Count()).ToList();
 
@@ -490,7 +488,7 @@ namespace svm_fs
 
         internal static void remove_duplicate_groups(dataset dataset)
         {
-            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_duplicate_groups));
+            //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_duplicate_groups));
 
 
             var column_data = get_column_data(dataset);
@@ -821,7 +819,7 @@ namespace svm_fs
 
         internal static void remove_fids(dataset dataset, List<int> fids_to_remove)
         {
-            io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_fids));
+            //io_proxy.WriteLine("...", nameof(dataset_loader), nameof(remove_fids));
 
             // removed given fids and renumber the headers/features
 

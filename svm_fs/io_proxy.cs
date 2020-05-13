@@ -164,7 +164,7 @@ namespace svm_fs
                 var thread_id = Thread.CurrentThread.ManagedThreadId;
                 var task_id = Task.CurrentId ?? 0;
                 //Memory usage: 
-                var s = $@"{DateTime.Now:G} {(GC.GetTotalMemory(false) / 1_000_000_000d):000.00}gb {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text ?? ""}";
+                var s = $@"{DateTime.Now:G} {Math.Ceiling(GC.GetTotalMemory(false) / 1_000_000_000d):00}gb {pid:000000}.{thread_id:000000}.{task_id:000000} {module_name}.{function_name} -> {text ?? ""}";
                 if (use_lock)
                 {
                     lock (_console_lock)
@@ -191,14 +191,14 @@ namespace svm_fs
             }
         }
 
-        internal static bool is_file_empty(string filename, string module_name = "", string function_name = "")
-        {
-            var file_empty = (!File.Exists(filename) || new FileInfo(filename).Length <= 0);
-            
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) = {file_empty}", nameof(io_proxy), nameof(is_file_empty));
-
-            return file_empty;
-        }
+        //internal static bool is_file_empty(string filename, string module_name = "", string function_name = "")
+        //{
+        //    var file_empty = (!File.Exists(filename) || new FileInfo(filename).Length <= 0);
+          //  
+        //    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) = {file_empty}", nameof(io_proxy), nameof(is_file_empty));
+        //
+        //    return file_empty;
+        //}
 
         internal static bool Exists(string filename, string module_name = "", string function_name = "")
         {
@@ -215,7 +215,7 @@ namespace svm_fs
         {
             //filename = /*convert_path*/(filename);
 
-            io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
+            //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} )", nameof(io_proxy), nameof(Delete));
 
             try
             {
@@ -243,7 +243,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} ) {tries}", nameof(io_proxy), nameof(Copy));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {source} , {dest} , {overwrite} ) {tries}", nameof(io_proxy), nameof(Copy));
 
                     tries++;
 
@@ -311,7 +311,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllLines));
 
                     tries++;
 
@@ -349,7 +349,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(ReadAllText));
 
                     tries++;
 
@@ -389,7 +389,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(WriteAllLines));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(WriteAllLines));
 
                     tries++;
 
@@ -425,7 +425,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllLines));
 
                     tries++;
                     File.AppendAllLines(filename, lines);
@@ -460,7 +460,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ). {nameof(tries)} = {tries}.", nameof(io_proxy), nameof(AppendAllText));
 
                     tries++;
                     File.AppendAllText(filename, text);
@@ -495,7 +495,7 @@ namespace svm_fs
             {
                 try
                 {
-                    io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(WriteAllText));
+                    //io_proxy.WriteLine($"{module_name}.{function_name} -> ( {filename} ) {tries}", nameof(io_proxy), nameof(WriteAllText));
 
                     tries++;
                     File.WriteAllText(filename, text);
