@@ -1634,7 +1634,8 @@ namespace svm_fs
                 List<string> testing_meta_text
                 
             ) job,
-                bool use_cache = true
+                bool use_cache = true,
+                bool log = false
         )
         {
             //io_proxy.WriteLine($@"Memory usage: {(GC.GetTotalMemory(false) / 1_000_000_000d):F2} GB", nameof(svm_ctl), nameof(do_outer_cv_job));
@@ -1737,23 +1738,23 @@ namespace svm_fs
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.options_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.options_filename, options_text);
-                io_proxy.WriteLine($"Saved wkr parameter options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Saved wkr parameter options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 cached = false;
             }
             else
             {
-                io_proxy.WriteLine($"Using cached options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Using cached options: {wkr_cmd_params.options_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
             }
 
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.train_filename, job.training_text);
-                io_proxy.WriteLine($"Saved training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Saved training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 cached = false;
             }
             else
             {
-                io_proxy.WriteLine($"Using cached training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Using cached training data: {wkr_cmd_params.train_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
             }
 
             if (p.save_train_id)
@@ -1761,12 +1762,12 @@ namespace svm_fs
                 if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.train_id_filename, job.training_id_text);
-                    io_proxy.WriteLine($"Saved training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Saved training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine($"Using cached training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Using cached training ids: {wkr_cmd_params.train_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
             }
 
@@ -1775,36 +1776,36 @@ namespace svm_fs
                 if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.train_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.train_meta_filename, job.training_meta_text);
-                    io_proxy.WriteLine($"Saved training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Saved training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine($"Using cached training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Using cached training meta: {wkr_cmd_params.train_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
             }
 
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 io_proxy.WriteAllLines(wkr_cmd_params.test_filename, job.testing_text);
-                io_proxy.WriteLine($"Saved testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Saved testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 cached = false;
             }
             else
             {
-                io_proxy.WriteLine($"Using cached testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Using cached testing data: {wkr_cmd_params.test_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
             }
 
             if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_labels_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
             {
                 var test_labels = job.testing_text.Select(a => a.Length > 0 ? a.Substring(0, a.IndexOf(' ', StringComparison.InvariantCulture) > -1 ? a.IndexOf(' ', StringComparison.InvariantCulture) : 0) : "").ToList();
                 io_proxy.WriteAllLines(wkr_cmd_params.test_labels_filename, test_labels, nameof(svm_ctl), nameof(do_outer_cv_job));
-                io_proxy.WriteLine($"Saved testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Saved testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 cached = false;
             }
             else
             {
-                io_proxy.WriteLine($"Using cached testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                if (log) io_proxy.WriteLine($"Using cached testing labels data: {wkr_cmd_params.test_labels_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
             }
 
             if (p.save_test_id)
@@ -1812,12 +1813,12 @@ namespace svm_fs
                 if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_id_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.test_id_filename, job.testing_id_text, nameof(svm_ctl), nameof(do_outer_cv_job));
-                    io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Saved testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine($"Using cached testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Using cached testing ids: {wkr_cmd_params.test_id_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
             }
 
@@ -1826,12 +1827,12 @@ namespace svm_fs
                 if (!use_cache || !io_proxy.is_file_available(wkr_cmd_params.test_meta_filename, nameof(svm_ctl), nameof(do_outer_cv_job)))
                 {
                     io_proxy.WriteAllLines(wkr_cmd_params.test_meta_filename, job.testing_meta_text, nameof(svm_ctl), nameof(do_outer_cv_job));
-                    io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Saved testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                     cached = false;
                 }
                 else
                 {
-                    io_proxy.WriteLine($"Using cached testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
+                    if (log) io_proxy.WriteLine($"Using cached testing meta: {wkr_cmd_params.test_meta_filename}", nameof(svm_ctl), nameof(do_outer_cv_job));
                 }
             }
             //cmds.Add($@"start cmd /c {cmd_params.program_runtime} -j {cmd_params.options_filename}");

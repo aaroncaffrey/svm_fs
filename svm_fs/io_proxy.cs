@@ -273,6 +273,9 @@ namespace svm_fs
             }
         }
 
+        private static object dirs_created_lock = new object();
+        private static List<string> dirs_created = new List<string>();
+
         internal static void CreateDirectory(string filename, string module_name = "", string function_name = "")
         {
             try
@@ -285,9 +288,25 @@ namespace svm_fs
 
                 var dir = Path.GetDirectoryName(filename);
 
+                
+
                 if (!String.IsNullOrWhiteSpace(dir))
                 {
-                    Directory.CreateDirectory(dir);
+                    bool create = false;
+
+                    lock (dirs_created_lock)
+                    {
+                        if (!dirs_created.Contains(dir))
+                        {
+                            dirs_created.Add(dir);
+                            create = true;
+                        }
+                    }
+
+                    if (create)
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
                 }
                 else
                 {
