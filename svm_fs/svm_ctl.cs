@@ -473,14 +473,14 @@ namespace svm_fs
             if (group_keys.Count != group_keys_distinct.Count) throw new Exception();
 
 
-            var test_run = true;
-            if (test_run)
-            {
-                groups = groups.Take(25).ToList();
-
-                //group count -- total groups currently selected/testing
-                //feature count -- total features currently selected/testing
-            }
+            //var test_run = true;
+            //if (test_run)
+            //{
+            //    groups = groups.Take(25).ToList();
+            //
+            //    //group count -- total groups currently selected/testing
+            //    //feature count -- total features currently selected/testing
+            //}
 
             io_proxy.WriteLine($@"--------------- Performing greedy feature selection on {groups.Count} groups ---------------", nameof(svm_ctl), nameof(feature_selection));
 

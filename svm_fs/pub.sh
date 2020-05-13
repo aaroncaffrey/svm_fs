@@ -1,16 +1,12 @@
-rm -rf ~/svm_fs/svm_fs/pbs_ctl_sub
-rm -rf ~/svm_fs/svm_fs/pbs_wkr_sub
-rm -rf ~/svm_fs/svm_fs/pbs_ldr_sub
-rm -rf ~/svm_fs/svm_fs/results
 rm -rf ~/svm_fs/svm_fs/obj
 rm -rf ~/svm_fs/svm_fs/bin
 
-rm -rf /mmfs1/data/scratch/k1040015/svm_fs/pbs_ctl_sub
-rm -rf /mmfs1/data/scratch/k1040015/svm_fs/pbs_wkr_sub
-rm -rf /mmfs1/data/scratch/k1040015/svm_fs/pbs_ldr_sub
-rm -rf /mmfs1/data/scratch/k1040015/svm_fs/results
-rm -rf /mmfs1/data/scratch/k1040015/svm_fs/obj
-rm -rf /mmfs1/data/scratch/k1040015/svm_fs/bin
+#rm -rf /mmfs1/data/scratch/k1040015/svm_fs/pbs_ctl_sub
+#rm -rf /mmfs1/data/scratch/k1040015/svm_fs/pbs_wkr_sub
+#rm -rf /mmfs1/data/scratch/k1040015/svm_fs/pbs_ldr_sub
+#rm -rf /mmfs1/data/scratch/k1040015/svm_fs/results
+#rm -rf /mmfs1/data/scratch/k1040015/svm_fs/obj
+#rm -rf /mmfs1/data/scratch/k1040015/svm_fs/bin
 
 git pull
 
